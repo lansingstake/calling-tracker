@@ -1807,6 +1807,8 @@
                 <label class="block text-xs text-slate-400 font-medium mb-1">Calling Name</label>
                 <input type="text" value="${record['Calling'] || ''}" onchange="updateRecordField('Calling', this.value)" ${isHC ? 'readonly disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
               <div>
                 <label class="block text-xs text-slate-400 font-medium mb-1">Current Step</label>
                 <select onchange="updateRecordField('Current Step', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
@@ -1834,6 +1836,8 @@
                 <label class="block text-xs text-slate-400 font-medium mb-1">Current Calling</label>
                 <input type="text" value="${record['Current Calling'] || ''}" onchange="updateRecordField('Current Calling', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
               ${renderSelectField('Need to be Released?', 'Need to be Released?', ['Yes', 'No'], record)}
             </div>
             <div>
@@ -2098,6 +2102,8 @@
                 <label class="block text-xs text-slate-400 font-medium mb-1">Calling to be Released From</label>
                 <input type="text" value="${record['Calling to be Released From'] || ''}" onchange="updateRecordField('Calling to be Released From', this.value)" ${isHC ? 'readonly disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
               <div>
                 <label class="block text-xs text-slate-400 font-medium mb-1">Current Step</label>
                 <select onchange="updateRecordField('Current Step', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
