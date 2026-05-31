@@ -2327,6 +2327,10 @@
     function toggleApprovalVote(type, voteHeader, voteValue) {
       if (!state.activeRecord) return;
       
+      // Preserve scroll position to prevent Android scroll jump
+      const modalDrawer = document.querySelector('#record-modal > div');
+      const scrollTop = modalDrawer ? modalDrawer.scrollTop : 0;
+      
       const updates = {};
       updates[voteHeader] = voteValue;
       
@@ -2384,6 +2388,9 @@
           bannerEl.innerHTML = '';
         }
       }
+      
+      // Restore scroll position after DOM updates
+      if (modalDrawer) modalDrawer.scrollTop = scrollTop;
       
       const loadingToast = showToast('Submitting vote...', 'info', 0);
       
@@ -2447,8 +2454,14 @@
                            `${state.activeRecord.record["Calling to be Released From"]} (${state.activeRecord.record["Unit"]})`;
           document.getElementById('modal-subtitle').innerText = subtitle;
 
+          // Save scroll position before re-render to prevent Android scroll jump
+          const modalDrawer = document.querySelector('#record-modal > div');
+          const savedScroll = modalDrawer ? modalDrawer.scrollTop : 0;
+
           renderModalContent(state.activeRecord.type, state.activeRecord.record);
           lucide.createIcons();
+          // Restore scroll position
+          if (modalDrawer) modalDrawer.scrollTop = savedScroll;
           renderDashboard();
           
           if (state.activeTab === 'history') {
