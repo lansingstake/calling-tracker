@@ -2551,7 +2551,7 @@
       (state.records.sustainings || []).forEach(s => {
         const key = `${s["Individual"]}|${s["Action"]}|${s["Calling"]}`;
         const status = (s["Status"] || "Pending").trim();
-        if (status === 'Complete') return; // Fully complete, skip
+        if (status === 'Complete' || status === 'Stake Conf') return; // Complete or Stake Conf items don't belong on Pulpit screen
         
         // Admin: show only Pending ordination items, not callings/releases
         if (state.role === 'admin') {
