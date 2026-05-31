@@ -1748,7 +1748,8 @@
             if (record[`Approval [${name}]`] === 'Yes') yesVotes++;
           });
         }
-              const approvalBannerHtml = isApproved ? `
+        const isApproved = yesVotes >= 7;
+        const approvalBannerHtml = isApproved ? `
           <div id="approval-banner" class="mb-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 flex items-center gap-3 text-emerald-400">
             <i data-lucide="check-circle" class="w-5 h-5 text-emerald-400 shrink-0"></i>
             <div>
