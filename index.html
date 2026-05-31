@@ -477,7 +477,7 @@
       <div class="flex justify-between items-start">
         <div>
           <span id="modal-type-badge" class="text-[11px] font-bold uppercase px-2 py-0.5 rounded-full"></span>
-          <h3 id="modal-title" class="text-lg font-bold mt-1 text-slate-100">Member Name</h3>
+          <input id="modal-title" type="text" value="Member Name" onchange="updateRecordField('Member Name', this.value)" class="text-lg font-bold mt-1 text-slate-100 bg-transparent border-b border-transparent hover:border-slate-700 focus:border-indigo-500 focus:outline-none w-full transition-colors">
           <p id="modal-subtitle" class="text-sm text-slate-400">Calling Details</p>
         </div>
         <button onclick="closeModal()" class="p-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-white transition-colors">
@@ -1696,7 +1696,7 @@
       if (type === 'Release Only') badgeBg = 'bg-amber-500/10 text-amber-400 border border-amber-500/20';
       badge.className = `text-[11px] font-bold uppercase px-2.5 py-0.5 rounded-full ${badgeBg}`;
 
-      document.getElementById('modal-title').innerText = record["Member Name"];
+      document.getElementById('modal-title').value = record["Member Name"];
       
       const desc = type === 'Callings Releasings' ? `${record["Calling"]} (${record["Unit"]})` : 
                    type === 'Ordinations' ? `${record["Priesthood Office"]} (${record["Unit"]})` : 
