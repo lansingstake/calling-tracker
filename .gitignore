@@ -4,3 +4,8 @@ Code.js
 migration_script.gs
 *.ps1
 *.gs
+
+# Ignore non-app files
+*.pdf
+*.xlsx
+*.txt
