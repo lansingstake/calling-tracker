@@ -1790,6 +1790,15 @@
           
           <hr class="border-slate-800">
 
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs text-slate-400 font-medium mb-1">High Council Approval Date</label>
+              <input type="date" value="${record['High Council Approval Date'] || ''}" onchange="updateRecordField('High Council Approval Date', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+            </div>
+          </div>
+
+          <hr class="border-slate-800">
+
           <!-- Section 1: Workflow & Key Info -->
           <div class="space-y-4">
             <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Workflow & Key Info</h4>
@@ -1815,7 +1824,10 @@
             </div>
             <div class="grid grid-cols-2 gap-3">
               ${renderNameInputField('Recommended By', 'Recommended By', record)}
-              ${renderSelectField('Calling Accepted?', 'Calling Accepted?', ['Accepted', 'Declined', 'Waiting for Answer'], record)}
+              <div>
+                <label class="block text-xs text-slate-400 font-medium mb-1">Unit Leader Date Contacted</label>
+                <input type="date" value="${record['Unit Leader Date Contacted'] || ''}" onchange="updateRecordField('Unit Leader Date Contacted', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+              </div>
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div>
@@ -1824,8 +1836,13 @@
               </div>
               ${renderSelectField('Need to be Released?', 'Need to be Released?', ['Yes', 'No'], record)}
             </div>
+            <div>
+              <label class="block text-xs text-slate-400 font-medium mb-1">Stake Presidency Date Approved</label>
+              <input type="date" value="${record['Stake Presidency Date Approved'] || ''}" onchange="updateRecordField('Stake Presidency Date Approved', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+            </div>
             <div class="grid grid-cols-2 gap-3">
               ${renderNameInputField('Assigned to Extend Calling / Release', 'Assigned to Call / Release', record)}
+              ${renderSelectField('Calling Accepted?', 'Calling Accepted?', ['Accepted', 'Declined', 'Waiting for Answer'], record)}
             </div>
           </div>
 
@@ -1969,6 +1986,15 @@
           
           <hr class="border-slate-800">
 
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs text-slate-400 font-medium mb-1">High Council Approval Date</label>
+              <input type="date" value="${record['High Council Approval Date'] || ''}" onchange="updateRecordField('High Council Approval Date', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+            </div>
+          </div>
+
+          <hr class="border-slate-800">
+
           <!-- Section 1: Workflow & Key Info -->
           <div class="space-y-4">
             <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Workflow & Key Info</h4>
@@ -1995,6 +2021,10 @@
                 </select>
               </div>
             </div>
+            <div>
+              <label class="block text-xs text-slate-400 font-medium mb-1">Stake Presidency Date Approved</label>
+              <input type="date" value="${record['Stake Presidency Date Approved'] || ''}" onchange="updateRecordField('Stake Presidency Date Approved', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+            </div>
             ${renderNameInputField('Assigned to Oversee Sustaining / Ordination', 'Assigned to Oversee Sustaining / Ordination', record)}
           </div>
 
@@ -2014,6 +2044,10 @@
               </div>
             </div>
             ${renderNameInputField('Ordained By', 'Ordained By', record)}
+            <div>
+              <label class="block text-xs text-slate-400 font-medium mb-1">Out of Unit Member Info</label>
+              <textarea onchange="updateRecordField('Out of Unit Member Info', this.value)" rows="2" class="w-full glass rounded-lg p-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Out of Unit Member Info'] || ''}</textarea>
+            </div>
             
             <!-- Stake Conference Section (Ordination only) -->
             ${renderSelectField('Stake Conference Sustaining', 'Stake Conference Sustaining', ['Pending', 'Complete'], record)}
@@ -2081,6 +2115,12 @@
                 <label class="block text-xs text-slate-400 font-medium mb-1">Reason for Release</label>
                 <input type="text" value="${record['Reason for Release'] || ''}" onchange="updateRecordField('Reason for Release', this.value)" placeholder="Reason" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
               </div>
+              <div>
+                <label class="block text-xs text-slate-400 font-medium mb-1">Stake Presidency Date Approved</label>
+                <input type="date" value="${record['Stake Presidency Date Approved'] || ''}" onchange="updateRecordField('Stake Presidency Date Approved', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
               ${renderNameInputField('Assigned to Extend Release', 'Assigned to Extend Release', record)}
             </div>
           </div>
@@ -2337,6 +2377,15 @@
         if (res.success) {
           showToast('Changes saved!', 'success');
           state.activeRecord.record[fieldKey] = value;
+          
+          // Auto-set High Council Approval Date when stepping away from Approval/HC Approval
+          if (fieldKey === 'Current Step' && (value !== 'Approval' && value !== 'HC Approval')) {
+            const currentRecord = state.activeRecord.record;
+            if (currentRecord && !currentRecord['High Council Approval Date']) {
+              const today = new Date().toISOString().split('T')[0];
+              updateRecordField('High Council Approval Date', today);
+            }
+          }
           
           // Dynamically update header subtitle in case Calling was modified
           const subtitle = state.activeRecord.type === 'Callings Releasings' ? `${state.activeRecord.record["Calling"]} (${state.activeRecord.record["Unit"]})` : 
@@ -3173,6 +3222,10 @@
               <input type="text" id="form-recommended-by" placeholder="e.g. Bishop Smith" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
             </div>
           </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-400 mb-1">Stake Presidency Date Approved</label>
+            <input type="date" id="form-sp-approved-date" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
+          </div>
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="block text-sm font-medium text-slate-400 mb-1">Pulpit Sustaining</label>
@@ -3223,6 +3276,10 @@
             <input type="text" list="stake-presidency-hc-list" id="form-oversee-assigned" placeholder="Select or type name" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
           </div>
           <div>
+            <label class="block text-sm font-medium text-slate-400 mb-1">Stake Presidency Date Approved</label>
+            <input type="date" id="form-sp-approved-date" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
+          </div>
+          <div>
             <label class="block text-sm font-medium text-slate-400 mb-1">Notes</label>
             <textarea id="form-notes" rows="3" placeholder="Details..." class="w-full glass rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200"></textarea>
           </div>
@@ -3247,6 +3304,10 @@
               <option value="Assigned">Assigned</option>
               <option value="Update System + LCR">Update System + LCR</option>
             </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-400 mb-1">Stake Presidency Date Approved</label>
+            <input type="date" id="form-sp-approved-date" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div>
@@ -3284,6 +3345,7 @@
         record["Over the Pulpit Sustaining"] = document.getElementById('form-pulpit-sustaining').value;
         record["Assigned to Extend Calling / Release"] = document.getElementById('form-extend-assigned').value;
         record["Stake Conference Sustaining"] = "";
+        record["Stake Presidency Date Approved"] = document.getElementById('form-sp-approved-date').value;
       } else if (state.formType === 'ordination') {
         type = 'Ordinations';
         record["Record Type"] = "Ordination";
@@ -3294,6 +3356,7 @@
         record["Assigned to Oversee Sustaining / Ordination"] = document.getElementById('form-oversee-assigned').value;
         record["Interview Status"] = "Pending";
         record["Stake Conference Sustaining"] = "Pending";
+        record["Stake Presidency Date Approved"] = document.getElementById('form-sp-approved-date').value;
       } else {
         type = 'Release Only';
         record["Record Type"] = "Release";
@@ -3303,6 +3366,7 @@
         record["Reason for Release"] = document.getElementById('form-release-reason').value;
         record["Assigned to Extend Release"] = document.getElementById('form-release-assigned').value;
         record["Stake Conference Sustaining"] = "";
+        record["Stake Presidency Date Approved"] = document.getElementById('form-sp-approved-date').value;
       }
 
       const loadToast = showToast('Creating new record...', 'info', 0);
@@ -3382,9 +3446,7 @@
     function renderHistoryResults() {
       const container = document.getElementById('history-results');
       const filter = state.historyStatusFilter;
-      const isAdmin = state.role === 'admin';
-      state.historyPage = state.historyPage || 0;
-      const pageSize = 20;
+      const isAdmin = state.role === 'admin' || state.role === 'presidency';
       
       // Filter list
       let filtered = state.historyResults;
@@ -3408,29 +3470,12 @@
         return;
       }
       
-      // Pagination
-      const totalPages = Math.ceil(filtered.length / pageSize);
-      if (state.historyPage >= totalPages) state.historyPage = totalPages - 1;
-      if (state.historyPage < 0) state.historyPage = 0;
-      const pageStart = state.historyPage * pageSize;
-      const pageEnd = Math.min(pageStart + pageSize, filtered.length);
-      const paged = filtered.slice(pageStart, pageEnd);
-      
-      const paginationHtml = totalPages > 1 ? `
-        <div class="flex items-center justify-center gap-3 pt-4">
-          <button onclick="state.historyPage = Math.max(0, state.historyPage - 1); renderHistoryResults();" ${state.historyPage === 0 ? 'disabled' : ''} class="px-3 py-1.5 text-xs font-bold rounded-lg glass border border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/10 transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed">
-            &larr; Prev
-          </button>
-          <span class="text-xs text-slate-400 font-semibold">Page ${state.historyPage + 1} of ${totalPages}</span>
-          <button onclick="state.historyPage = Math.min(${totalPages - 1}, state.historyPage + 1); renderHistoryResults();" ${state.historyPage >= totalPages - 1 ? 'disabled' : ''} class="px-3 py-1.5 text-xs font-bold rounded-lg glass border border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/10 transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed">
-            Next &rarr;
-          </button>
-        </div>
-      ` : '';
+      filtered = filtered.slice(0, 20);
       
       container.innerHTML = `
+        <p class="text-xs text-slate-500 text-center mb-4">Showing ${filtered.length} most recent records</p>
         <div class="border-l-2 border-slate-800 ml-4 pl-6 space-y-6 relative">
-          ${paged.map(r => {
+          ${filtered.map(r => {
             let badgeBg = 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
             if (r.type === 'Ordination') badgeBg = 'bg-purple-500/10 text-purple-400 border border-purple-500/20';
             if (r.type === 'Release') badgeBg = 'bg-amber-500/10 text-amber-400 border border-amber-500/20';
@@ -3461,7 +3506,6 @@
             `;
           }).join('')}
         </div>
-        ${paginationHtml}
       `;
     }
 
