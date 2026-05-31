@@ -51,14 +51,14 @@
       </div>
       <div>
         <h1 class="text-sm font-bold tracking-tight">Calling Tracker</h1>
-        <span id="demo-indicator" class="hidden text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1.5 py-0.5 rounded-full font-medium">Demo Mode</span>
+        <span id="demo-indicator" class="hidden text-[11px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1.5 py-0.5 rounded-full font-medium">Demo Mode</span>
       </div>
     </div>
     
     <div id="user-profile" class="hidden flex items-center gap-2">
       <div class="text-right">
-        <p id="profile-name" class="text-xs font-semibold text-slate-200"></p>
-        <p id="profile-role" class="text-[9px] uppercase tracking-wider text-indigo-400 font-bold"></p>
+        <p id="profile-name" class="text-sm font-semibold text-slate-200"></p>
+        <p id="profile-role" class="text-[11px] uppercase tracking-wider text-indigo-400 font-bold"></p>
       </div>
       <button onclick="logout()" class="p-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-red-400 transition-colors">
         <i data-lucide="log-out" class="w-4 h-4"></i>
@@ -78,25 +78,25 @@
         <div class="text-center space-y-2">
           <i data-lucide="lock" class="w-12 h-12 text-indigo-500 mx-auto"></i>
           <h2 class="text-xl font-bold">Secure Access</h2>
-          <p class="text-xs text-slate-400">Enter the shared PIN to access the calling tracker</p>
+          <p class="text-sm text-slate-400">Enter the shared PIN to access the calling tracker</p>
         </div>
         
         <div class="space-y-4">
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Enter Shared PIN</label>
+            <label class="block text-sm font-medium text-slate-400 mb-1">Enter Shared PIN</label>
             <input type="password" id="login-pin" oninput="document.getElementById('hc-name-selector').classList.add('hidden')" onkeydown="if(event.key === 'Enter') { event.preventDefault(); handleLogin(); }" placeholder="********" maxlength="8" class="w-full glass rounded-xl px-4 py-3 text-center text-lg font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder-slate-600">
           </div>
 
           <!-- API URL (shown only if not yet configured) -->
           <div id="login-api-section" class="hidden">
-            <label class="block text-xs font-medium text-slate-400 mb-1">API Connection URL</label>
-            <input type="text" id="login-api-url" placeholder="Paste your Apps Script URL here" class="w-full glass rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200 placeholder-slate-600">
-            <p class="text-[10px] text-slate-500 mt-1">First-time setup only — ask your admin for this URL</p>
+            <label class="block text-sm font-medium text-slate-400 mb-1">API Connection URL</label>
+            <input type="text" id="login-api-url" placeholder="Paste your Apps Script URL here" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200 placeholder-slate-600">
+            <p class="text-[11px] text-slate-500 mt-1">First-time setup only â€” ask your admin for this URL</p>
           </div>
 
           <!-- Roster/Role Dropdown (Hidden initially, shown if correct pin entered) -->
           <div id="hc-name-selector" class="hidden space-y-1 transition-all">
-            <label id="login-selector-label" class="block text-xs font-medium text-slate-400 mb-1">Select Your Name</label>
+            <label id="login-selector-label" class="block text-sm font-medium text-slate-400 mb-1">Select Your Name</label>
             <select id="login-hc-name" onkeydown="if(event.key === 'Enter') { event.preventDefault(); handleLogin(); }" class="w-full glass rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200">
               <!-- Populated dynamically -->
             </select>
@@ -115,8 +115,8 @@
     <section id="view-dashboard" class="hidden space-y-4">
       <!-- Admin Tracker Toggle (Only for Admin) -->
       <div id="db-tracker-toggle-card" class="hidden bg-slate-900/60 p-1 rounded-xl border border-slate-800 grid grid-cols-2 gap-2">
-        <button onclick="setDashboardViewType('active')" id="btn-db-active" class="py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 text-white transition-all">Active Tracker</button>
-        <button onclick="setDashboardViewType('stakeconf')" id="btn-db-stakeconf" class="py-1.5 text-xs font-semibold rounded-lg text-slate-400 hover:text-slate-200 transition-all">Stake Conference</button>
+        <button onclick="setDashboardViewType('active')" id="btn-db-active" class="py-1.5 text-sm font-semibold rounded-lg bg-indigo-600 text-white transition-all">Active Tracker</button>
+        <button onclick="setDashboardViewType('stakeconf')" id="btn-db-stakeconf" class="py-1.5 text-sm font-semibold rounded-lg text-slate-400 hover:text-slate-200 transition-all">Stake Conference</button>
       </div>
 
       <!-- Dashboard View: Active Tracker -->
@@ -130,16 +130,16 @@
           
           <!-- Filter Tabs Wrapping Grid/Flex Layout (All 9 Units) -->
           <div id="db-filter-bar" class="flex flex-wrap gap-2 pb-1">
-            <button onclick="setFilter('all')" id="filter-all" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 text-white transition-all whitespace-nowrap">All Units</button>
-            <button onclick="setFilter('Charlotte')" id="filter-Charlotte" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg glass text-slate-300 transition-all whitespace-nowrap">Charlotte</button>
-            <button onclick="setFilter('Holt')" id="filter-Holt" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg glass text-slate-300 transition-all whitespace-nowrap">Holt</button>
-            <button onclick="setFilter('Jackson')" id="filter-Jackson" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg glass text-slate-300 transition-all whitespace-nowrap">Jackson</button>
-            <button onclick="setFilter('Lansing')" id="filter-Lansing" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg glass text-slate-300 transition-all whitespace-nowrap">Lansing</button>
-            <button onclick="setFilter('Portland')" id="filter-Portland" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg glass text-slate-300 transition-all whitespace-nowrap">Portland</button>
-            <button onclick="setFilter('Owosso')" id="filter-Owosso" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg glass text-slate-300 transition-all whitespace-nowrap">Owosso</button>
-            <button onclick="setFilter('St Johns')" id="filter-StJohns" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg glass text-slate-300 transition-all whitespace-nowrap">St Johns</button>
-            <button onclick="setFilter('Williamston')" id="filter-Williamston" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg glass text-slate-300 transition-all whitespace-nowrap">Williamston</button>
-            <button onclick="setFilter('YSA')" id="filter-YSA" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg glass text-slate-300 transition-all whitespace-nowrap">YSA</button>
+            <button onclick="setFilter('all')" id="filter-all" class="px-3.5 py-1.5 text-sm font-semibold rounded-lg bg-indigo-600 text-white transition-all whitespace-nowrap">All Units</button>
+            <button onclick="setFilter('Charlotte')" id="filter-Charlotte" class="px-3.5 py-1.5 text-sm font-semibold rounded-lg glass text-slate-300 transition-all whitespace-nowrap">Charlotte</button>
+            <button onclick="setFilter('Holt')" id="filter-Holt" class="px-3.5 py-1.5 text-sm font-semibold rounded-lg glass text-slate-300 transition-all whitespace-nowrap">Holt</button>
+            <button onclick="setFilter('Jackson')" id="filter-Jackson" class="px-3.5 py-1.5 text-sm font-semibold rounded-lg glass text-slate-300 transition-all whitespace-nowrap">Jackson</button>
+            <button onclick="setFilter('Lansing')" id="filter-Lansing" class="px-3.5 py-1.5 text-sm font-semibold rounded-lg glass text-slate-300 transition-all whitespace-nowrap">Lansing</button>
+            <button onclick="setFilter('Portland')" id="filter-Portland" class="px-3.5 py-1.5 text-sm font-semibold rounded-lg glass text-slate-300 transition-all whitespace-nowrap">Portland</button>
+            <button onclick="setFilter('Owosso')" id="filter-Owosso" class="px-3.5 py-1.5 text-sm font-semibold rounded-lg glass text-slate-300 transition-all whitespace-nowrap">Owosso</button>
+            <button onclick="setFilter('St Johns')" id="filter-StJohns" class="px-3.5 py-1.5 text-sm font-semibold rounded-lg glass text-slate-300 transition-all whitespace-nowrap">St Johns</button>
+            <button onclick="setFilter('Williamston')" id="filter-Williamston" class="px-3.5 py-1.5 text-sm font-semibold rounded-lg glass text-slate-300 transition-all whitespace-nowrap">Williamston</button>
+            <button onclick="setFilter('YSA')" id="filter-YSA" class="px-3.5 py-1.5 text-sm font-semibold rounded-lg glass text-slate-300 transition-all whitespace-nowrap">YSA</button>
           </div>
         </div>
 
@@ -152,7 +152,7 @@
                 <i data-lucide="check-square" class="w-4 h-4 text-indigo-400"></i>
                 My Assigned Tasks
               </h3>
-              <span id="count-hc-tasks" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-400 font-semibold">0</span>
+              <span id="count-hc-tasks" class="text-[11px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-400 font-semibold">0</span>
             </div>
             <div id="hc-dashboard-tasks" class="space-y-3"></div>
           </div>
@@ -164,7 +164,7 @@
                 <i data-lucide="user-plus" class="w-4 h-4 text-emerald-400"></i>
                 Active Callings & Releases
               </h3>
-              <span id="count-callings" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-400 font-semibold">0</span>
+              <span id="count-callings" class="text-[11px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-400 font-semibold">0</span>
             </div>
             <div id="list-callings" class="space-y-3"></div>
           </div>
@@ -176,7 +176,7 @@
                 <i data-lucide="award" class="w-4 h-4 text-purple-400"></i>
                 Active Ordinations
               </h3>
-              <span id="count-ordinations" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-400 font-semibold">0</span>
+              <span id="count-ordinations" class="text-[11px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-400 font-semibold">0</span>
             </div>
             <div id="list-ordinations" class="space-y-3"></div>
           </div>
@@ -188,7 +188,7 @@
                 <i data-lucide="user-minus" class="w-4 h-4 text-amber-400"></i>
                 Active Releases Only
               </h3>
-              <span id="count-releases" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-400 font-semibold">0</span>
+              <span id="count-releases" class="text-[11px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-400 font-semibold">0</span>
             </div>
             <div id="list-releases" class="space-y-3"></div>
           </div>
@@ -200,19 +200,19 @@
         <div class="glass p-4 rounded-xl space-y-3">
           <div class="flex items-center justify-between">
             <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">Stake Conference Filter</h3>
-            <span id="count-stakeconf" class="text-[10px] bg-indigo-600 px-2 py-0.5 rounded-full text-white font-semibold">0</span>
+            <span id="count-stakeconf" class="text-[11px] bg-indigo-600 px-2 py-0.5 rounded-full text-white font-semibold">0</span>
           </div>
           
           <div class="flex gap-4 flex-wrap">
-            <label class="flex items-center gap-2 text-xs cursor-pointer select-none">
+            <label class="flex items-center gap-2 text-sm cursor-pointer select-none">
               <input type="checkbox" id="sc-filter-pending" checked onchange="renderDashboard()" class="w-4 h-4 rounded text-indigo-600 bg-slate-800 border-slate-700">
               <span class="text-slate-300">Pending</span>
             </label>
-            <label class="flex items-center gap-2 text-xs cursor-pointer select-none">
+            <label class="flex items-center gap-2 text-sm cursor-pointer select-none">
               <input type="checkbox" id="sc-filter-stakeconf" checked onchange="renderDashboard()" class="w-4 h-4 rounded text-indigo-600 bg-slate-800 border-slate-700">
               <span class="text-slate-300">Stake Conference</span>
             </label>
-            <label class="flex items-center gap-2 text-xs cursor-pointer select-none">
+            <label class="flex items-center gap-2 text-sm cursor-pointer select-none">
               <input type="checkbox" id="sc-filter-complete" onchange="renderDashboard()" class="w-4 h-4 rounded text-indigo-600 bg-slate-800 border-slate-700">
               <span class="text-slate-300">Complete</span>
             </label>
@@ -220,10 +220,10 @@
 
           <!-- Bulk Date Update (Admin only) -->
           <div id="sc-bulk-update" class="hidden border-t border-slate-800 pt-3 mt-2 space-y-2">
-            <label class="block text-[10px] text-slate-400 font-medium">Stake Conf Sustain Date (will be applied to all Stake Conf items below)</label>
+            <label class="block text-[11px] text-slate-400 font-medium">Stake Conf Sustain Date (will be applied to all Stake Conf items below)</label>
             <div class="flex gap-2">
-              <input type="date" id="sc-bulk-date" class="flex-1 glass rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
-              <button onclick="bulkUpdateStakeConfDate()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold rounded-lg transition-all active:scale-95 whitespace-nowrap flex items-center gap-1.5">
+              <input type="date" id="sc-bulk-date" class="flex-1 glass rounded-lg px-2.5 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+              <button onclick="bulkUpdateStakeConfDate()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-bold rounded-lg transition-all active:scale-95 whitespace-nowrap flex items-center gap-1.5">
                 <i data-lucide="calendar-check" class="w-3 h-3"></i> Update Sustain Date
               </button>
             </div>
@@ -264,7 +264,7 @@
             </h2>
           </div>
           
-          <div id="sunday-ordination-script-text" class="p-3 bg-slate-900/80 rounded-xl border border-slate-800 text-xs leading-relaxed text-slate-300 italic">
+          <div id="sunday-ordination-script-text" class="p-3 bg-slate-900/80 rounded-xl border border-slate-800 text-sm leading-relaxed text-slate-300 italic">
             No ordinations scheduled for this unit.
           </div>
           
@@ -282,7 +282,7 @@
             </h2>
           </div>
           
-          <div id="sunday-release-script-text" class="p-3 bg-slate-900/80 rounded-xl border border-slate-800 text-xs leading-relaxed text-slate-300 italic">
+          <div id="sunday-release-script-text" class="p-3 bg-slate-900/80 rounded-xl border border-slate-800 text-sm leading-relaxed text-slate-300 italic">
             No releases scheduled for this unit.
           </div>
           
@@ -300,7 +300,7 @@
             </h2>
           </div>
           
-          <div id="sunday-sustain-script-text" class="p-3 bg-slate-900/80 rounded-xl border border-slate-800 text-xs leading-relaxed text-slate-300 italic">
+          <div id="sunday-sustain-script-text" class="p-3 bg-slate-900/80 rounded-xl border border-slate-800 text-sm leading-relaxed text-slate-300 italic">
             No sustainings scheduled for this unit.
           </div>
           
@@ -321,16 +321,16 @@
         
         <!-- Tab Selector for Form Type -->
         <div class="grid grid-cols-3 gap-2 bg-slate-900/60 p-1 rounded-xl border border-slate-800">
-          <button onclick="setFormType('calling')" id="btn-form-calling" class="py-2 text-xs font-semibold rounded-lg bg-indigo-600 text-white transition-all">Calling</button>
-          <button onclick="setFormType('ordination')" id="btn-form-ordination" class="py-2 text-xs font-semibold rounded-lg text-slate-400 hover:text-slate-200 transition-all">Ordination</button>
-          <button onclick="setFormType('release')" id="btn-form-release" class="py-2 text-xs font-semibold rounded-lg text-slate-400 hover:text-slate-200 transition-all">Release</button>
+          <button onclick="setFormType('calling')" id="btn-form-calling" class="py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white transition-all">Calling</button>
+          <button onclick="setFormType('ordination')" id="btn-form-ordination" class="py-2 text-sm font-semibold rounded-lg text-slate-400 hover:text-slate-200 transition-all">Ordination</button>
+          <button onclick="setFormType('release')" id="btn-form-release" class="py-2 text-sm font-semibold rounded-lg text-slate-400 hover:text-slate-200 transition-all">Release</button>
         </div>
 
         <!-- Dynamic Forms -->
         <form id="entry-form" onsubmit="submitEntryForm(event)" class="space-y-4">
           <!-- Common Member Name -->
           <div>
-            <label id="lbl-member-name" class="block text-xs font-medium text-slate-400 mb-1">Member Name</label>
+            <label id="lbl-member-name" class="block text-sm font-medium text-slate-400 mb-1">Member Name</label>
             <input type="text" id="form-name" required class="w-full glass rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
           </div>
 
@@ -364,11 +364,11 @@
 
         <!-- History status filter buttons -->
         <div class="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
-          <button onclick="setHistoryStatusFilter('all')" id="hist-f-all" class="px-2.5 py-1 text-[10px] font-bold rounded bg-indigo-600 text-white transition-all whitespace-nowrap">All</button>
-          <button onclick="setHistoryStatusFilter('Active')" id="hist-f-Active" class="px-2.5 py-1 text-[10px] font-bold rounded glass text-slate-300 transition-all whitespace-nowrap">Active</button>
-          <button onclick="setHistoryStatusFilter('Complete')" id="hist-f-Complete" class="px-2.5 py-1 text-[10px] font-bold rounded glass text-slate-300 transition-all whitespace-nowrap">Complete</button>
-          <button onclick="setHistoryStatusFilter('Cancelled')" id="hist-f-Cancelled" class="px-2.5 py-1 text-[10px] font-bold rounded glass text-slate-300 transition-all whitespace-nowrap">Cancelled</button>
-          <button onclick="setHistoryStatusFilter('Declined')" id="hist-f-Declined" class="px-2.5 py-1 text-[10px] font-bold rounded glass text-slate-300 transition-all whitespace-nowrap">Declined</button>
+          <button onclick="setHistoryStatusFilter('all')" id="hist-f-all" class="px-2.5 py-1 text-[11px] font-bold rounded bg-indigo-600 text-white transition-all whitespace-nowrap">All</button>
+          <button onclick="setHistoryStatusFilter('Active')" id="hist-f-Active" class="px-2.5 py-1 text-[11px] font-bold rounded glass text-slate-300 transition-all whitespace-nowrap">Active</button>
+          <button onclick="setHistoryStatusFilter('Complete')" id="hist-f-Complete" class="px-2.5 py-1 text-[11px] font-bold rounded glass text-slate-300 transition-all whitespace-nowrap">Complete</button>
+          <button onclick="setHistoryStatusFilter('Cancelled')" id="hist-f-Cancelled" class="px-2.5 py-1 text-[11px] font-bold rounded glass text-slate-300 transition-all whitespace-nowrap">Cancelled</button>
+          <button onclick="setHistoryStatusFilter('Declined')" id="hist-f-Declined" class="px-2.5 py-1 text-[11px] font-bold rounded glass text-slate-300 transition-all whitespace-nowrap">Declined</button>
         </div>
 
         <!-- Unit Filter Dropdown -->
@@ -395,7 +395,41 @@
 
     <!-- 6. SETTINGS / ADMIN PANEL VIEW -->
     <section id="view-settings" class="hidden space-y-4">
-      <!-- 6a. API Connection -->
+      <!-- 6a. High Council Roster (Admin Only) -->
+      <div id="settings-roster-card" class="glass rounded-2xl p-5 shadow-xl space-y-4 hidden">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+          <i data-lucide="users" class="w-4 h-4 text-emerald-500"></i>
+          High Council Roster
+        </h2>
+        <p class="text-[11px] text-slate-400">Renaming a high councilor here renames their approval column header in Google Sheets dynamically, preserving historical counts.</p>
+        
+        <div class="grid grid-cols-1 gap-2" id="roster-inputs">
+          <!-- 12 Councilor name inputs and unit selects -->
+        </div>
+        
+        <button onclick="saveRoster()" id="btn-save-roster" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl text-sm transition-all active:scale-95 flex items-center justify-center gap-2 mt-4 shadow-lg shadow-emerald-500/10">
+          <i data-lucide="save" class="w-4 h-4"></i> Save Changes
+        </button>
+      </div>
+
+      <!-- 6b. Stake Presidency Roster (Admin Only) -->
+      <div id="settings-presidency-card" class="glass rounded-2xl p-5 shadow-xl space-y-4 hidden">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+          <i data-lucide="shield" class="w-4 h-4 text-indigo-400"></i>
+          Stake Presidency Roster
+        </h2>
+        <p class="text-[11px] text-slate-400">Manage the names of the 3 Stake Presidency members.</p>
+        
+        <div class="grid grid-cols-3 gap-2" id="presidency-inputs">
+          <!-- 3 Presidency name inputs -->
+        </div>
+        
+        <button onclick="savePresidencyRoster()" id="btn-save-presidency" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl text-sm transition-all active:scale-95 flex items-center justify-center gap-2 mt-4 shadow-lg shadow-indigo-500/10">
+          <i data-lucide="save" class="w-4 h-4"></i> Save Changes
+        </button>
+      </div>
+
+      <!-- 6c. API Connection -->
       <div class="glass rounded-2xl p-5 shadow-xl space-y-4">
         <h2 class="text-lg font-bold flex items-center gap-2">
           <i data-lucide="settings" class="w-5 h-5 text-indigo-500"></i>
@@ -403,8 +437,8 @@
         </h2>
         <div class="space-y-3">
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Google Apps Script Web App URL</label>
-            <input type="text" id="settings-api-url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full glass rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-300">
+            <label class="block text-sm font-medium text-slate-400 mb-1">Google Apps Script Web App URL</label>
+            <input type="text" id="settings-api-url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full glass rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-300">
           </div>
           <button onclick="saveApiUrl()" class="w-full bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-200 font-semibold py-2 rounded-xl text-sm transition-all active:scale-95">
             Save Web App URL
@@ -412,7 +446,7 @@
         </div>
       </div>
 
-      <!-- 6b. PIN Management (Admin Only) -->
+      <!-- 6d. PIN Management (Admin Only) -->
       <div id="settings-pins-card" class="glass rounded-2xl p-5 shadow-xl space-y-4 hidden">
         <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
           <i data-lucide="key" class="w-4 h-4 text-amber-500"></i>
@@ -420,50 +454,16 @@
         </h2>
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Admin PIN (6-8 digits)</label>
+            <label class="block text-sm font-medium text-slate-400 mb-1">Admin PIN (6-8 digits)</label>
             <input type="text" id="settings-admin-pin" placeholder="******" maxlength="8" class="w-full glass rounded-xl px-3 py-2 text-center text-sm font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
           </div>
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">HC PIN (6-8 digits)</label>
+            <label class="block text-sm font-medium text-slate-400 mb-1">HC PIN (6-8 digits)</label>
             <input type="text" id="settings-hc-pin" placeholder="******" maxlength="8" class="w-full glass rounded-xl px-3 py-2 text-center text-sm font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
           </div>
         </div>
-        <button onclick="savePINs()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 rounded-xl text-xs transition-all active:scale-95 flex items-center justify-center gap-2">
+        <button onclick="savePINs()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 rounded-xl text-sm transition-all active:scale-95 flex items-center justify-center gap-2">
           <i data-lucide="save" class="w-4 h-4"></i> Save New PINs
-        </button>
-      </div>
-
-      <!-- 6c. High Council Roster (Admin Only) -->
-      <div id="settings-roster-card" class="glass rounded-2xl p-5 shadow-xl space-y-4 hidden">
-        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-          <i data-lucide="users" class="w-4 h-4 text-emerald-500"></i>
-          High Council Roster
-        </h2>
-        <p class="text-[10px] text-slate-400">Renaming a high councilor here renames their approval column header in Google Sheets dynamically, preserving historical counts.</p>
-        
-        <div class="grid grid-cols-1 gap-2" id="roster-inputs">
-          <!-- 12 Councilor name inputs and unit selects -->
-        </div>
-        
-        <button onclick="saveRoster()" id="btn-save-roster" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl text-xs transition-all active:scale-95 flex items-center justify-center gap-2 mt-4 shadow-lg shadow-emerald-500/10">
-          <i data-lucide="save" class="w-4 h-4"></i> Save Changes
-        </button>
-      </div>
-
-      <!-- 6d. Stake Presidency Roster (Admin Only) -->
-      <div id="settings-presidency-card" class="glass rounded-2xl p-5 shadow-xl space-y-4 hidden">
-        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-          <i data-lucide="shield" class="w-4 h-4 text-indigo-400"></i>
-          Stake Presidency Roster
-        </h2>
-        <p class="text-[10px] text-slate-400">Manage the names of the 3 Stake Presidency members.</p>
-        
-        <div class="grid grid-cols-3 gap-2" id="presidency-inputs">
-          <!-- 3 Presidency name inputs -->
-        </div>
-        
-        <button onclick="savePresidencyRoster()" id="btn-save-presidency" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl text-xs transition-all active:scale-95 flex items-center justify-center gap-2 mt-4 shadow-lg shadow-indigo-500/10">
-          <i data-lucide="save" class="w-4 h-4"></i> Save Changes
         </button>
       </div>
     </section>
@@ -476,9 +476,9 @@
       <!-- Modal Header -->
       <div class="flex justify-between items-start">
         <div>
-          <span id="modal-type-badge" class="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full"></span>
+          <span id="modal-type-badge" class="text-[11px] font-bold uppercase px-2 py-0.5 rounded-full"></span>
           <h3 id="modal-title" class="text-lg font-bold mt-1 text-slate-100">Member Name</h3>
-          <p id="modal-subtitle" class="text-xs text-slate-400">Calling Details</p>
+          <p id="modal-subtitle" class="text-sm text-slate-400">Calling Details</p>
         </div>
         <button onclick="closeModal()" class="p-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-white transition-colors">
           <i data-lucide="x" class="w-4 h-4"></i>
@@ -496,27 +496,27 @@
   <nav id="bottom-nav" class="glass fixed bottom-0 left-0 right-0 z-40 border-t border-slate-800 flex justify-around py-3 px-4 max-w-md mx-auto rounded-t-2xl shadow-xl hidden">
     <button onclick="switchTab('dashboard')" id="nav-dashboard" class="flex flex-col items-center gap-1 text-indigo-500 transition-colors">
       <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
-      <span class="text-[10px] font-medium">Dashboard</span>
+      <span class="text-[11px] font-medium">Dashboard</span>
     </button>
 
     <button onclick="switchTab('sunday')" id="nav-sunday" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
       <i data-lucide="calendar" class="w-5 h-5"></i>
-      <span class="text-[10px] font-medium">Over the Pulpit</span>
+      <span class="text-[11px] font-medium">Over the Pulpit</span>
     </button>
     
     <button onclick="switchTab('create')" id="nav-create" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors hidden admin-only">
       <i data-lucide="plus-circle" class="w-5 h-5"></i>
-      <span class="text-[10px] font-medium">Create</span>
+      <span class="text-[11px] font-medium">Create</span>
     </button>
     
     <button onclick="switchTab('history')" id="nav-history" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors hidden admin-only">
       <i data-lucide="history" class="w-5 h-5"></i>
-      <span class="text-[10px] font-medium">History</span>
+      <span class="text-[11px] font-medium">History</span>
     </button>
     
     <button onclick="switchTab('settings')" id="nav-settings" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
       <i data-lucide="settings" class="w-5 h-5"></i>
-      <span class="text-[10px] font-medium">Settings</span>
+      <span class="text-[11px] font-medium">Settings</span>
     </button>
   </nav>
 
@@ -537,7 +537,7 @@
       historyStatusFilter: 'all',
       historyResults: [],
       formType: 'calling',
-      // ★ API URL — Update this when you create a new Apps Script deployment ★
+      // â˜… API URL â€” Update this when you create a new Apps Script deployment â˜…
       apiUrl: localStorage.getItem('tracker_api_url') || 'https://script.google.com/macros/s/AKfycbxg7Mok_dgwKmwi10r4_ALR4AGM63Tci-ga3ioBwt9f3I55uw9jz4ENrqCLMAwUB0g/exec',
       isDemo: localStorage.getItem('tracker_is_demo') === 'true',
       activeRecord: null,
@@ -886,7 +886,7 @@
 
       if (state.role === 'hc') {
         document.getElementById('nav-settings').classList.add('hidden');
-        // Hide dashboard filter bar and search for HC Ã¢â‚¬â€ they see all records
+        // Hide dashboard filter bar and search for HC ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â they see all records
         document.getElementById('db-search-filter-container').classList.add('hidden');
         
         // Find their assigned unit for the Sunday pulpit dropdown default
@@ -1465,15 +1465,15 @@
           
           const personalContainer = document.getElementById('hc-dashboard-tasks');
           if (personalTasks.length === 0) {
-            personalContainer.innerHTML = `<p class="text-xs text-slate-500 italic text-center py-4">You have no pending assigned tasks</p>`;
+            personalContainer.innerHTML = `<p class="text-sm text-slate-500 italic text-center py-4">You have no pending assigned tasks</p>`;
           } else {
             personalContainer.innerHTML = personalTasks.map(t => `
               <div class="glass p-3.5 rounded-xl border border-slate-800 flex justify-between items-center shadow-md">
                 <div>
-                  <p class="text-xs font-bold text-slate-100">${t.task}: ${t.name}</p>
-                  <p class="text-[10px] text-slate-400 font-medium">${t.details}</p>
+                  <p class="text-sm font-bold text-slate-100">${t.task}: ${t.name}</p>
+                  <p class="text-[11px] text-slate-400 font-medium">${t.details}</p>
                 </div>
-                <button onclick="openRecordDetails('${t.type === 'calling' ? 'Callings Releasings' : t.type === 'ordination' ? 'Ordinations' : 'Release Only'}', '${t.record["Timestamp"]}', '${t.name.replace(/'/g, "\\'")}')" class="px-2.5 py-1 text-[10px] font-bold bg-indigo-600 text-white rounded hover:bg-indigo-500 active:scale-95 transition-all">
+                <button onclick="openRecordDetails('${t.type === 'calling' ? 'Callings Releasings' : t.type === 'ordination' ? 'Ordinations' : 'Release Only'}', '${t.record["Timestamp"]}', '${t.name.replace(/'/g, "\\'")}')" class="px-2.5 py-1 text-[11px] font-bold bg-indigo-600 text-white rounded hover:bg-indigo-500 active:scale-95 transition-all">
                   Update
                 </button>
               </div>
@@ -1516,7 +1516,7 @@
         
         const container = document.getElementById('list-stakeconf');
         if (scList.length === 0) {
-          container.innerHTML = `<p class="text-xs text-slate-500 italic text-center py-8">No records match filters</p>`;
+          container.innerHTML = `<p class="text-sm text-slate-500 italic text-center py-8">No records match filters</p>`;
           return;
         }
         
@@ -1542,7 +1542,7 @@
           }
           
           // Date display
-          const dateHtml = stakeConfDate ? `<span class="text-[9px] text-slate-400 font-medium ml-2">${stakeConfDate}</span>` : '';
+          const dateHtml = stakeConfDate ? `<span class="text-[11px] text-slate-400 font-medium ml-2">${stakeConfDate}</span>` : '';
           
           // Admin status buttons
           const isAdmin = state.role === 'admin';
@@ -1552,8 +1552,8 @@
             const completeActive = status === 'Complete' ? 'ring-2 ring-emerald-400 bg-emerald-500/20' : 'bg-slate-800 hover:bg-slate-700';
             statusBtnsHtml = `
               <div class="flex items-center gap-1.5 flex-shrink-0">
-                <button onclick="event.stopPropagation(); updateStakeConfStatus('${individual.replace(/'/g, "\\'")}', '${action}', '${calling.replace(/'/g, "\\'")}', 'Stake Conf')" class="px-2 py-1 text-[9px] font-bold rounded-md text-purple-300 transition-all active:scale-95 ${scActive}">Stake Conf</button>
-                <button onclick="event.stopPropagation(); updateStakeConfStatus('${individual.replace(/'/g, "\\'")}', '${action}', '${calling.replace(/'/g, "\\'")}', 'Complete')" class="px-2 py-1 text-[9px] font-bold rounded-md text-emerald-300 transition-all active:scale-95 ${completeActive}">Complete</button>
+                <button onclick="event.stopPropagation(); updateStakeConfStatus('${individual.replace(/'/g, "\\'")}', '${action}', '${calling.replace(/'/g, "\\'")}', 'Stake Conf')" class="px-2 py-1 text-[11px] font-bold rounded-md text-purple-300 transition-all active:scale-95 ${scActive}">Stake Conf</button>
+                <button onclick="event.stopPropagation(); updateStakeConfStatus('${individual.replace(/'/g, "\\'")}', '${action}', '${calling.replace(/'/g, "\\'")}', 'Complete')" class="px-2 py-1 text-[11px] font-bold rounded-md text-emerald-300 transition-all active:scale-95 ${completeActive}">Complete</button>
               </div>
             `;
           }
@@ -1563,12 +1563,12 @@
               <div class="flex justify-between items-start gap-3">
                 <div class="space-y-1 min-w-0 flex-1">
                   <div class="flex items-center gap-2">
-                    <span class="text-xs font-bold text-slate-100">${individual}</span>
-                    <span class="text-[9px] font-semibold bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded-md border border-slate-700">${unit}</span>
+                    <span class="text-sm font-bold text-slate-100">${individual}</span>
+                    <span class="text-[11px] font-semibold bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded-md border border-slate-700">${unit}</span>
                   </div>
-                  <p class="text-xs text-slate-400 font-medium">${calling}</p>
+                  <p class="text-sm text-slate-400 font-medium">${calling}</p>
                   <div class="flex items-center gap-2 pt-1">
-                    <span class="text-[9px] font-medium border px-2 py-0.5 rounded-full ${badgeColor}">${badgeText}</span>
+                    <span class="text-[11px] font-medium border px-2 py-0.5 rounded-full ${badgeColor}">${badgeText}</span>
                     ${dateHtml}
                   </div>
                 </div>
@@ -1584,7 +1584,7 @@
     function renderCardList(containerId, list, type, icon, borderColorClass) {
       const container = document.getElementById(containerId);
       if (list.length === 0) {
-        container.innerHTML = `<p class="text-xs text-slate-500 italic text-center py-4">No records found</p>`;
+        container.innerHTML = `<p class="text-sm text-slate-500 italic text-center py-4">No records found</p>`;
         return;
       }
 
@@ -1605,7 +1605,7 @@
         let votePillHtml = '';
         if (type !== 'Release Only') {
           const approves = r["Approvals"] || 0;
-          votePillHtml = `<span class="text-[10px] bg-slate-800 text-slate-400 border border-slate-700 px-2 py-0.5 rounded-full flex items-center gap-1 font-semibold">
+          votePillHtml = `<span class="text-[11px] bg-slate-800 text-slate-400 border border-slate-700 px-2 py-0.5 rounded-full flex items-center gap-1 font-semibold">
             <i data-lucide="check" class="w-3 h-3 text-emerald-400"></i> ${approves} Vote${approves === 1 ? '' : 's'}
           </span>`;
         }
@@ -1617,7 +1617,7 @@
         
         let votedBadgeHtml = '';
         if (hasVoted) {
-          votedBadgeHtml = `<span class="text-[9px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full flex items-center gap-1 leading-none shadow-sm">
+          votedBadgeHtml = `<span class="text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full flex items-center gap-1 leading-none shadow-sm">
             <i data-lucide="check" class="w-2.5 h-2.5 text-emerald-400"></i> You Voted
           </span>`;
         }
@@ -1637,13 +1637,13 @@
           <div onclick='openRecordDetails("${type}", "${r["Timestamp"]}", "${name.replace(/'/g, "\\'")}")' class="glass hover:bg-slate-800/50 p-4 rounded-xl border-l-4 ${borderColorClass} cursor-pointer active:scale-[0.99] transition-all flex justify-between items-center shadow-lg">
             <div class="space-y-1">
               <div class="flex items-center gap-2">
-                <span class="text-xs font-bold text-slate-100">${name}</span>
-                <span class="text-[9px] font-semibold bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded-md border border-slate-700">${unit}</span>
+                <span class="text-sm font-bold text-slate-100">${name}</span>
+                <span class="text-[11px] font-semibold bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded-md border border-slate-700">${unit}</span>
               </div>
-              <p class="text-xs text-slate-400 font-medium">${desc}</p>
+              <p class="text-sm text-slate-400 font-medium">${desc}</p>
               <div class="flex items-center gap-2 pt-1.5 flex-wrap">
                 ${votePillHtml}
-                <span class="text-[9px] font-medium border px-2 py-0.5 rounded-full ${badgeColor}">${step}</span>
+                <span class="text-[11px] font-medium border px-2 py-0.5 rounded-full ${badgeColor}">${step}</span>
                 ${votedBadgeHtml}
               </div>
             </div>
@@ -1674,7 +1674,7 @@
       let badgeBg = 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
       if (type === 'Ordinations') badgeBg = 'bg-purple-500/10 text-purple-400 border border-purple-500/20';
       if (type === 'Release Only') badgeBg = 'bg-amber-500/10 text-amber-400 border border-amber-500/20';
-      badge.className = `text-[9px] font-bold uppercase px-2.5 py-0.5 rounded-full ${badgeBg}`;
+      badge.className = `text-[11px] font-bold uppercase px-2.5 py-0.5 rounded-full ${badgeBg}`;
 
       document.getElementById('modal-title').innerText = record["Member Name"];
       
@@ -1734,7 +1734,7 @@
             <i data-lucide="check-circle" class="w-5 h-5 text-emerald-400 shrink-0"></i>
             <div>
               <div class="text-xs font-bold uppercase tracking-wider">&#10004; High Council Approved</div>
-              <div class="text-[10px] opacity-80">This record has received ${yesVotes} approval votes from the High Council.</div>
+              <div class="text-[11px] opacity-80">This record has received ${yesVotes} approval votes from the High Council.</div>
             </div>
           </div>
         ` : '';
@@ -1752,7 +1752,7 @@
             `onclick="toggleApprovalVote('Callings Releasings', '${colHeader}', '${vote === 'Yes' ? 'No' : vote === 'No' ? '' : 'Yes'}')"` : '';
           
           return `
-            <button ${toggleActionHtml} class="px-2.5 py-1.5 rounded-lg border text-xs font-semibold ${voteColor} active:scale-95 transition-all text-center">
+            <button ${toggleActionHtml} class="px-2.5 py-1.5 rounded-lg border text-sm font-semibold ${voteColor} active:scale-95 transition-all text-center">
               ${name}: ${vote || 'Pending'}
             </button>
           `;
@@ -1765,7 +1765,7 @@
           <div class="space-y-2.5">
             <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
               <span>High Council Approvals</span>
-              <span class="text-[10px] text-slate-500">${record["Approvals"] || 0} Yes / ${record["Votes Against"] || 0} No</span>
+              <span class="text-[11px] text-slate-500">${record["Approvals"] || 0} Yes / ${record["Votes Against"] || 0} No</span>
             </h4>
             <div class="grid grid-cols-3 gap-2">
               ${approvalsList}
@@ -1779,12 +1779,12 @@
             <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Workflow & Key Info</h4>
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-[10px] text-slate-400 font-medium mb-1">Calling Name</label>
-                <input type="text" value="${record['Calling'] || ''}" onchange="updateRecordField('Calling', this.value)" ${isHC ? 'readonly disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+                <label class="block text-[11px] text-slate-400 font-medium mb-1">Calling Name</label>
+                <input type="text" value="${record['Calling'] || ''}" onchange="updateRecordField('Calling', this.value)" ${isHC ? 'readonly disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
               <div>
-                <label class="block text-[10px] text-slate-400 font-medium mb-1">Current Step</label>
-                <select onchange="updateRecordField('Current Step', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                <label class="block text-[11px] text-slate-400 font-medium mb-1">Current Step</label>
+                <select onchange="updateRecordField('Current Step', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
                   <option value=""></option>
                   <option value="Approval" ${record['Current Step'] === 'Approval' ? 'selected' : ''}>Approval</option>
                   <option value="Call / Release" ${record['Current Step'] === 'Call / Release' ? 'selected' : ''}>Call / Release</option>
@@ -1803,8 +1803,8 @@
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-[10px] text-slate-400 font-medium mb-1">Current Calling</label>
-                <input type="text" value="${record['Current Calling'] || ''}" onchange="updateRecordField('Current Calling', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+                <label class="block text-[11px] text-slate-400 font-medium mb-1">Current Calling</label>
+                <input type="text" value="${record['Current Calling'] || ''}" onchange="updateRecordField('Current Calling', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
               ${renderSelectField('Calling Accepted?', 'Calling Accepted?', ['Accepted', 'Declined', 'Waiting for Answer'], record)}
             </div>
@@ -1820,8 +1820,8 @@
             <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Member to Release</h4>
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-[10px] text-slate-400 font-medium mb-1">Member to Release</label>
-                <input type="text" value="${record['Member to Release'] || ''}" onchange="updateRecordField('Member to Release', this.value)" placeholder="Name" class="w-full glass rounded-lg px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+                <label class="block text-[11px] text-slate-400 font-medium mb-1">Member to Release</label>
+                <input type="text" value="${record['Member to Release'] || ''}" onchange="updateRecordField('Member to Release', this.value)" placeholder="Name" class="w-full glass rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
               ${renderSelectField('Notified of Release?', 'Notified of Release?', ['Yes', 'No'], record)}
             </div>
@@ -1842,12 +1842,12 @@
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-[10px] text-slate-400 font-medium mb-1">Date Sustained</label>
-                <input type="date" value="${record['Date Sustained'] || ''}" onchange="updateRecordField('Date Sustained', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+                <label class="block text-[11px] text-slate-400 font-medium mb-1">Date Sustained</label>
+                <input type="date" value="${record['Date Sustained'] || ''}" onchange="updateRecordField('Date Sustained', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
               <div>
-                <label class="block text-[10px] text-slate-400 font-medium mb-1">Date Set Apart</label>
-                <input type="date" value="${record['Date Set Apart'] || ''}" onchange="updateRecordField('Date Set Apart', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+                <label class="block text-[11px] text-slate-400 font-medium mb-1">Date Set Apart</label>
+                <input type="date" value="${record['Date Set Apart'] || ''}" onchange="updateRecordField('Date Set Apart', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
             </div>
             <div class="grid grid-cols-2 gap-3">
@@ -1876,8 +1876,8 @@
 
           <!-- Notes -->
           <div>
-            <label class="block text-[10px] text-slate-400 font-medium mb-1">Notes</label>
-            <textarea onchange="updateRecordField('Notes', this.value)" rows="2" class="w-full glass rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Notes'] || ''}</textarea>
+            <label class="block text-[11px] text-slate-400 font-medium mb-1">Notes</label>
+            <textarea onchange="updateRecordField('Notes', this.value)" rows="2" class="w-full glass rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Notes'] || ''}</textarea>
           </div>
         `;
       } 
@@ -1896,7 +1896,7 @@
             <i data-lucide="check-circle" class="w-5 h-5 text-emerald-400 shrink-0"></i>
             <div>
               <div class="text-xs font-bold uppercase tracking-wider">&#10004; High Council Approved</div>
-              <div class="text-[10px] opacity-80">This record has received ${yesVotes} approval votes from the High Council.</div>
+              <div class="text-[11px] opacity-80">This record has received ${yesVotes} approval votes from the High Council.</div>
             </div>
           </div>
         ` : '';
@@ -1914,7 +1914,7 @@
             `onclick="toggleApprovalVote('Ordinations', '${colHeader}', '${vote === 'Yes' ? 'No' : vote === 'No' ? '' : 'Yes'}')"` : '';
           
           return `
-            <button ${toggleActionHtml} class="px-2.5 py-1.5 rounded-lg border text-xs font-semibold ${voteColor} active:scale-95 transition-all text-center">
+            <button ${toggleActionHtml} class="px-2.5 py-1.5 rounded-lg border text-sm font-semibold ${voteColor} active:scale-95 transition-all text-center">
               ${name}: ${vote || 'Pending'}
             </button>
           `;
@@ -1938,8 +1938,8 @@
             <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Workflow & Key Info</h4>
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-[10px] text-slate-400 font-medium mb-1">Current Step</label>
-                <select onchange="updateRecordField('Current Step', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                <label class="block text-[11px] text-slate-400 font-medium mb-1">Current Step</label>
+                <select onchange="updateRecordField('Current Step', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
                   <option value=""></option>
                   <option value="Stake Interview" ${record['Current Step'] === 'Stake Interview' ? 'selected' : ''}>Stake Interview</option>
                   <option value="HC Approval" ${record['Current Step'] === 'HC Approval' ? 'selected' : ''}>HC Approval</option>
@@ -1951,8 +1951,8 @@
                 </select>
               </div>
               <div>
-                <label class="block text-[10px] text-slate-400 font-medium mb-1">Interview Status</label>
-                <select onchange="updateRecordField('Interview Status', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                <label class="block text-[11px] text-slate-400 font-medium mb-1">Interview Status</label>
+                <select onchange="updateRecordField('Interview Status', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
                   <option value="Pending" ${(record['Interview Status'] || 'Pending') === 'Pending' ? 'selected' : ''}>Pending</option>
                   <option value="Scheduled" ${record['Interview Status'] === 'Scheduled' ? 'selected' : ''}>Scheduled</option>
                   <option value="Complete" ${record['Interview Status'] === 'Complete' || record['Interview Status'] === 'Completed' ? 'selected' : ''}>Complete</option>
@@ -1969,12 +1969,12 @@
             <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Sustain & Ordain</h4>
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-[10px] text-slate-400 font-medium mb-1">Date Sustained</label>
-                <input type="date" value="${record['Date Sustained'] || ''}" onchange="updateRecordField('Date Sustained', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+                <label class="block text-[11px] text-slate-400 font-medium mb-1">Date Sustained</label>
+                <input type="date" value="${record['Date Sustained'] || ''}" onchange="updateRecordField('Date Sustained', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
               <div>
-                <label class="block text-[10px] text-slate-400 font-medium mb-1">Ordained Date</label>
-                <input type="date" value="${record['Ordained Date'] || ''}" onchange="updateRecordField('Ordained Date', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+                <label class="block text-[11px] text-slate-400 font-medium mb-1">Ordained Date</label>
+                <input type="date" value="${record['Ordained Date'] || ''}" onchange="updateRecordField('Ordained Date', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
             </div>
             ${renderNameInputField('Ordained By', 'Ordained By', record)}
@@ -1996,12 +1996,12 @@
             <div class="grid grid-cols-3 gap-2">
               ${renderSelectField('LCR Updated?', 'LCR Updated?', ['Yes', 'Pending'], record)}
               <div>
-                <label class="block text-[10px] text-slate-400 font-medium mb-1">Entered By</label>
-                <input type="text" value="${record['Entered By'] || ''}" onchange="updateRecordField('Entered By', this.value)" placeholder="Type name" class="w-full glass rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                <label class="block text-[11px] text-slate-400 font-medium mb-1">Entered By</label>
+                <input type="text" value="${record['Entered By'] || ''}" onchange="updateRecordField('Entered By', this.value)" placeholder="Type name" class="w-full glass rounded-lg px-2.5 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
               </div>
               <div>
-                <label class="block text-[10px] text-slate-400 font-medium mb-1">Date Entered</label>
-                <input type="date" value="${record['Date Entered'] || ''}" onchange="updateRecordField('Date Entered', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+                <label class="block text-[11px] text-slate-400 font-medium mb-1">Date Entered</label>
+                <input type="date" value="${record['Date Entered'] || ''}" onchange="updateRecordField('Date Entered', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
             </div>
           </div>
@@ -2010,8 +2010,8 @@
 
           <!-- Notes -->
           <div>
-            <label class="block text-[10px] text-slate-400 font-medium mb-1">Notes</label>
-            <textarea onchange="updateRecordField('Notes', this.value)" rows="2" class="w-full glass rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Notes'] || ''}</textarea>
+            <label class="block text-[11px] text-slate-400 font-medium mb-1">Notes</label>
+            <textarea onchange="updateRecordField('Notes', this.value)" rows="2" class="w-full glass rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Notes'] || ''}</textarea>
           </div>
         `;
       }
@@ -2023,12 +2023,12 @@
             <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Workflow & Key Info</h4>
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-[10px] text-slate-400 font-medium mb-1">Calling to be Released From</label>
-                <input type="text" value="${record['Calling to be Released From'] || ''}" onchange="updateRecordField('Calling to be Released From', this.value)" ${isHC ? 'readonly disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+                <label class="block text-[11px] text-slate-400 font-medium mb-1">Calling to be Released From</label>
+                <input type="text" value="${record['Calling to be Released From'] || ''}" onchange="updateRecordField('Calling to be Released From', this.value)" ${isHC ? 'readonly disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
               <div>
-                <label class="block text-[10px] text-slate-400 font-medium mb-1">Current Step</label>
-                <select onchange="updateRecordField('Current Step', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                <label class="block text-[11px] text-slate-400 font-medium mb-1">Current Step</label>
+                <select onchange="updateRecordField('Current Step', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
                   <option value=""></option>
                   <option value="Pending Approval" ${record['Current Step'] === 'Pending Approval' ? 'selected' : ''}>Pending Approval</option>
                   <option value="Assigned" ${record['Current Step'] === 'Assigned' ? 'selected' : ''}>Assigned</option>
@@ -2040,8 +2040,8 @@
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-[10px] text-slate-400 font-medium mb-1">Reason for Release</label>
-                <input type="text" value="${record['Reason for Release'] || ''}" onchange="updateRecordField('Reason for Release', this.value)" placeholder="Reason" class="w-full glass rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                <label class="block text-[11px] text-slate-400 font-medium mb-1">Reason for Release</label>
+                <input type="text" value="${record['Reason for Release'] || ''}" onchange="updateRecordField('Reason for Release', this.value)" placeholder="Reason" class="w-full glass rounded-lg px-2.5 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
               </div>
               ${renderNameInputField('Assigned to Extend Release', 'Assigned to Extend Release', record)}
             </div>
@@ -2054,8 +2054,8 @@
             <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Release Status & Updates</h4>
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-[10px] text-slate-400 font-medium mb-1">Date Released</label>
-                <input type="date" value="${record['Date Released'] || ''}" onchange="updateRecordField('Date Released', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+                <label class="block text-[11px] text-slate-400 font-medium mb-1">Date Released</label>
+                <input type="date" value="${record['Date Released'] || ''}" onchange="updateRecordField('Date Released', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
               ${renderSelectField('Release Complete?', 'Release Complete?', ['Yes', 'No'], record)}
             </div>
@@ -2073,8 +2073,8 @@
 
           <!-- Notes -->
           <div>
-            <label class="block text-[10px] text-slate-400 font-medium mb-1">Notes</label>
-            <textarea onchange="updateRecordField('Notes', this.value)" rows="2" class="w-full glass rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Notes'] || ''}</textarea>
+            <label class="block text-[11px] text-slate-400 font-medium mb-1">Notes</label>
+            <textarea onchange="updateRecordField('Notes', this.value)" rows="2" class="w-full glass rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Notes'] || ''}</textarea>
           </div>
         `;
       }
@@ -2118,7 +2118,7 @@
         const hcOnchangeHtml = canEdit ? 
           `onchange="updateRecordField('${fieldKey}', this.checked ? 'Accepted' : 'Declined')"` : 'disabled';
         return `
-          <label class="flex items-center gap-3 cursor-pointer text-xs select-none">
+          <label class="flex items-center gap-3 cursor-pointer text-sm select-none">
             <input type="checkbox" ${checkedValue ? 'checked' : ''} ${hcOnchangeHtml} class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 bg-slate-800 border-slate-700">
             <span class="${checkedValue ? 'text-slate-200 font-semibold' : 'text-slate-400'}">${labelText}</span>
           </label>
@@ -2126,7 +2126,7 @@
       }
       
       return `
-        <label class="flex items-center gap-3 cursor-pointer text-xs select-none">
+        <label class="flex items-center gap-3 cursor-pointer text-sm select-none">
           <input type="checkbox" ${checkedValue ? 'checked' : ''} ${onchangeHtml} class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 bg-slate-800 border-slate-700">
           <span class="${checkedValue ? 'text-slate-200 font-semibold' : 'text-slate-400'}">${labelText}</span>
         </label>
@@ -2184,8 +2184,8 @@
       
       return `
         <div>
-          <label class="block text-[10px] text-slate-400 font-medium mb-1">${labelText}</label>
-          <select onchange="updateRecordField('${fieldKey}', this.value)" ${disabledHtml} class="w-full glass rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+          <label class="block text-[11px] text-slate-400 font-medium mb-1">${labelText}</label>
+          <select onchange="updateRecordField('${fieldKey}', this.value)" ${disabledHtml} class="w-full glass rounded-lg px-2.5 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
             <option value=""></option>
             ${optionsHtml}
           </select>
@@ -2214,8 +2214,8 @@
       
       return `
         <div>
-          <label class="block text-[10px] text-slate-400 font-medium mb-1">${labelText}</label>
-          <input type="text" list="stake-presidency-hc-list" value="${currentValue}" onchange="updateRecordField('${fieldKey}', this.value)" ${disabledHtml} placeholder="Select or type name" class="w-full glass rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+          <label class="block text-[11px] text-slate-400 font-medium mb-1">${labelText}</label>
+          <input type="text" list="stake-presidency-hc-list" value="${currentValue}" onchange="updateRecordField('${fieldKey}', this.value)" ${disabledHtml} placeholder="Select or type name" class="w-full glass rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
         </div>
       `;
     }
@@ -2430,7 +2430,7 @@
         if (hasSustainingData) {
           // If already checked off, only show if it's a session check-off (just done now)
           if (isAlreadyCheckedOff && !sessionKeys.has(key)) {
-            // Already completed before this session — hide it
+            // Already completed before this session â€” hide it
             keysSeen.add(key);
             return;
           }
@@ -2516,7 +2516,7 @@
       const ordScriptBox = document.getElementById('sunday-ordination-script-text');
       
       if (ordinations.length === 0) {
-        ordContainer.innerHTML = `<p class="text-xs text-slate-500 italic text-center py-4">No active ordinations</p>`;
+        ordContainer.innerHTML = `<p class="text-sm text-slate-500 italic text-center py-4">No active ordinations</p>`;
         if (!isAdmin) ordScriptBox.innerHTML = `No ordinations scheduled for this unit.`;
       } else {
         if (!isAdmin) {
@@ -2541,7 +2541,7 @@
       const relScriptBox = document.getElementById('sunday-release-script-text');
       
       if (releases.length === 0) {
-        relContainer.innerHTML = `<p class="text-xs text-slate-500 italic text-center py-4">No active releases</p>`;
+        relContainer.innerHTML = `<p class="text-sm text-slate-500 italic text-center py-4">No active releases</p>`;
         if (!isAdmin) relScriptBox.innerHTML = `No releases scheduled for this unit.`;
       } else {
         if (!isAdmin) {
@@ -2560,7 +2560,7 @@
       const susScriptBox = document.getElementById('sunday-sustain-script-text');
       
       if (sustains.length === 0) {
-        susContainer.innerHTML = `<p class="text-xs text-slate-500 italic text-center py-4">No active sustainings</p>`;
+        susContainer.innerHTML = `<p class="text-sm text-slate-500 italic text-center py-4">No active sustainings</p>`;
         if (!isAdmin) susScriptBox.innerHTML = `No sustainings scheduled for this unit.`;
       } else {
         if (!isAdmin) {
@@ -2604,12 +2604,12 @@
           return val === 'False' || val === false || val === '' || val === undefined || val === null;
         });
         const incompleteHtml = incompleteUnits.length > 0
-          ? `<p class="text-[10px] text-amber-400 font-medium mt-0.5">Remaining: ${incompleteUnits.join(', ')}</p>`
-          : `<p class="text-[10px] text-emerald-400 font-medium mt-0.5">All units complete</p>`;
+          ? `<p class="text-[11px] text-amber-400 font-medium mt-0.5">Remaining: ${incompleteUnits.join(', ')}</p>`
+          : `<p class="text-[11px] text-emerald-400 font-medium mt-0.5">All units complete</p>`;
         
         const adminActionHtml = status === 'Complete'
-          ? `<span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold flex items-center gap-1"><i data-lucide="check-circle" class="w-3 h-3 text-emerald-400"></i> Complete</span>`
-          : `<button onclick="markSustainingComplete('${individualVal.replace(/'/g, "\\'")}', '${cand["Action"]}', '${callingVal.replace(/'/g, "\\'")}')" class="px-2.5 py-1 text-[10px] font-bold bg-emerald-600 hover:bg-emerald-500 active:scale-95 transition-all text-white rounded flex items-center gap-1 whitespace-nowrap">
+          ? `<span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-bold flex items-center gap-1"><i data-lucide="check-circle" class="w-3 h-3 text-emerald-400"></i> Complete</span>`
+          : `<button onclick="markSustainingComplete('${individualVal.replace(/'/g, "\\'")}', '${cand["Action"]}', '${callingVal.replace(/'/g, "\\'")}')" class="px-2.5 py-1 text-[11px] font-bold bg-emerald-600 hover:bg-emerald-500 active:scale-95 transition-all text-white rounded flex items-center gap-1 whitespace-nowrap">
               <i data-lucide="check" class="w-3 h-3"></i> Mark Complete
             </button>`;
         
@@ -2618,8 +2618,8 @@
             <div class="flex items-center gap-3 min-w-0 flex-1">
               <input type="checkbox" ${status === 'Complete' ? 'checked' : ''} onchange="markSustainingComplete('${individualVal.replace(/'/g, "\\'")}', '${cand["Action"]}', '${callingVal.replace(/'/g, "\\'")}')" class="w-4.5 h-4.5 rounded text-indigo-600 bg-slate-800 border-slate-700 flex-shrink-0">
               <div class="min-w-0">
-                <p class="text-xs font-bold text-slate-100 truncate">${individualVal} (${cand["Unit"] || ''})</p>
-                <p class="text-[10px] text-slate-400 font-medium break-words">${callingVal}</p>
+                <p class="text-sm font-bold text-slate-100 truncate">${individualVal} (${cand["Unit"] || ''})</p>
+                <p class="text-[11px] text-slate-400 font-medium break-words">${callingVal}</p>
                 ${incompleteHtml}
               </div>
             </div>
@@ -2633,8 +2633,8 @@
       
       // HC / Presidency view (existing behavior)
       const actionButtonHtml = isChecked 
-        ? `<span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold flex items-center gap-1"><i data-lucide="check-circle" class="w-3 h-3 text-emerald-400"></i> Done</span>`
-        : `<button onclick="toggleSustaining('${individualVal.replace(/'/g, "\\'")}', '${cand["Action"]}', '${callingVal.replace(/'/g, "\\'")}', true)" class="px-2.5 py-1 text-[10px] font-bold bg-emerald-600 hover:bg-emerald-500 active:scale-95 transition-all text-white rounded flex items-center gap-1">
+        ? `<span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-bold flex items-center gap-1"><i data-lucide="check-circle" class="w-3 h-3 text-emerald-400"></i> Done</span>`
+        : `<button onclick="toggleSustaining('${individualVal.replace(/'/g, "\\'")}', '${cand["Action"]}', '${callingVal.replace(/'/g, "\\'")}', true)" class="px-2.5 py-1 text-[11px] font-bold bg-emerald-600 hover:bg-emerald-500 active:scale-95 transition-all text-white rounded flex items-center gap-1">
             <i data-lucide="check" class="w-3 h-3"></i> Check Off
            </button>`;
       
@@ -2643,8 +2643,8 @@
           <div class="flex items-center gap-3 min-w-0 flex-1">
             <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleSustaining('${individualVal.replace(/'/g, "\\'")}', '${cand["Action"]}', '${callingVal.replace(/'/g, "\\'")}', this.checked)" class="w-4.5 h-4.5 rounded text-indigo-600 bg-slate-800 border-slate-700 flex-shrink-0">
             <div class="min-w-0">
-              <p class="text-xs font-bold text-slate-100 truncate">${individualVal} (${cand["Unit"] || ''})</p>
-              <p class="text-[10px] text-slate-400 font-medium break-words">${callingVal}</p>
+              <p class="text-sm font-bold text-slate-100 truncate">${individualVal} (${cand["Unit"] || ''})</p>
+              <p class="text-[11px] text-slate-400 font-medium break-words">${callingVal}</p>
             </div>
           </div>
           
@@ -2834,7 +2834,7 @@
         });
     }
 
-    // Admin: Mark a sustaining as Complete — removes from all Over the Pulpit screens
+    // Admin: Mark a sustaining as Complete â€” removes from all Over the Pulpit screens
     function markSustainingComplete(individual, action, calling) {
       const load = showToast('Marking as Complete...', 'info', 0);
       apiCall('updateRecord', {
@@ -2848,7 +2848,7 @@
       }).then(res => {
         dismissToast(load);
         if (res.success) {
-          showToast('Marked Complete — removed from all pulpit views', 'success');
+          showToast('Marked Complete â€” removed from all pulpit views', 'success');
           // Update local cache
           const item = (state.records.sustainings || []).find(s =>
             s["Individual"] === individual && s["Action"] === action && (s["Calling"] === calling || s["Calling / Office"] === calling)
@@ -2959,22 +2959,22 @@
       let actionBtnHtml = '';
       
       if (t.task === "Set Apart") {
-        actionBtnHtml = `<button onclick="triggerCompleteSetApart('${t.record["Timestamp"]}', '${t.name.replace(/'/g, "\\'")}')" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] rounded active:scale-95 transition-all">Mark Set Apart</button>`;
+        actionBtnHtml = `<button onclick="triggerCompleteSetApart('${t.record["Timestamp"]}', '${t.name.replace(/'/g, "\\'")}')" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] rounded active:scale-95 transition-all">Mark Set Apart</button>`;
       } else if (t.task === "Ordain") {
-        actionBtnHtml = `<button onclick="triggerCompleteOrdination('${t.record["Timestamp"]}', '${t.name.replace(/'/g, "\\'")}')" class="px-3 py-1 bg-purple-600 hover:bg-purple-500 text-white font-bold text-[10px] rounded active:scale-95 transition-all">Mark Ordained</button>`;
+        actionBtnHtml = `<button onclick="triggerCompleteOrdination('${t.record["Timestamp"]}', '${t.name.replace(/'/g, "\\'")}')" class="px-3 py-1 bg-purple-600 hover:bg-purple-500 text-white font-bold text-[11px] rounded active:scale-95 transition-all">Mark Ordained</button>`;
       } else if (t.task === "Train") {
-        actionBtnHtml = `<button onclick="triggerCompleteTraining('${t.record["Timestamp"]}', '${t.name.replace(/'/g, "\\'")}')" class="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[10px] rounded active:scale-95 transition-all">Training Complete</button>`;
+        actionBtnHtml = `<button onclick="triggerCompleteTraining('${t.record["Timestamp"]}', '${t.name.replace(/'/g, "\\'")}')" class="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[11px] rounded active:scale-95 transition-all">Training Complete</button>`;
       } else {
-        actionBtnHtml = `<button onclick="openRecordDetails('Callings Releasings', '${t.record["Timestamp"]}', '${t.name.replace(/'/g, "\\'")}')" class="px-3 py-1 bg-slate-800 border border-slate-700 text-slate-300 font-bold text-[10px] rounded active:scale-95 transition-all">View Details</button>`;
+        actionBtnHtml = `<button onclick="openRecordDetails('Callings Releasings', '${t.record["Timestamp"]}', '${t.name.replace(/'/g, "\\'")}')" class="px-3 py-1 bg-slate-800 border border-slate-700 text-slate-300 font-bold text-[11px] rounded active:scale-95 transition-all">View Details</button>`;
       }
 
       return `
         <div class="glass p-3.5 rounded-xl flex items-center justify-between gap-3 border border-slate-800 shadow-md">
           <div class="space-y-0.5">
-            <span class="text-[9px] uppercase tracking-wider bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded-md border border-slate-700 font-bold">${t.task}</span>
-            <p class="text-xs font-bold text-slate-100 pt-1">${t.name}</p>
-            <p class="text-[10px] text-slate-400 font-medium">${t.details}</p>
-            <p class="text-[9px] text-slate-500 italic">Assigned: ${t.performer || 'Not assigned'}</p>
+            <span class="text-[11px] uppercase tracking-wider bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded-md border border-slate-700 font-bold">${t.task}</span>
+            <p class="text-sm font-bold text-slate-100 pt-1">${t.name}</p>
+            <p class="text-[11px] text-slate-400 font-medium">${t.details}</p>
+            <p class="text-[11px] text-slate-500 italic">Assigned: ${t.performer || 'Not assigned'}</p>
           </div>
           ${actionBtnHtml}
         </div>
@@ -3106,22 +3106,22 @@
         lblName.innerText = "Member Name (Person being called)";
         container.innerHTML = `
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">New Calling</label>
+            <label class="block text-sm font-medium text-slate-400 mb-1">New Calling</label>
             <input type="text" id="form-calling" required placeholder="e.g. Elders Quorum President" class="w-full glass rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200">
           </div>
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Unit</label>
+            <label class="block text-sm font-medium text-slate-400 mb-1">Unit</label>
             <select id="form-unit" required class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200 font-semibold">
               ${unitOptions}
             </select>
           </div>
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Member to Release (If replacing someone)</label>
+            <label class="block text-sm font-medium text-slate-400 mb-1">Member to Release (If replacing someone)</label>
             <input type="text" id="form-release-member" placeholder="Name of person to be released" class="w-full glass rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200">
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-xs font-medium text-slate-400 mb-1">Current Step</label>
+              <label class="block text-sm font-medium text-slate-400 mb-1">Current Step</label>
               <select id="form-current-step" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
                 <option value="Approval" selected>Approval</option>
                 <option value="HC Approval">HC Approval</option>
@@ -3131,25 +3131,25 @@
               </select>
             </div>
             <div>
-              <label class="block text-xs font-medium text-slate-400 mb-1">Recommended By</label>
+              <label class="block text-sm font-medium text-slate-400 mb-1">Recommended By</label>
               <input type="text" id="form-recommended-by" placeholder="e.g. Bishop Smith" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
             </div>
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-xs font-medium text-slate-400 mb-1">Pulpit Sustaining</label>
+              <label class="block text-sm font-medium text-slate-400 mb-1">Pulpit Sustaining</label>
               <select id="form-pulpit-sustaining" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
                 <option value="All Units" selected>All Units</option>
                 <option value="Home Unit Only">Home Unit Only</option>
               </select>
             </div>
             <div>
-              <label class="block text-xs font-medium text-slate-400 mb-1">Assigned to Extend</label>
+              <label class="block text-sm font-medium text-slate-400 mb-1">Assigned to Extend</label>
               <input type="text" list="stake-presidency-hc-list" id="form-extend-assigned" placeholder="Select or type name" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
             </div>
           </div>
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Notes / Instructions</label>
+            <label class="block text-sm font-medium text-slate-400 mb-1">Notes / Instructions</label>
             <textarea id="form-notes" rows="3" placeholder="Additional context..." class="w-full glass rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200"></textarea>
           </div>
         `;
@@ -3157,7 +3157,7 @@
         lblName.innerText = "Member Name (Priesthood candidate)";
         container.innerHTML = `
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Priesthood Office</label>
+            <label class="block text-sm font-medium text-slate-400 mb-1">Priesthood Office</label>
             <select id="form-priesthood" required class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200">
               <option value=""></option>
               <option value="Elder">Elder</option>
@@ -3165,13 +3165,13 @@
             </select>
           </div>
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Unit</label>
+            <label class="block text-sm font-medium text-slate-400 mb-1">Unit</label>
             <select id="form-unit" required class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200 font-semibold">
               ${unitOptions}
             </select>
           </div>
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Current Step</label>
+            <label class="block text-sm font-medium text-slate-400 mb-1">Current Step</label>
             <select id="form-current-step" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
               <option value="Stake Interview" selected>Stake Interview</option>
               <option value="HC Approval">HC Approval</option>
@@ -3181,11 +3181,11 @@
             </select>
           </div>
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Assigned to Oversee</label>
+            <label class="block text-sm font-medium text-slate-400 mb-1">Assigned to Oversee</label>
             <input type="text" list="stake-presidency-hc-list" id="form-oversee-assigned" placeholder="Select or type name" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
           </div>
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Notes</label>
+            <label class="block text-sm font-medium text-slate-400 mb-1">Notes</label>
             <textarea id="form-notes" rows="3" placeholder="Details..." class="w-full glass rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200"></textarea>
           </div>
         `;
@@ -3193,17 +3193,17 @@
         lblName.innerText = "Member Name (Person being released)";
         container.innerHTML = `
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Calling to be Released From</label>
+            <label class="block text-sm font-medium text-slate-400 mb-1">Calling to be Released From</label>
             <input type="text" id="form-release-calling" required placeholder="e.g. Ward Clerk" class="w-full glass rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200">
           </div>
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Unit</label>
+            <label class="block text-sm font-medium text-slate-400 mb-1">Unit</label>
             <select id="form-unit" required class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200 font-semibold">
               ${unitOptions}
             </select>
           </div>
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Current Step</label>
+            <label class="block text-sm font-medium text-slate-400 mb-1">Current Step</label>
             <select id="form-current-step" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
               <option value="Pending Approval" selected>Pending Approval</option>
               <option value="Assigned">Assigned</option>
@@ -3212,11 +3212,11 @@
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-xs font-medium text-slate-400 mb-1">Reason for Release</label>
+              <label class="block text-sm font-medium text-slate-400 mb-1">Reason for Release</label>
               <input type="text" id="form-release-reason" placeholder="e.g. Relocating, Health" class="w-full glass rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200">
             </div>
             <div>
-              <label class="block text-xs font-medium text-slate-400 mb-1">Assigned to Release</label>
+              <label class="block text-sm font-medium text-slate-400 mb-1">Assigned to Release</label>
               <input type="text" list="stake-presidency-hc-list" id="form-release-assigned" placeholder="Select or type name" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
             </div>
           </div>
@@ -3299,7 +3299,7 @@
       container.innerHTML = `
         <div class="flex flex-col items-center py-8">
           <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-2"></div>
-          <span class="text-xs text-slate-400">Searching archive...</span>
+          <span class="text-sm text-slate-400">Searching archive...</span>
         </div>
       `;
 
@@ -3309,11 +3309,11 @@
             state.historyResults = res.results || [];
             renderHistoryResults();
           } else {
-            container.innerHTML = `<p class="text-xs text-red-500 text-center py-6">Error loading history: ${res.error}</p>`;
+            container.innerHTML = `<p class="text-sm text-red-500 text-center py-6">Error loading history: ${res.error}</p>`;
           }
         })
         .catch(err => {
-          container.innerHTML = `<p class="text-xs text-red-500 text-center py-6">Connection error searching history.</p>`;
+          container.innerHTML = `<p class="text-sm text-red-500 text-center py-6">Connection error searching history.</p>`;
         });
     }
 
@@ -3362,7 +3362,7 @@
       }
       
       if (filtered.length === 0) {
-        container.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">No matching records found.</p>`;
+        container.innerHTML = `<p class="text-sm text-slate-500 text-center py-6">No matching records found.</p>`;
         return;
       }
       
@@ -3386,14 +3386,14 @@
                 <div class="w-3.5 h-3.5 rounded-full bg-slate-900 border-2 border-indigo-500 absolute -left-[31px] top-3.5"></div>
                 
                 <div class="flex items-center justify-between">
-                  <span class="text-xs font-semibold text-slate-200">${r.name}</span>
-                  <span class="text-[9px] text-slate-500">${r.date.split(' ')[0]}</span>
+                  <span class="text-sm font-semibold text-slate-200">${r.name}</span>
+                  <span class="text-[11px] text-slate-500">${r.date.split(' ')[0]}</span>
                 </div>
-                <div class="text-xs text-slate-300">${r.details}</div>
-                ${r.releasing ? `<div class="text-[10px] text-slate-400 italic">${r.releasing}</div>` : ''}
+                <div class="text-sm text-slate-300">${r.details}</div>
+                ${r.releasing ? `<div class="text-[11px] text-slate-400 italic">${r.releasing}</div>` : ''}
                 <div class="pt-1.5 flex gap-1.5">
-                  <span class="text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${badgeBg}">${r.type}</span>
-                  <span class="text-[9px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700 font-semibold">${r.step}</span>
+                  <span class="text-[11px] px-2 py-0.5 rounded-full font-bold uppercase ${badgeBg}">${r.type}</span>
+                  <span class="text-[11px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700 font-semibold">${r.step}</span>
                 </div>
               </div>
             `;
@@ -3438,12 +3438,12 @@
           return `
             <div class="flex items-center gap-2 p-2 bg-slate-900/40 rounded-xl border border-slate-800/60">
               <div class="flex-1 min-w-0">
-                <label class="block text-[9px] text-slate-500 font-bold mb-0.5">High Councilor ${i+1}</label>
-                <input type="text" id="hc-input-${i}" value="${name}" class="w-full glass rounded-lg px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-indigo-500 text-slate-300">
+                <label class="block text-[11px] text-slate-500 font-bold mb-0.5">High Councilor ${i+1}</label>
+                <input type="text" id="hc-input-${i}" value="${name}" class="w-full glass rounded-lg px-2.5 py-1.5 text-sm focus:ring-1 focus:ring-indigo-500 text-slate-300">
               </div>
               <div class="w-36">
-                <label class="block text-[9px] text-slate-500 font-bold mb-0.5">Unit Assigned</label>
-                <select id="hc-unit-${i}" class="w-full glass rounded-lg px-2 py-1.5 text-xs focus:ring-1 focus:ring-indigo-500 text-slate-300">
+                <label class="block text-[11px] text-slate-500 font-bold mb-0.5">Unit Assigned</label>
+                <select id="hc-unit-${i}" class="w-full glass rounded-lg px-2 py-1.5 text-sm focus:ring-1 focus:ring-indigo-500 text-slate-300">
                   ${optionsHtml}
                 </select>
               </div>
@@ -3456,8 +3456,8 @@
         const spLabels = ["Stake President", "1st Counselor", "2nd Counselor"];
         spContainer.innerHTML = spRoster.map((name, i) => `
           <div>
-            <label class="block text-[9px] text-slate-500 font-bold mb-0.5">${spLabels[i] || `Presidency Member ${i+1}`}</label>
-            <input type="text" id="sp-input-${i}" value="${name}" class="w-full glass rounded-lg px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-indigo-500 text-slate-300">
+            <label class="block text-[11px] text-slate-500 font-bold mb-0.5">${spLabels[i] || `Presidency Member ${i+1}`}</label>
+            <input type="text" id="sp-input-${i}" value="${name}" class="w-full glass rounded-lg px-2.5 py-1.5 text-sm focus:ring-1 focus:ring-indigo-500 text-slate-300">
           </div>
         `).join('');
       }
@@ -3621,7 +3621,7 @@
 
       const toast = document.createElement('div');
       toast.id = `toast-${id}`;
-      toast.className = `glass pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border shadow-2xl transition-all duration-300 transform translate-y-2 opacity-0 text-xs font-semibold ${colors}`;
+      toast.className = `glass pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border shadow-2xl transition-all duration-300 transform translate-y-2 opacity-0 text-sm font-semibold ${colors}`;
       toast.innerHTML = `
         <i data-lucide="${icon}" class="w-4 h-4 flex-shrink-0"></i>
         <span>${message}</span>
