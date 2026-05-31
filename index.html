@@ -2352,7 +2352,7 @@
           state.activeRecord.record["Votes Against"] = String(noCount);
           
           renderModalContent(type, state.activeRecord.record);
-          renderDashboard();
+          lucide.createIcons();
         } else {
           showToast(res.error || 'Failed to register vote', 'error');
         }
@@ -2400,6 +2400,7 @@
           document.getElementById('modal-subtitle').innerText = subtitle;
 
           renderModalContent(state.activeRecord.type, state.activeRecord.record);
+          lucide.createIcons();
           renderDashboard();
           
           if (state.activeTab === 'history') {
