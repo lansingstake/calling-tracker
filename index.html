@@ -373,7 +373,7 @@
 
         <!-- Unit Filter Dropdown -->
         <div>
-          <select id="history-unit-filter" onchange="renderHistoryResults()" class="w-full glass rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200 font-semibold">
+          <select id="history-unit-filter" onchange="state.historyPage = 0; renderHistoryResults()" class="w-full glass rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200 font-semibold">
             <option value="all">All Units</option>
             <option value="Charlotte">Charlotte</option>
             <option value="Holt">Holt</option>
@@ -1815,17 +1815,17 @@
             </div>
             <div class="grid grid-cols-2 gap-3">
               ${renderNameInputField('Recommended By', 'Recommended By', record)}
-              ${renderNameInputField('Assigned to Extend Calling / Release', 'Assigned to Extend Calling / Release', record)}
+              ${renderSelectField('Calling Accepted?', 'Calling Accepted?', ['Accepted', 'Declined', 'Waiting for Answer'], record)}
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div>
                 <label class="block text-xs text-slate-400 font-medium mb-1">Current Calling</label>
                 <input type="text" value="${record['Current Calling'] || ''}" onchange="updateRecordField('Current Calling', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
-              ${renderSelectField('Calling Accepted?', 'Calling Accepted?', ['Accepted', 'Declined', 'Waiting for Answer'], record)}
+              ${renderSelectField('Need to be Released?', 'Need to be Released?', ['Yes', 'No'], record)}
             </div>
             <div class="grid grid-cols-2 gap-3">
-              ${renderSelectField('Need to be Released?', 'Need to be Released?', ['Yes', 'No'], record)}
+              ${renderNameInputField('Assigned to Extend Calling / Release', 'Assigned to Call / Release', record)}
             </div>
           </div>
 
@@ -1898,11 +1898,14 @@
               ${renderSelectField('Ready for Training?', 'Ready for Training?', ['Yes', 'No'], record)}
               ${renderNameInputField('Assigned Trainer', 'Assigned Trainer', record)}
             </div>
-            <div class="grid grid-cols-3 gap-2">
+            <div class="grid grid-cols-2 gap-3">
               ${renderSelectField('Key Provided?', 'Key Provided?', ['Yes', 'No', 'N/A'], record)}
-              ${renderSelectField('Added to Google Drive and Calendar Invites?', 'Added to Drive/Calendar?', ['Yes', 'No', 'N/A'], record)}
               ${renderSelectField('Training Provided?', 'Training Provided?', ['Yes', 'No'], record)}
             </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            ${renderSelectField('Added to Google Drive and Calendar Invites?', 'Added to Drive/Calendar?', ['Yes', 'No', 'N/A'], record)}
           </div>
 
           <hr class="border-slate-800">
@@ -2021,13 +2024,15 @@
           <!-- Section 3: Certificate & Office Admin -->
           <div class="space-y-4">
             <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Certificate & LCR</h4>
-            <div class="grid grid-cols-3 gap-2">
+            <div class="grid grid-cols-2 gap-3">
               ${renderSelectField('Certificate Printed?', 'Cert Printed?', ['Yes', 'No'], record)}
               ${renderSelectField('Certificate Signed?', 'Cert Signed?', ['Yes', 'No'], record)}
-              ${renderSelectField('Certificate Delivered?', 'Cert Delivered?', ['Yes', 'No'], record)}
             </div>
-            <div class="grid grid-cols-3 gap-2">
+            <div class="grid grid-cols-2 gap-3">
+              ${renderSelectField('Certificate Delivered?', 'Cert Delivered?', ['Yes', 'No'], record)}
               ${renderSelectField('LCR Updated?', 'LCR Updated?', ['Yes', 'Pending'], record)}
+            </div>
+            <div class="grid grid-cols-2 gap-3">
               <div>
                 <label class="block text-xs text-slate-400 font-medium mb-1">Entered By</label>
                 <input type="text" value="${record['Entered By'] || ''}" onchange="updateRecordField('Entered By', this.value)" placeholder="Type name" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
@@ -3340,6 +3345,7 @@
         .then(res => {
           if (res.success) {
             state.historyResults = res.results || [];
+            state.historyPage = 0;
             renderHistoryResults();
           } else {
             container.innerHTML = `<p class="text-sm text-red-500 text-center py-6">Error loading history: ${res.error}</p>`;
@@ -3352,6 +3358,7 @@
 
     function setHistoryStatusFilter(filter) {
       state.historyStatusFilter = filter;
+      state.historyPage = 0;
       
       // Update buttons
       const btns = ['all', 'Active', 'Complete', 'Cancelled', 'Declined'];
@@ -3376,6 +3383,8 @@
       const container = document.getElementById('history-results');
       const filter = state.historyStatusFilter;
       const isAdmin = state.role === 'admin';
+      state.historyPage = state.historyPage || 0;
+      const pageSize = 20;
       
       // Filter list
       let filtered = state.historyResults;
@@ -3399,9 +3408,29 @@
         return;
       }
       
+      // Pagination
+      const totalPages = Math.ceil(filtered.length / pageSize);
+      if (state.historyPage >= totalPages) state.historyPage = totalPages - 1;
+      if (state.historyPage < 0) state.historyPage = 0;
+      const pageStart = state.historyPage * pageSize;
+      const pageEnd = Math.min(pageStart + pageSize, filtered.length);
+      const paged = filtered.slice(pageStart, pageEnd);
+      
+      const paginationHtml = totalPages > 1 ? `
+        <div class="flex items-center justify-center gap-3 pt-4">
+          <button onclick="state.historyPage = Math.max(0, state.historyPage - 1); renderHistoryResults();" ${state.historyPage === 0 ? 'disabled' : ''} class="px-3 py-1.5 text-xs font-bold rounded-lg glass border border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/10 transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed">
+            &larr; Prev
+          </button>
+          <span class="text-xs text-slate-400 font-semibold">Page ${state.historyPage + 1} of ${totalPages}</span>
+          <button onclick="state.historyPage = Math.min(${totalPages - 1}, state.historyPage + 1); renderHistoryResults();" ${state.historyPage >= totalPages - 1 ? 'disabled' : ''} class="px-3 py-1.5 text-xs font-bold rounded-lg glass border border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/10 transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed">
+            Next &rarr;
+          </button>
+        </div>
+      ` : '';
+      
       container.innerHTML = `
         <div class="border-l-2 border-slate-800 ml-4 pl-6 space-y-6 relative">
-          ${filtered.map(r => {
+          ${paged.map(r => {
             let badgeBg = 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
             if (r.type === 'Ordination') badgeBg = 'bg-purple-500/10 text-purple-400 border border-purple-500/20';
             if (r.type === 'Release') badgeBg = 'bg-amber-500/10 text-amber-400 border border-amber-500/20';
@@ -3432,6 +3461,7 @@
             `;
           }).join('')}
         </div>
+        ${paginationHtml}
       `;
     }
 
