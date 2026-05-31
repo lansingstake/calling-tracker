@@ -2495,11 +2495,15 @@
         const status = (s["Status"] || "Pending").trim();
         if (status === 'Complete') return; // Fully complete, skip
         
-        // Admin: show only Pending items, no unit-level filtering
+        // Admin: show only Pending ordination items, not callings/releases
         if (state.role === 'admin') {
           if (status === 'Pending') {
-            activeSustainings.push(s);
-            keysSeen.add(key);
+            // Only include ordinations for admin
+            const isOrdination = s["Action"] === "Sustain" && (s["Calling"] === "Elder" || s["Calling"] === "High Priest");
+            if (isOrdination) {
+              activeSustainings.push(s);
+              keysSeen.add(key);
+            }
           }
           return;
         }
@@ -2954,6 +2958,24 @@
           showToast('Connection error updating sustaining', 'error');
           fetchSundayData();
         });
+
+        // Auto-complete calling sustainings when all required units are done
+        if (isChecked && action === 'Sustain' && calling !== 'Elder' && calling !== 'High Priest') {
+          const item = (state.records.sustainings || []).find(s => s["Individual"] === individual && s["Action"] === action && s["Calling"] === calling);
+          if (item) {
+            const requiredUnits = STAKE_UNITS.filter(u => {
+              const val = item[u];
+              return val === 'True' || val === 'False' || val === 'Complete' || val === true || val === false;
+            });
+            const allDone = requiredUnits.length > 0 && requiredUnits.every(u => {
+              const val = item[u];
+              return val === 'True' || val === 'Complete' || val === true;
+            });
+            if (allDone) {
+              markSustainingComplete(individual, action, calling);
+            }
+          }
+        }
     }
 
     // Admin: Mark a sustaining as Complete â€” removes from all Over the Pulpit screens
