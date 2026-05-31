@@ -1773,7 +1773,7 @@
             `onclick="toggleApprovalVote('Callings Releasings', '${colHeader}', '${nextVote}', ${idx})"` : '';
           
           return `
-            <button id="vote-btn-${idx}" ${toggleActionHtml} class="px-2.5 py-1.5 rounded-lg border text-base font-semibold ${voteColor} active:scale-95 transition-all text-center">
+            <button id="vote-btn-${idx}" ${toggleActionHtml} class="px-2.5 py-1.5 rounded-lg border text-base font-semibold ${voteColor} transition-colors text-center">
               ${name}: ${vote || 'Pending'}
             </button>
           `;
@@ -1788,7 +1788,7 @@
               <span>High Council Approvals</span>
               <span id="approval-vote-counts" class="text-xs text-slate-500">${record["Approvals"] || 0} Yes / ${record["Votes Against"] || 0} No</span>
             </h4>
-            <div id="approval-vote-grid" class="grid grid-cols-3 gap-2">
+            <div id="approval-vote-grid" class="grid grid-cols-3 gap-2" style="will-change: contents;">
               ${approvalsList}
             </div>
           </div>
@@ -1973,7 +1973,7 @@
             `onclick="toggleApprovalVote('Ordinations', '${colHeader}', '${nextVote}', ${idx})"` : '';
           
           return `
-            <button id="vote-btn-${idx}" ${toggleActionHtml} class="px-2.5 py-1.5 rounded-lg border text-base font-semibold ${voteColor} active:scale-95 transition-all text-center">
+            <button id="vote-btn-${idx}" ${toggleActionHtml} class="px-2.5 py-1.5 rounded-lg border text-base font-semibold ${voteColor} transition-colors text-center">
               ${name}: ${vote || 'Pending'}
             </button>
           `;
@@ -1988,7 +1988,7 @@
               <span>High Council Approvals</span>
               <span id="approval-vote-counts" class="text-xs text-slate-500">${record["Approvals"] || 0} Yes / ${record["Votes Against"] || 0} No</span>
             </h4>
-            <div id="approval-vote-grid" class="grid grid-cols-3 gap-2">
+            <div id="approval-vote-grid" class="grid grid-cols-3 gap-2" style="will-change: contents;">
               ${approvalsList}
             </div>
           </div>
@@ -2337,11 +2337,11 @@
       if (btn) {
         const name = voteHeader.replace('Approval [', '').replace(']', '');
         if (voteValue === 'Yes') {
-          btn.className = 'px-2.5 py-1.5 rounded-lg border text-base font-semibold active:scale-95 transition-all text-center bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+          btn.className = 'px-2.5 py-1.5 rounded-lg border text-base font-semibold transition-colors text-center bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
         } else if (voteValue === 'No') {
-          btn.className = 'px-2.5 py-1.5 rounded-lg border text-base font-semibold active:scale-95 transition-all text-center bg-red-500/10 text-red-400 border-red-500/20';
+          btn.className = 'px-2.5 py-1.5 rounded-lg border text-base font-semibold transition-colors text-center bg-red-500/10 text-red-400 border-red-500/20';
         } else {
-          btn.className = 'px-2.5 py-1.5 rounded-lg border text-base font-semibold active:scale-95 transition-all text-center bg-slate-800 text-slate-400 border-slate-700';
+          btn.className = 'px-2.5 py-1.5 rounded-lg border text-base font-semibold transition-colors text-center bg-slate-800 text-slate-400 border-slate-700';
         }
         btn.textContent = name + ': ' + (voteValue || 'Pending');
         const nextVote = voteValue === 'Yes' ? 'No' : voteValue === 'No' ? '' : 'Yes';
