@@ -1646,6 +1646,22 @@
                 <span class="text-[11px] font-medium border px-2 py-0.5 rounded-full ${badgeColor}">${step}</span>
                 ${votedBadgeHtml}
               </div>
+              ${(() => {
+                if (state.role === 'admin' || state.role === 'presidency') {
+                  let assignedPerson = '';
+                  if (step.includes('Call') || step.includes('Release')) {
+                    assignedPerson = r['Assigned to Extend Calling / Release'] || r['Assigned to Extend Release'] || '';
+                  } else if (step.includes('Set Apart') || step.includes('Apart')) {
+                    assignedPerson = r['Set Apart By'] || '';
+                  } else if (step.includes('Training')) {
+                    assignedPerson = r['Assigned Trainer'] || '';
+                  }
+                  if (assignedPerson) {
+                    return `<p class="text-[11px] text-amber-400 font-medium mt-1">Assigned: ${assignedPerson}</p>`;
+                  }
+                }
+                return '';
+              })()}
             </div>
             <div class="flex items-center">
               ${reorderButtons}
@@ -1733,8 +1749,8 @@
           <div class="mb-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 flex items-center gap-3 text-emerald-400">
             <i data-lucide="check-circle" class="w-5 h-5 text-emerald-400 shrink-0"></i>
             <div>
-              <div class="text-xs font-bold uppercase tracking-wider">&#10004; High Council Approved</div>
-              <div class="text-[11px] opacity-80">This record has received ${yesVotes} approval votes from the High Council.</div>
+              <div class="text-sm font-bold uppercase tracking-wider">&#10004; High Council Approved</div>
+              <div class="text-xs opacity-80">This record has received ${yesVotes} approval votes from the High Council.</div>
             </div>
           </div>
         ` : '';
@@ -1752,7 +1768,7 @@
             `onclick="toggleApprovalVote('Callings Releasings', '${colHeader}', '${vote === 'Yes' ? 'No' : vote === 'No' ? '' : 'Yes'}')"` : '';
           
           return `
-            <button ${toggleActionHtml} class="px-2.5 py-1.5 rounded-lg border text-sm font-semibold ${voteColor} active:scale-95 transition-all text-center">
+            <button ${toggleActionHtml} class="px-2.5 py-1.5 rounded-lg border text-base font-semibold ${voteColor} active:scale-95 transition-all text-center">
               ${name}: ${vote || 'Pending'}
             </button>
           `;
@@ -1763,9 +1779,9 @@
           
           <!-- Approval Vote grid -->
           <div class="space-y-2.5">
-            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+            <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
               <span>High Council Approvals</span>
-              <span class="text-[11px] text-slate-500">${record["Approvals"] || 0} Yes / ${record["Votes Against"] || 0} No</span>
+              <span class="text-xs text-slate-500">${record["Approvals"] || 0} Yes / ${record["Votes Against"] || 0} No</span>
             </h4>
             <div class="grid grid-cols-3 gap-2">
               ${approvalsList}
@@ -1776,15 +1792,15 @@
 
           <!-- Section 1: Workflow & Key Info -->
           <div class="space-y-4">
-            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Workflow & Key Info</h4>
+            <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Workflow & Key Info</h4>
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-[11px] text-slate-400 font-medium mb-1">Calling Name</label>
-                <input type="text" value="${record['Calling'] || ''}" onchange="updateRecordField('Calling', this.value)" ${isHC ? 'readonly disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+                <label class="block text-xs text-slate-400 font-medium mb-1">Calling Name</label>
+                <input type="text" value="${record['Calling'] || ''}" onchange="updateRecordField('Calling', this.value)" ${isHC ? 'readonly disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
               <div>
-                <label class="block text-[11px] text-slate-400 font-medium mb-1">Current Step</label>
-                <select onchange="updateRecordField('Current Step', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                <label class="block text-xs text-slate-400 font-medium mb-1">Current Step</label>
+                <select onchange="updateRecordField('Current Step', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
                   <option value=""></option>
                   <option value="Approval" ${record['Current Step'] === 'Approval' ? 'selected' : ''}>Approval</option>
                   <option value="Call / Release" ${record['Current Step'] === 'Call / Release' ? 'selected' : ''}>Call / Release</option>
@@ -1803,8 +1819,8 @@
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-[11px] text-slate-400 font-medium mb-1">Current Calling</label>
-                <input type="text" value="${record['Current Calling'] || ''}" onchange="updateRecordField('Current Calling', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+                <label class="block text-xs text-slate-400 font-medium mb-1">Current Calling</label>
+                <input type="text" value="${record['Current Calling'] || ''}" onchange="updateRecordField('Current Calling', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
               ${renderSelectField('Calling Accepted?', 'Calling Accepted?', ['Accepted', 'Declined', 'Waiting for Answer'], record)}
             </div>
@@ -1817,11 +1833,11 @@
 
           <!-- Section 2: Member to Release -->
           <div class="space-y-4">
-            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Member to Release</h4>
+            <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Member to Release</h4>
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-[11px] text-slate-400 font-medium mb-1">Member to Release</label>
-                <input type="text" value="${record['Member to Release'] || ''}" onchange="updateRecordField('Member to Release', this.value)" placeholder="Name" class="w-full glass rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+                <label class="block text-xs text-slate-400 font-medium mb-1">Member to Release</label>
+                <input type="text" value="${record['Member to Release'] || ''}" onchange="updateRecordField('Member to Release', this.value)" placeholder="Name" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
               ${renderSelectField('Notified of Release?', 'Notified of Release?', ['Yes', 'No'], record)}
             </div>
@@ -1835,23 +1851,40 @@
 
           <!-- Section 3: Sustaining & Setting Apart -->
           <div class="space-y-4">
-            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Sustain & Set Apart</h4>
+            <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Sustain & Set Apart</h4>
             <div class="grid grid-cols-2 gap-3">
               ${renderSelectField('Ready for Sustaining / Setting Apart?', 'Ready for Sustaining?', ['Yes', 'No'], record)}
               ${renderSelectField('Over the Pulpit Sustaining', 'Pulpit Sustaining Type', ['All Units', 'Home Unit Only', 'None'], record)}
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-[11px] text-slate-400 font-medium mb-1">Date Sustained</label>
-                <input type="date" value="${record['Date Sustained'] || ''}" onchange="updateRecordField('Date Sustained', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+                <label class="block text-xs text-slate-400 font-medium mb-1">Date Sustained</label>
+                <input type="date" value="${record['Date Sustained'] || ''}" onchange="updateRecordField('Date Sustained', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
               <div>
-                <label class="block text-[11px] text-slate-400 font-medium mb-1">Date Set Apart</label>
-                <input type="date" value="${record['Date Set Apart'] || ''}" onchange="updateRecordField('Date Set Apart', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+                <label class="block text-xs text-slate-400 font-medium mb-1">Date Set Apart</label>
+                <input type="date" value="${record['Date Set Apart'] || ''}" onchange="updateRecordField('Date Set Apart', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
             </div>
             <div class="grid grid-cols-2 gap-3">
-              ${renderNameInputField('Set Apart By', 'Set Apart By', record)}
+              ${(() => {
+                const spRoster = state.isDemo ? (state.records.stakePresidency || []) : (state.stakePresidency || []);
+                const hcRoster = state.isDemo ? (state.records.highCouncilors || []) : (state.highCouncilors || []);
+                const spHcOptions = [...spRoster, ...hcRoster];
+                const setApartOptions = spHcOptions.map(name => `<option value="${name}" ${record['Set Apart By'] === name ? 'selected' : ''}>${name}</option>`).join('');
+                const isAdmin = state.role === 'admin';
+                const isHC = state.role === 'hc';
+                const isPres = state.role === 'presidency';
+                const canEdit = isAdmin || isHC || isPres;
+                const disabledHtml = canEdit ? '' : 'disabled';
+                return `<div>
+                  <label class="block text-sm text-slate-400 font-medium mb-1">Assigned to Set Apart</label>
+                  <select onchange="updateRecordField('Set Apart By', this.value)" ${disabledHtml} class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                    <option value="">Select person</option>
+                    ${setApartOptions}
+                  </select>
+                </div>`;
+              })()}
               ${renderSelectField('LCR Updated?', 'LCR Updated?', ['Yes', 'No'], record)}
             </div>
           </div>
@@ -1860,7 +1893,7 @@
 
           <!-- Section 4: Training & Onboarding -->
           <div class="space-y-4">
-            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Training & Onboarding</h4>
+            <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Training & Onboarding</h4>
             <div class="grid grid-cols-2 gap-3">
               ${renderSelectField('Ready for Training?', 'Ready for Training?', ['Yes', 'No'], record)}
               ${renderNameInputField('Assigned Trainer', 'Assigned Trainer', record)}
@@ -1876,8 +1909,8 @@
 
           <!-- Notes -->
           <div>
-            <label class="block text-[11px] text-slate-400 font-medium mb-1">Notes</label>
-            <textarea onchange="updateRecordField('Notes', this.value)" rows="2" class="w-full glass rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Notes'] || ''}</textarea>
+            <label class="block text-xs text-slate-400 font-medium mb-1">Notes</label>
+            <textarea onchange="updateRecordField('Notes', this.value)" rows="2" class="w-full glass rounded-lg p-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Notes'] || ''}</textarea>
           </div>
         `;
       } 
@@ -1895,8 +1928,8 @@
           <div class="mb-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 flex items-center gap-3 text-emerald-400">
             <i data-lucide="check-circle" class="w-5 h-5 text-emerald-400 shrink-0"></i>
             <div>
-              <div class="text-xs font-bold uppercase tracking-wider">&#10004; High Council Approved</div>
-              <div class="text-[11px] opacity-80">This record has received ${yesVotes} approval votes from the High Council.</div>
+              <div class="text-sm font-bold uppercase tracking-wider">&#10004; High Council Approved</div>
+              <div class="text-xs opacity-80">This record has received ${yesVotes} approval votes from the High Council.</div>
             </div>
           </div>
         ` : '';
@@ -1914,7 +1947,7 @@
             `onclick="toggleApprovalVote('Ordinations', '${colHeader}', '${vote === 'Yes' ? 'No' : vote === 'No' ? '' : 'Yes'}')"` : '';
           
           return `
-            <button ${toggleActionHtml} class="px-2.5 py-1.5 rounded-lg border text-sm font-semibold ${voteColor} active:scale-95 transition-all text-center">
+            <button ${toggleActionHtml} class="px-2.5 py-1.5 rounded-lg border text-base font-semibold ${voteColor} active:scale-95 transition-all text-center">
               ${name}: ${vote || 'Pending'}
             </button>
           `;
@@ -1925,7 +1958,7 @@
 
           <!-- Approval Vote grid -->
           <div class="space-y-2.5">
-            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">High Council Approvals</h4>
+            <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">High Council Approvals</h4>
             <div class="grid grid-cols-3 gap-2">
               ${approvalsList}
             </div>
@@ -1935,11 +1968,11 @@
 
           <!-- Section 1: Workflow & Key Info -->
           <div class="space-y-4">
-            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Workflow & Key Info</h4>
+            <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Workflow & Key Info</h4>
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-[11px] text-slate-400 font-medium mb-1">Current Step</label>
-                <select onchange="updateRecordField('Current Step', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                <label class="block text-xs text-slate-400 font-medium mb-1">Current Step</label>
+                <select onchange="updateRecordField('Current Step', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
                   <option value=""></option>
                   <option value="Stake Interview" ${record['Current Step'] === 'Stake Interview' ? 'selected' : ''}>Stake Interview</option>
                   <option value="HC Approval" ${record['Current Step'] === 'HC Approval' ? 'selected' : ''}>HC Approval</option>
@@ -1951,8 +1984,8 @@
                 </select>
               </div>
               <div>
-                <label class="block text-[11px] text-slate-400 font-medium mb-1">Interview Status</label>
-                <select onchange="updateRecordField('Interview Status', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                <label class="block text-xs text-slate-400 font-medium mb-1">Interview Status</label>
+                <select onchange="updateRecordField('Interview Status', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
                   <option value="Pending" ${(record['Interview Status'] || 'Pending') === 'Pending' ? 'selected' : ''}>Pending</option>
                   <option value="Scheduled" ${record['Interview Status'] === 'Scheduled' ? 'selected' : ''}>Scheduled</option>
                   <option value="Complete" ${record['Interview Status'] === 'Complete' || record['Interview Status'] === 'Completed' ? 'selected' : ''}>Complete</option>
@@ -1966,15 +1999,15 @@
 
           <!-- Section 2: Sustaining & Ordination -->
           <div class="space-y-4">
-            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Sustain & Ordain</h4>
+            <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Sustain & Ordain</h4>
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-[11px] text-slate-400 font-medium mb-1">Date Sustained</label>
-                <input type="date" value="${record['Date Sustained'] || ''}" onchange="updateRecordField('Date Sustained', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+                <label class="block text-xs text-slate-400 font-medium mb-1">Date Sustained</label>
+                <input type="date" value="${record['Date Sustained'] || ''}" onchange="updateRecordField('Date Sustained', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
               <div>
-                <label class="block text-[11px] text-slate-400 font-medium mb-1">Ordained Date</label>
-                <input type="date" value="${record['Ordained Date'] || ''}" onchange="updateRecordField('Ordained Date', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+                <label class="block text-xs text-slate-400 font-medium mb-1">Ordained Date</label>
+                <input type="date" value="${record['Ordained Date'] || ''}" onchange="updateRecordField('Ordained Date', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
             </div>
             ${renderNameInputField('Ordained By', 'Ordained By', record)}
@@ -1987,7 +2020,7 @@
 
           <!-- Section 3: Certificate & Office Admin -->
           <div class="space-y-4">
-            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Certificate & LCR</h4>
+            <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Certificate & LCR</h4>
             <div class="grid grid-cols-3 gap-2">
               ${renderSelectField('Certificate Printed?', 'Cert Printed?', ['Yes', 'No'], record)}
               ${renderSelectField('Certificate Signed?', 'Cert Signed?', ['Yes', 'No'], record)}
@@ -1996,12 +2029,12 @@
             <div class="grid grid-cols-3 gap-2">
               ${renderSelectField('LCR Updated?', 'LCR Updated?', ['Yes', 'Pending'], record)}
               <div>
-                <label class="block text-[11px] text-slate-400 font-medium mb-1">Entered By</label>
-                <input type="text" value="${record['Entered By'] || ''}" onchange="updateRecordField('Entered By', this.value)" placeholder="Type name" class="w-full glass rounded-lg px-2.5 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                <label class="block text-xs text-slate-400 font-medium mb-1">Entered By</label>
+                <input type="text" value="${record['Entered By'] || ''}" onchange="updateRecordField('Entered By', this.value)" placeholder="Type name" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
               </div>
               <div>
-                <label class="block text-[11px] text-slate-400 font-medium mb-1">Date Entered</label>
-                <input type="date" value="${record['Date Entered'] || ''}" onchange="updateRecordField('Date Entered', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+                <label class="block text-xs text-slate-400 font-medium mb-1">Date Entered</label>
+                <input type="date" value="${record['Date Entered'] || ''}" onchange="updateRecordField('Date Entered', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
             </div>
           </div>
@@ -2010,8 +2043,8 @@
 
           <!-- Notes -->
           <div>
-            <label class="block text-[11px] text-slate-400 font-medium mb-1">Notes</label>
-            <textarea onchange="updateRecordField('Notes', this.value)" rows="2" class="w-full glass rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Notes'] || ''}</textarea>
+            <label class="block text-xs text-slate-400 font-medium mb-1">Notes</label>
+            <textarea onchange="updateRecordField('Notes', this.value)" rows="2" class="w-full glass rounded-lg p-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Notes'] || ''}</textarea>
           </div>
         `;
       }
@@ -2020,15 +2053,15 @@
         html += `
           <!-- Section 1: Workflow & Key Info -->
           <div class="space-y-4">
-            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Workflow & Key Info</h4>
+            <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Workflow & Key Info</h4>
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-[11px] text-slate-400 font-medium mb-1">Calling to be Released From</label>
-                <input type="text" value="${record['Calling to be Released From'] || ''}" onchange="updateRecordField('Calling to be Released From', this.value)" ${isHC ? 'readonly disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+                <label class="block text-xs text-slate-400 font-medium mb-1">Calling to be Released From</label>
+                <input type="text" value="${record['Calling to be Released From'] || ''}" onchange="updateRecordField('Calling to be Released From', this.value)" ${isHC ? 'readonly disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
               <div>
-                <label class="block text-[11px] text-slate-400 font-medium mb-1">Current Step</label>
-                <select onchange="updateRecordField('Current Step', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                <label class="block text-xs text-slate-400 font-medium mb-1">Current Step</label>
+                <select onchange="updateRecordField('Current Step', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
                   <option value=""></option>
                   <option value="Pending Approval" ${record['Current Step'] === 'Pending Approval' ? 'selected' : ''}>Pending Approval</option>
                   <option value="Assigned" ${record['Current Step'] === 'Assigned' ? 'selected' : ''}>Assigned</option>
@@ -2040,8 +2073,8 @@
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-[11px] text-slate-400 font-medium mb-1">Reason for Release</label>
-                <input type="text" value="${record['Reason for Release'] || ''}" onchange="updateRecordField('Reason for Release', this.value)" placeholder="Reason" class="w-full glass rounded-lg px-2.5 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                <label class="block text-xs text-slate-400 font-medium mb-1">Reason for Release</label>
+                <input type="text" value="${record['Reason for Release'] || ''}" onchange="updateRecordField('Reason for Release', this.value)" placeholder="Reason" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
               </div>
               ${renderNameInputField('Assigned to Extend Release', 'Assigned to Extend Release', record)}
             </div>
@@ -2051,11 +2084,11 @@
 
           <!-- Section 2: Release Status & System Updates -->
           <div class="space-y-4">
-            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Release Status & Updates</h4>
+            <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Release Status & Updates</h4>
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-[11px] text-slate-400 font-medium mb-1">Date Released</label>
-                <input type="date" value="${record['Date Released'] || ''}" onchange="updateRecordField('Date Released', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+                <label class="block text-xs text-slate-400 font-medium mb-1">Date Released</label>
+                <input type="date" value="${record['Date Released'] || ''}" onchange="updateRecordField('Date Released', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
               ${renderSelectField('Release Complete?', 'Release Complete?', ['Yes', 'No'], record)}
             </div>
@@ -2073,8 +2106,8 @@
 
           <!-- Notes -->
           <div>
-            <label class="block text-[11px] text-slate-400 font-medium mb-1">Notes</label>
-            <textarea onchange="updateRecordField('Notes', this.value)" rows="2" class="w-full glass rounded-lg p-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Notes'] || ''}</textarea>
+            <label class="block text-xs text-slate-400 font-medium mb-1">Notes</label>
+            <textarea onchange="updateRecordField('Notes', this.value)" rows="2" class="w-full glass rounded-lg p-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Notes'] || ''}</textarea>
           </div>
         `;
       }
@@ -2118,7 +2151,7 @@
         const hcOnchangeHtml = canEdit ? 
           `onchange="updateRecordField('${fieldKey}', this.checked ? 'Accepted' : 'Declined')"` : 'disabled';
         return `
-          <label class="flex items-center gap-3 cursor-pointer text-sm select-none">
+          <label class="flex items-center gap-3 cursor-pointer text-base select-none">
             <input type="checkbox" ${checkedValue ? 'checked' : ''} ${hcOnchangeHtml} class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 bg-slate-800 border-slate-700">
             <span class="${checkedValue ? 'text-slate-200 font-semibold' : 'text-slate-400'}">${labelText}</span>
           </label>
@@ -2126,7 +2159,7 @@
       }
       
       return `
-        <label class="flex items-center gap-3 cursor-pointer text-sm select-none">
+        <label class="flex items-center gap-3 cursor-pointer text-base select-none">
           <input type="checkbox" ${checkedValue ? 'checked' : ''} ${onchangeHtml} class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 bg-slate-800 border-slate-700">
           <span class="${checkedValue ? 'text-slate-200 font-semibold' : 'text-slate-400'}">${labelText}</span>
         </label>
@@ -2184,8 +2217,8 @@
       
       return `
         <div>
-          <label class="block text-[11px] text-slate-400 font-medium mb-1">${labelText}</label>
-          <select onchange="updateRecordField('${fieldKey}', this.value)" ${disabledHtml} class="w-full glass rounded-lg px-2.5 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+          <label class="block text-xs text-slate-400 font-medium mb-1">${labelText}</label>
+          <select onchange="updateRecordField('${fieldKey}', this.value)" ${disabledHtml} class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
             <option value=""></option>
             ${optionsHtml}
           </select>
@@ -2214,8 +2247,8 @@
       
       return `
         <div>
-          <label class="block text-[11px] text-slate-400 font-medium mb-1">${labelText}</label>
-          <input type="text" list="stake-presidency-hc-list" value="${currentValue}" onchange="updateRecordField('${fieldKey}', this.value)" ${disabledHtml} placeholder="Select or type name" class="w-full glass rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+          <label class="block text-xs text-slate-400 font-medium mb-1">${labelText}</label>
+          <input type="text" list="stake-presidency-hc-list" value="${currentValue}" onchange="updateRecordField('${fieldKey}', this.value)" ${disabledHtml} placeholder="Select or type name" class="w-full glass rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
         </div>
       `;
     }
@@ -3144,7 +3177,7 @@
               </select>
             </div>
             <div>
-              <label class="block text-sm font-medium text-slate-400 mb-1">Assigned to Extend</label>
+              <label class="block text-sm font-medium text-slate-400 mb-1">Assigned to Call / Release</label>
               <input type="text" list="stake-presidency-hc-list" id="form-extend-assigned" placeholder="Select or type name" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
             </div>
           </div>
