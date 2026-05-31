@@ -1391,9 +1391,9 @@
         let ordinations = state.records.ordinations.filter(filterFn);
         const releases = state.records.releases.filter(filterFn);
         
-        // HC only sees callings at "Approval" and ordinations at "HC Approval"
+        // HC only sees callings at "HC Approval" and ordinations at "HC Approval"
         if (isHC) {
-          callings = callings.filter(r => r["Current Step"] === "Approval");
+          callings = callings.filter(r => r["Current Step"] === "HC Approval");
           ordinations = ordinations.filter(r => r["Current Step"] === "HC Approval");
         }
         
@@ -1817,7 +1817,7 @@
                 <label class="block text-xs text-slate-400 font-medium mb-1">Current Step</label>
                 <select onchange="updateRecordField('Current Step', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
                   <option value=""></option>
-                  <option value="Approval" ${record['Current Step'] === 'Approval' ? 'selected' : ''}>Approval</option>
+                  <option value="HC Approval" ${record['Current Step'] === 'HC Approval' ? 'selected' : ''}>HC Approval</option>
                   <option value="Call / Release" ${record['Current Step'] === 'Call / Release' ? 'selected' : ''}>Call / Release</option>
                   <option value="Sustain" ${record['Current Step'] === 'Sustain' ? 'selected' : ''}>Sustain</option>
                   <option value="Set Apart" ${record['Current Step'] === 'Set Apart' ? 'selected' : ''}>Set Apart</option>
@@ -2388,8 +2388,8 @@
           showToast('Changes saved!', 'success');
           state.activeRecord.record[fieldKey] = value;
           
-          // Auto-set High Council Approval Date when stepping away from Approval/HC Approval
-          if (fieldKey === 'Current Step' && (value !== 'Approval' && value !== 'HC Approval')) {
+          // Auto-set High Council Approval Date when stepping away from HC Approval
+          if (fieldKey === 'Current Step' && value !== 'HC Approval') {
             const currentRecord = state.activeRecord.record;
             if (currentRecord && !currentRecord['High Council Approval Date']) {
               const today = new Date().toISOString().split('T')[0];
@@ -2558,7 +2558,7 @@
       });
       
       // Exclude sustaining items whose parent record is still at an early step
-      const earlySteps = ['Approval', 'HC Approval', 'Stake Interview', 'Call / Release'];
+      const earlySteps = ['HC Approval', 'Stake Interview', 'Call / Release'];
       const filteredSustainings = activeSustainings.filter(s => {
         const name = s["Individual"];
         const calling = s["Calling"];
@@ -3265,10 +3265,19 @@
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div>
+              <label class="block text-sm font-medium text-slate-400 mb-1">Current Calling</label>
+              <input type="text" id="form-current-calling" placeholder="Current calling (if any)" class="w-full glass rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-400 mb-1">Unit Leader Date Contacted</label>
+              <input type="date" id="form-unit-leader-date" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
               <label class="block text-sm font-medium text-slate-400 mb-1">Current Step</label>
               <select id="form-current-step" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
-                <option value="Approval" selected>Approval</option>
-                <option value="HC Approval">HC Approval</option>
+                <option value="HC Approval" selected>HC Approval</option>
                 <option value="Call / Release">Call / Release</option>
                 <option value="Set Apart">Set Apart</option>
                 <option value="Training">Training</option>
@@ -3403,6 +3412,8 @@
         record["Assigned to Extend Calling / Release"] = document.getElementById('form-extend-assigned').value;
         record["Stake Conference Sustaining"] = "";
         record["Stake Presidency Date Approved"] = document.getElementById('form-sp-approved-date').value;
+        record["Current Calling"] = document.getElementById('form-current-calling').value;
+        record["Unit Leader Date Contacted"] = document.getElementById('form-unit-leader-date').value;
       } else if (state.formType === 'ordination') {
         type = 'Ordinations';
         record["Record Type"] = "Ordination";
