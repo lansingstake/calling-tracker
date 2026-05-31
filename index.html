@@ -1,0 +1,3539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Stake Calling & Ordination Tracker</title>
+  
+  <!-- SEO & PWA Meta -->
+  <meta name="description" content="Mobile tracker for church callings, ordinations, and releases.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#020617">
+  
+  <!-- CSS & Fonts -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <style>
+    body {
+      font-family: 'Outfit', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .glass {
+      background: rgba(30, 41, 59, 0.45);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-focus {
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+    }
+    .scrollbar-hide::-webkit-scrollbar {
+      display: none;
+    }
+    .scrollbar-hide {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col pb-24 overflow-x-hidden">
+
+  <!-- Top Navigation / Status Header -->
+  <header id="app-header" class="glass sticky top-0 z-40 px-4 py-3 flex items-center justify-between border-b border-slate-800">
+    <div class="flex items-center gap-2">
+      <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+        <i data-lucide="shield-check" class="w-5 h-5 text-white"></i>
+      </div>
+      <div>
+        <h1 class="text-sm font-bold tracking-tight">Stake Tracker</h1>
+        <span id="demo-indicator" class="hidden text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1.5 py-0.5 rounded-full font-medium">Demo Mode</span>
+      </div>
+    </div>
+    
+    <div id="user-profile" class="hidden flex items-center gap-2">
+      <div class="text-right">
+        <p id="profile-name" class="text-xs font-semibold text-slate-200"></p>
+        <p id="profile-role" class="text-[9px] uppercase tracking-wider text-indigo-400 font-bold"></p>
+      </div>
+      <button onclick="logout()" class="p-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-red-400 transition-colors">
+        <i data-lucide="log-out" class="w-4 h-4"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Notification Toast Container -->
+  <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- Main Content Container -->
+  <main class="flex-grow w-full max-w-md mx-auto px-4 py-4">
+
+    <!-- 1. LOGIN SCREEN -->
+    <section id="view-login" class="flex flex-col items-center justify-center py-10">
+      <form onsubmit="event.preventDefault(); handleLogin();" class="w-full glass rounded-2xl p-6 shadow-xl space-y-6">
+        <div class="text-center space-y-2">
+          <i data-lucide="lock" class="w-12 h-12 text-indigo-500 mx-auto"></i>
+          <h2 class="text-xl font-bold">Secure Access</h2>
+          <p class="text-xs text-slate-400">Enter a shared 6-digit PIN to access the church calling tracker</p>
+        </div>
+        
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Enter Shared PIN</label>
+            <input type="password" id="login-pin" oninput="document.getElementById('hc-name-selector').classList.add('hidden')" onkeydown="if(event.key === 'Enter') { event.preventDefault(); handleLogin(); }" placeholder="******" maxlength="8" class="w-full glass rounded-xl px-4 py-3 text-center text-lg font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder-slate-600">
+          </div>
+
+          <!-- Roster/Role Dropdown (Hidden initially, shown if correct pin entered) -->
+          <div id="hc-name-selector" class="hidden space-y-1 transition-all">
+            <label id="login-selector-label" class="block text-xs font-medium text-slate-400 mb-1">Select Your Name</label>
+            <select id="login-hc-name" onkeydown="if(event.key === 'Enter') { event.preventDefault(); handleLogin(); }" class="w-full glass rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200">
+              <!-- Populated dynamically -->
+            </select>
+          </div>
+          
+          <button type="submit" id="btn-login" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl shadow-lg shadow-indigo-500/20 active:scale-95 transition-all flex items-center justify-center gap-2">
+            <span>Continue</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <div class="border-t border-slate-800 pt-4 text-center">
+          <button type="button" onclick="toggleDemoMode()" id="btn-demo-toggle" class="text-xs text-indigo-400 hover:text-indigo-300 underline font-medium">
+            Try Demo Mode without API URL
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- 2. DASHBOARD VIEW -->
+    <section id="view-dashboard" class="hidden space-y-4">
+      <!-- Admin Tracker Toggle (Only for Admin) -->
+      <div id="db-tracker-toggle-card" class="hidden bg-slate-900/60 p-1 rounded-xl border border-slate-800 grid grid-cols-2 gap-2">
+        <button onclick="setDashboardViewType('active')" id="btn-db-active" class="py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 text-white transition-all">Active Tracker</button>
+        <button onclick="setDashboardViewType('stakeconf')" id="btn-db-stakeconf" class="py-1.5 text-xs font-semibold rounded-lg text-slate-400 hover:text-slate-200 transition-all">Stake Conference</button>
+      </div>
+
+      <!-- Dashboard View: Active Tracker -->
+      <div id="db-active-panel" class="space-y-4">
+        <!-- Search & Filters -->
+        <div id="db-search-filter-container" class="space-y-2">
+          <div id="db-search-container" class="relative">
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></i>
+            <input type="text" id="db-search" oninput="filterDashboard()" placeholder="Search member, calling, unit..." class="w-full glass rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+          </div>
+          
+          <!-- Filter Tabs Wrapping Grid/Flex Layout (All 9 Units) -->
+          <div id="db-filter-bar" class="flex flex-wrap gap-2 pb-1">
+            <button onclick="setFilter('all')" id="filter-all" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 text-white transition-all whitespace-nowrap">All Units</button>
+            <button onclick="setFilter('Charlotte')" id="filter-Charlotte" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg glass text-slate-300 transition-all whitespace-nowrap">Charlotte</button>
+            <button onclick="setFilter('Holt')" id="filter-Holt" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg glass text-slate-300 transition-all whitespace-nowrap">Holt</button>
+            <button onclick="setFilter('Jackson')" id="filter-Jackson" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg glass text-slate-300 transition-all whitespace-nowrap">Jackson</button>
+            <button onclick="setFilter('Lansing')" id="filter-Lansing" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg glass text-slate-300 transition-all whitespace-nowrap">Lansing</button>
+            <button onclick="setFilter('Portland')" id="filter-Portland" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg glass text-slate-300 transition-all whitespace-nowrap">Portland</button>
+            <button onclick="setFilter('Owosso')" id="filter-Owosso" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg glass text-slate-300 transition-all whitespace-nowrap">Owosso</button>
+            <button onclick="setFilter('St Johns')" id="filter-StJohns" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg glass text-slate-300 transition-all whitespace-nowrap">St Johns</button>
+            <button onclick="setFilter('Williamston')" id="filter-Williamston" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg glass text-slate-300 transition-all whitespace-nowrap">Williamston</button>
+            <button onclick="setFilter('YSA')" id="filter-YSA" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg glass text-slate-300 transition-all whitespace-nowrap">YSA</button>
+          </div>
+        </div>
+
+        <!-- Actionable Section Lists -->
+        <div id="dashboard-lists" class="space-y-6">
+          <!-- High Councilor Personal Tasks Section (Only visible for High Councilors) -->
+          <div id="hc-dashboard-tasks-container" class="space-y-3 hidden">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                <i data-lucide="check-square" class="w-4 h-4 text-indigo-400"></i>
+                My Assigned Tasks
+              </h3>
+              <span id="count-hc-tasks" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-400 font-semibold">0</span>
+            </div>
+            <div id="hc-dashboard-tasks" class="space-y-3"></div>
+          </div>
+
+          <!-- Callings/Releasings Section -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                <i data-lucide="user-plus" class="w-4 h-4 text-emerald-400"></i>
+                Active Callings & Releases
+              </h3>
+              <span id="count-callings" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-400 font-semibold">0</span>
+            </div>
+            <div id="list-callings" class="space-y-3"></div>
+          </div>
+
+          <!-- Ordinations Section -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                <i data-lucide="award" class="w-4 h-4 text-purple-400"></i>
+                Active Ordinations
+              </h3>
+              <span id="count-ordinations" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-400 font-semibold">0</span>
+            </div>
+            <div id="list-ordinations" class="space-y-3"></div>
+          </div>
+
+          <!-- Releases Only Section -->
+          <div id="dashboard-releases-container" class="space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                <i data-lucide="user-minus" class="w-4 h-4 text-amber-400"></i>
+                Active Releases Only
+              </h3>
+              <span id="count-releases" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-400 font-semibold">0</span>
+            </div>
+            <div id="list-releases" class="space-y-3"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dashboard View: Stake Conference -->
+      <div id="db-stakeconf-panel" class="space-y-4 hidden">
+        <div class="glass p-4 rounded-xl space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">Stake Conference Filter</h3>
+            <span id="count-stakeconf" class="text-[10px] bg-indigo-600 px-2 py-0.5 rounded-full text-white font-semibold">0</span>
+          </div>
+          
+          <div class="flex gap-4 flex-wrap">
+            <label class="flex items-center gap-2 text-xs cursor-pointer select-none">
+              <input type="checkbox" id="sc-filter-pending" checked onchange="renderDashboard()" class="w-4 h-4 rounded text-indigo-600 bg-slate-800 border-slate-700">
+              <span class="text-slate-300">Pending</span>
+            </label>
+            <label class="flex items-center gap-2 text-xs cursor-pointer select-none">
+              <input type="checkbox" id="sc-filter-stakeconf" checked onchange="renderDashboard()" class="w-4 h-4 rounded text-indigo-600 bg-slate-800 border-slate-700">
+              <span class="text-slate-300">Stake Conference</span>
+            </label>
+            <label class="flex items-center gap-2 text-xs cursor-pointer select-none">
+              <input type="checkbox" id="sc-filter-complete" onchange="renderDashboard()" class="w-4 h-4 rounded text-indigo-600 bg-slate-800 border-slate-700">
+              <span class="text-slate-300">Complete</span>
+            </label>
+          </div>
+
+          <!-- Bulk Date Update (Admin only) -->
+          <div id="sc-bulk-update" class="hidden border-t border-slate-800 pt-3 mt-2 space-y-2">
+            <label class="block text-[10px] text-slate-400 font-medium">Stake Conf Sustain Date (will be applied to all Stake Conf items below)</label>
+            <div class="flex gap-2">
+              <input type="date" id="sc-bulk-date" class="flex-1 glass rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+              <button onclick="bulkUpdateStakeConfDate()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold rounded-lg transition-all active:scale-95 whitespace-nowrap flex items-center gap-1.5">
+                <i data-lucide="calendar-check" class="w-3 h-3"></i> Update Sustain Date
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <div id="list-stakeconf" class="space-y-3"></div>
+      </div>
+    </section>
+
+    <!-- 3. SUNDAY UNIT VIEW -->
+    <section id="view-sunday" class="hidden space-y-4">
+      <!-- Pulpit Unit Selector -->
+      <div class="glass rounded-2xl p-4 shadow-xl space-y-3">
+        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Pulpit Unit Selector</label>
+        <select id="sunday-unit-select" onchange="renderSundayView()" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200">
+          <option value="all">All Units</option>
+          <option value="Charlotte">Charlotte</option>
+          <option value="Holt">Holt</option>
+          <option value="Jackson">Jackson</option>
+          <option value="Lansing" selected>Lansing</option>
+          <option value="Portland">Portland</option>
+          <option value="Owosso">Owosso</option>
+          <option value="St Johns">St Johns</option>
+          <option value="Williamston">Williamston</option>
+          <option value="YSA">YSA</option>
+        </select>
+      </div>
+
+      <!-- Pulpit Announcements Container -->
+      <div id="sunday-script-container" class="space-y-4">
+        <!-- Section 1: Priesthood Ordinations -->
+        <div class="glass rounded-2xl p-5 shadow-xl space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+              <i data-lucide="award" class="w-4 h-4 text-purple-400"></i>
+              1. Priesthood Ordinations
+            </h2>
+          </div>
+          
+          <div id="sunday-ordination-script-text" class="p-3 bg-slate-900/80 rounded-xl border border-slate-800 text-xs leading-relaxed text-slate-300 italic">
+            No ordinations scheduled for this unit.
+          </div>
+          
+          <div id="sunday-ordination-list" class="space-y-2.5">
+            <!-- Dynamic ordination candidate list with up/down arrows -->
+          </div>
+        </div>
+
+        <!-- Section 2: Release & Thank -->
+        <div class="glass rounded-2xl p-5 shadow-xl space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+              <i data-lucide="megaphone" class="w-4 h-4 text-emerald-400"></i>
+              2. Release & Thank
+            </h2>
+          </div>
+          
+          <div id="sunday-release-script-text" class="p-3 bg-slate-900/80 rounded-xl border border-slate-800 text-xs leading-relaxed text-slate-300 italic">
+            No releases scheduled for this unit.
+          </div>
+          
+          <div id="sunday-release-list" class="space-y-2.5">
+            <!-- Dynamic release candidate list with up/down arrows -->
+          </div>
+        </div>
+
+        <!-- Section 3: Callings -->
+        <div class="glass rounded-2xl p-5 shadow-xl space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+              <i data-lucide="smile" class="w-4 h-4 text-indigo-400"></i>
+              3. Callings
+            </h2>
+          </div>
+          
+          <div id="sunday-sustain-script-text" class="p-3 bg-slate-900/80 rounded-xl border border-slate-800 text-xs leading-relaxed text-slate-300 italic">
+            No sustainings scheduled for this unit.
+          </div>
+          
+          <div id="sunday-sustain-list" class="space-y-2.5">
+            <!-- Dynamic sustaining candidate list with up/down arrows -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. CREATE ENTRY VIEW (Admin Only) -->
+    <section id="view-create" class="hidden space-y-4">
+      <div class="glass rounded-2xl p-5 shadow-xl space-y-4">
+        <h2 class="text-lg font-bold flex items-center gap-2">
+          <i data-lucide="plus-circle" class="w-5 h-5 text-indigo-500"></i>
+          Create New Entry
+        </h2>
+        
+        <!-- Tab Selector for Form Type -->
+        <div class="grid grid-cols-3 gap-2 bg-slate-900/60 p-1 rounded-xl border border-slate-800">
+          <button onclick="setFormType('calling')" id="btn-form-calling" class="py-2 text-xs font-semibold rounded-lg bg-indigo-600 text-white transition-all">Calling</button>
+          <button onclick="setFormType('ordination')" id="btn-form-ordination" class="py-2 text-xs font-semibold rounded-lg text-slate-400 hover:text-slate-200 transition-all">Ordination</button>
+          <button onclick="setFormType('release')" id="btn-form-release" class="py-2 text-xs font-semibold rounded-lg text-slate-400 hover:text-slate-200 transition-all">Release</button>
+        </div>
+
+        <!-- Dynamic Forms -->
+        <form id="entry-form" onsubmit="submitEntryForm(event)" class="space-y-4">
+          <!-- Common Member Name -->
+          <div>
+            <label id="lbl-member-name" class="block text-xs font-medium text-slate-400 mb-1">Member Name</label>
+            <input type="text" id="form-name" required class="w-full glass rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+          </div>
+
+          <!-- Dynamic Field Container -->
+          <div id="dynamic-form-fields" class="space-y-4">
+            <!-- Populated via JavaScript -->
+          </div>
+
+          <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20 mt-6">
+            <i data-lucide="check" class="w-4 h-4"></i>
+            <span>Add Record</span>
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- 5. SEARCH HISTORY VIEW -->
+    <section id="view-history" class="hidden space-y-4">
+      <div class="glass rounded-2xl p-5 shadow-xl space-y-4">
+        <h2 class="text-lg font-bold flex items-center gap-2">
+          <i data-lucide="history" class="w-5 h-5 text-indigo-500"></i>
+          History Search
+        </h2>
+        
+        <div class="flex gap-2">
+          <input type="text" id="history-query" placeholder="Enter member name..." class="flex-grow glass rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+          <button onclick="performHistorySearch()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-4 py-2.5 rounded-xl active:scale-95 transition-all flex items-center justify-center">
+            <i data-lucide="search" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <!-- History status filter buttons -->
+        <div class="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
+          <button onclick="setHistoryStatusFilter('all')" id="hist-f-all" class="px-2.5 py-1 text-[10px] font-bold rounded bg-indigo-600 text-white transition-all whitespace-nowrap">All</button>
+          <button onclick="setHistoryStatusFilter('Active')" id="hist-f-Active" class="px-2.5 py-1 text-[10px] font-bold rounded glass text-slate-300 transition-all whitespace-nowrap">Active</button>
+          <button onclick="setHistoryStatusFilter('Complete')" id="hist-f-Complete" class="px-2.5 py-1 text-[10px] font-bold rounded glass text-slate-300 transition-all whitespace-nowrap">Complete</button>
+          <button onclick="setHistoryStatusFilter('Cancelled')" id="hist-f-Cancelled" class="px-2.5 py-1 text-[10px] font-bold rounded glass text-slate-300 transition-all whitespace-nowrap">Cancelled</button>
+          <button onclick="setHistoryStatusFilter('Declined')" id="hist-f-Declined" class="px-2.5 py-1 text-[10px] font-bold rounded glass text-slate-300 transition-all whitespace-nowrap">Declined</button>
+        </div>
+
+        <!-- Unit Filter Dropdown -->
+        <div>
+          <select id="history-unit-filter" onchange="renderHistoryResults()" class="w-full glass rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200 font-semibold">
+            <option value="all">All Units</option>
+            <option value="Charlotte">Charlotte</option>
+            <option value="Holt">Holt</option>
+            <option value="Jackson">Jackson</option>
+            <option value="Lansing">Lansing</option>
+            <option value="Owosso">Owosso</option>
+            <option value="Portland">Portland</option>
+            <option value="St Johns">St Johns</option>
+            <option value="Williamston">Williamston</option>
+            <option value="YSA">YSA</option>
+          </select>
+        </div>
+
+        <div id="history-results" class="space-y-4">
+          <!-- Initial 10 loaded, updates via query -->
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. SETTINGS / ADMIN PANEL VIEW -->
+    <section id="view-settings" class="hidden space-y-4">
+      <!-- 6a. API Connection -->
+      <div class="glass rounded-2xl p-5 shadow-xl space-y-4">
+        <h2 class="text-lg font-bold flex items-center gap-2">
+          <i data-lucide="settings" class="w-5 h-5 text-indigo-500"></i>
+          Connection Settings
+        </h2>
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Google Apps Script Web App URL</label>
+            <input type="text" id="settings-api-url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full glass rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-300">
+          </div>
+          <button onclick="saveApiUrl()" class="w-full bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-200 font-semibold py-2 rounded-xl text-sm transition-all active:scale-95">
+            Save Web App URL
+          </button>
+        </div>
+      </div>
+
+      <!-- 6b. PIN Management (Admin Only) -->
+      <div id="settings-pins-card" class="glass rounded-2xl p-5 shadow-xl space-y-4 hidden">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+          <i data-lucide="key" class="w-4 h-4 text-amber-500"></i>
+          PIN Administration
+        </h2>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Admin PIN (6 digits)</label>
+            <input type="text" id="settings-admin-pin" placeholder="******" maxlength="8" class="w-full glass rounded-xl px-3 py-2 text-center text-sm font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">HC PIN (6 digits)</label>
+            <input type="text" id="settings-hc-pin" placeholder="******" maxlength="8" class="w-full glass rounded-xl px-3 py-2 text-center text-sm font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+          </div>
+        </div>
+        <button onclick="savePINs()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 rounded-xl text-xs transition-all active:scale-95 flex items-center justify-center gap-2">
+          <i data-lucide="save" class="w-4 h-4"></i> Save New PINs
+        </button>
+      </div>
+
+      <!-- 6c. High Council Roster (Admin Only) -->
+      <div id="settings-roster-card" class="glass rounded-2xl p-5 shadow-xl space-y-4 hidden">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+          <i data-lucide="users" class="w-4 h-4 text-emerald-500"></i>
+          High Council Roster
+        </h2>
+        <p class="text-[10px] text-slate-400">Renaming a high councilor here renames their approval column header in Google Sheets dynamically, preserving historical counts.</p>
+        
+        <div class="grid grid-cols-1 gap-2" id="roster-inputs">
+          <!-- 12 Councilor name inputs and unit selects -->
+        </div>
+        
+        <button onclick="saveRoster()" id="btn-save-roster" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl text-xs transition-all active:scale-95 flex items-center justify-center gap-2 mt-4 shadow-lg shadow-emerald-500/10">
+          <i data-lucide="save" class="w-4 h-4"></i> Save Changes
+        </button>
+      </div>
+
+      <!-- 6d. Stake Presidency Roster (Admin Only) -->
+      <div id="settings-presidency-card" class="glass rounded-2xl p-5 shadow-xl space-y-4 hidden">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+          <i data-lucide="shield" class="w-4 h-4 text-indigo-400"></i>
+          Stake Presidency Roster
+        </h2>
+        <p class="text-[10px] text-slate-400">Manage the names of the 3 Stake Presidency members.</p>
+        
+        <div class="grid grid-cols-3 gap-2" id="presidency-inputs">
+          <!-- 3 Presidency name inputs -->
+        </div>
+        
+        <button onclick="savePresidencyRoster()" id="btn-save-presidency" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl text-xs transition-all active:scale-95 flex items-center justify-center gap-2 mt-4 shadow-lg shadow-indigo-500/10">
+          <i data-lucide="save" class="w-4 h-4"></i> Save Changes
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Expanded Record Drawer / Modal -->
+  <div id="record-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-end justify-center hidden opacity-0 transition-opacity duration-300">
+    <div class="w-full max-w-md bg-slate-900 border-t border-slate-800 rounded-t-3xl shadow-2xl p-6 space-y-6 max-h-[85vh] overflow-y-auto translate-y-full transition-transform duration-300 scrollbar-hide">
+      <!-- Modal Header -->
+      <div class="flex justify-between items-start">
+        <div>
+          <span id="modal-type-badge" class="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full"></span>
+          <h3 id="modal-title" class="text-lg font-bold mt-1 text-slate-100">Member Name</h3>
+          <p id="modal-subtitle" class="text-xs text-slate-400">Calling Details</p>
+        </div>
+        <button onclick="closeModal()" class="p-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-white transition-colors">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Actionable Details/Checklists -->
+      <div id="modal-content" class="space-y-6">
+        <!-- Content parsed dynamically by type -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation Tab Bar (Mobile) -->
+  <nav id="bottom-nav" class="glass fixed bottom-0 left-0 right-0 z-40 border-t border-slate-800 flex justify-around py-3 px-4 max-w-md mx-auto rounded-t-2xl shadow-xl hidden">
+    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="flex flex-col items-center gap-1 text-indigo-500 transition-colors">
+      <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+      <span class="text-[10px] font-medium">Dashboard</span>
+    </button>
+
+    <button onclick="switchTab('sunday')" id="nav-sunday" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
+      <i data-lucide="calendar" class="w-5 h-5"></i>
+      <span class="text-[10px] font-medium">Over the Pulpit</span>
+    </button>
+    
+    <button onclick="switchTab('create')" id="nav-create" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors hidden admin-only">
+      <i data-lucide="plus-circle" class="w-5 h-5"></i>
+      <span class="text-[10px] font-medium">Create</span>
+    </button>
+    
+    <button onclick="switchTab('history')" id="nav-history" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors hidden admin-only">
+      <i data-lucide="history" class="w-5 h-5"></i>
+      <span class="text-[10px] font-medium">History</span>
+    </button>
+    
+    <button onclick="switchTab('settings')" id="nav-settings" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
+      <i data-lucide="settings" class="w-5 h-5"></i>
+      <span class="text-[10px] font-medium">Settings</span>
+    </button>
+  </nav>
+
+  <!-- JavaScript Logic -->
+  <script>
+    const state = {
+      pin: localStorage.getItem('tracker_pin') || '',
+      role: null, // 'admin', 'hc', or null
+      username: localStorage.getItem('tracker_username') || '',
+      highCouncilors: [],
+      highCouncilorUnits: [],
+      stakePresidency: [],
+      records: { callings: [], ordinations: [], releases: [], sustainings: [] },
+      activeTab: 'dashboard',
+      activeFilter: 'all',
+      dashboardViewType: 'active', // 'active' or 'stakeconf'
+      // sundaySubTab removed - Over the Pulpit only shows Pulpit Announcements now
+      historyStatusFilter: 'all',
+      historyResults: [],
+      formType: 'calling',
+      apiUrl: localStorage.getItem('tracker_api_url') || '',
+      isDemo: localStorage.getItem('tracker_is_demo') === 'true',
+      activeRecord: null,
+      
+      // Sunday Pulpit Candidate Lists (Client-side custom order arrays)
+      sundayReleasesOrder: [],
+      sundaySustainingsOrder: []
+    };
+
+    // Constants
+    const STAKE_UNITS = ["Charlotte", "Holt", "Jackson", "Lansing", "Portland", "Owosso", "St Johns", "Williamston", "YSA"];
+
+    // Mock Data for Demo Mode (empty - connect to live API for real data)
+    const mockData = {
+      highCouncilors: [],
+      highCouncilorUnits: [],
+      stakePresidency: [],
+      records: [],
+      sustainings: []
+    };
+    // Load state from local storage or set defaults
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      initUI();
+    });
+
+    function initUI() {
+      // Setup default configuration URL
+      document.getElementById('settings-api-url').value = state.apiUrl;
+      
+      if (state.pin) {
+        // Authenticate with saved PIN (works for both demo and live modes via apiCall)
+        if (state.isDemo) {
+          loadDemoData();
+        }
+        apiCall('login', { pin: state.pin, username: state.username })
+          .then(res => {
+            if (res.success) {
+              state.role = res.role;
+              state.highCouncilors = res.highCouncilors;
+              state.highCouncilorUnits = res.highCouncilorUnits || [];
+              state.stakePresidency = res.stakePresidency || [];
+              showMainUI();
+            } else {
+              localStorage.removeItem('tracker_pin');
+              localStorage.removeItem('tracker_username');
+              showView('login');
+            }
+          })
+          .catch(() => {
+            showToast('Connection failed. Switching to demo mode.', 'warning');
+            toggleDemoMode();
+          });
+      } else if (state.isDemo) {
+        // If isDemo is active but no PIN is saved, default to admin demo login
+        toggleDemoMode();
+      } else {
+        showView('login');
+      }
+    }
+
+    function toggleDemoMode() {
+      state.isDemo = true;
+      localStorage.setItem('tracker_is_demo', 'true');
+      document.getElementById('demo-indicator').classList.remove('hidden');
+      
+      // Setup demo variables
+      state.role = 'admin';
+      state.username = '';
+      state.highCouncilors = mockData.highCouncilors;
+      state.highCouncilorUnits = mockData.highCouncilorUnits;
+      state.stakePresidency = mockData.stakePresidency;
+      
+      // Save credentials for reload compatibility
+      state.pin = '567890';
+      localStorage.setItem('tracker_pin', '567890');
+      localStorage.setItem('tracker_username', '');
+      
+      loadDemoData();
+      showMainUI();
+      showToast('Demo Mode active with sample data.', 'info');
+    }
+
+    function loadDemoData() {
+      const stored = localStorage.getItem('demo_database_v5');
+      if (stored) {
+        state.records = JSON.parse(stored);
+        // Migrate: Add Record Type if missing
+        if (state.records.callings) {
+          state.records.callings.forEach(r => { if (!r['Record Type']) r['Record Type'] = 'Calling'; });
+        }
+        if (state.records.ordinations) {
+          state.records.ordinations.forEach(r => { if (!r['Record Type']) r['Record Type'] = 'Ordination'; });
+        }
+        if (state.records.releases) {
+          state.records.releases.forEach(r => { if (!r['Record Type']) r['Record Type'] = 'Release'; });
+        }
+        // Rebuild unified 'all' array from individual arrays
+        state.records.all = [
+          ...(state.records.callings || []),
+          ...(state.records.ordinations || []),
+          ...(state.records.releases || [])
+        ];
+        if (!state.records.stakePresidency) {
+          state.records.stakePresidency = [...mockData.stakePresidency];
+          state.records.highCouncilors = [...mockData.highCouncilors];
+          state.records.highCouncilorUnits = [...mockData.highCouncilorUnits];
+          saveDemoDatabase();
+        }
+        if (!state.records.highCouncilorUnits) {
+          state.records.highCouncilorUnits = [...mockData.highCouncilorUnits];
+          saveDemoDatabase();
+        }
+      } else {
+        state.records = {
+          all: [...mockData.records],
+          callings: mockData.records.filter(r => r['Record Type'] === 'Calling'),
+          ordinations: mockData.records.filter(r => r['Record Type'] === 'Ordination'),
+          releases: mockData.records.filter(r => r['Record Type'] === 'Release'),
+          sustainings: [...mockData.pulpitTracker],
+          highCouncilors: [...mockData.highCouncilors],
+          highCouncilorUnits: [...mockData.highCouncilorUnits],
+          stakePresidency: [...mockData.stakePresidency]
+        };
+        saveDemoDatabase();
+      }
+      
+      // Sanitize Stake Conference field for non-ordinations
+      let needsSave = false;
+      if (state.records.callings) {
+        state.records.callings.forEach(c => {
+          if (c["Stake Conference Sustaining"] && c["Stake Conference Sustaining"] !== "") {
+            c["Stake Conference Sustaining"] = "";
+            needsSave = true;
+          }
+        });
+      }
+      if (state.records.releases) {
+        state.records.releases.forEach(r => {
+          if (r["Stake Conference Sustaining"] && r["Stake Conference Sustaining"] !== "") {
+            r["Stake Conference Sustaining"] = "";
+            needsSave = true;
+          }
+        });
+      }
+      if (needsSave) {
+        saveDemoDatabase();
+      }
+      
+      // Apply custom manual sorting order if it exists
+      state.records.callings = sortRecordsByStoredOrder('Callings Releasings', state.records.callings || []);
+      state.records.ordinations = sortRecordsByStoredOrder('Ordinations', state.records.ordinations || []);
+      state.records.releases = sortRecordsByStoredOrder('Release Only', state.records.releases || []);
+    }
+
+    function saveDemoDatabase() {
+      localStorage.setItem('demo_database_v5', JSON.stringify(state.records));
+    }
+
+    // Render Login Interface
+    function showView(viewId) {
+      document.getElementById('view-login').classList.add('hidden');
+      document.getElementById('view-dashboard').classList.add('hidden');
+      document.getElementById('view-sunday').classList.add('hidden');
+      document.getElementById('view-create').classList.add('hidden');
+      document.getElementById('view-history').classList.add('hidden');
+      document.getElementById('view-settings').classList.add('hidden');
+      
+      document.getElementById(`view-${viewId}`).classList.remove('hidden');
+      state.activeTab = viewId;
+      
+      // Update nav states
+      if (document.getElementById('bottom-nav').style.display !== 'none') {
+        const buttons = document.querySelectorAll('#bottom-nav button');
+        buttons.forEach(btn => btn.classList.remove('text-indigo-500'));
+        buttons.forEach(btn => btn.classList.add('text-slate-400'));
+        const activeNavBtn = document.getElementById(`nav-${viewId}`);
+        if (activeNavBtn) {
+          activeNavBtn.classList.remove('text-slate-400');
+          activeNavBtn.classList.add('text-indigo-500');
+        }
+      }
+    }
+
+    function switchTab(viewId) {
+      if (state.activeTab === 'sunday' && viewId !== 'sunday') {
+        state.sessionSustainings = {};
+      }
+      showView(viewId);
+      if (viewId === 'dashboard') {
+        fetchDashboardData();
+      } else if (viewId === 'sunday') {
+        fetchSundayData();
+      } else if (viewId === 'history') {
+        // Run initial empty query to fetch default list of 10
+        performHistorySearch("");
+      } else if (viewId === 'settings') {
+        renderSettings();
+      } else if (viewId === 'create') {
+        // Render the default form type fields on tab switch
+        renderFormFields();
+      }
+    }
+
+    function handleLogin() {
+      const pin = document.getElementById('login-pin').value;
+      const hcName = document.getElementById('login-hc-name').value;
+      
+      if (!pin) {
+        showToast('Please enter a PIN', 'error');
+        return;
+      }
+
+      const selectorVisible = !document.getElementById('hc-name-selector').classList.contains('hidden');
+
+      if (selectorVisible && !hcName) {
+        const labelText = document.getElementById('login-selector-label').innerText;
+        showToast(`Please ${labelText.toLowerCase()}`, 'error');
+        return;
+      }
+
+      // Submit API Call
+      document.getElementById('btn-login').disabled = true;
+      
+      apiCall('login', { pin: pin, username: hcName || '' })
+        .then(res => {
+          document.getElementById('btn-login').disabled = false;
+          if (res.success) {
+            if (res.role === 'admin_sp_pending') {
+              // PIN matches admin/presidency, show role selector
+              state.highCouncilors = res.highCouncilors;
+              state.highCouncilorUnits = res.highCouncilorUnits || [];
+              state.stakePresidency = res.stakePresidency || [];
+              
+              const selector = document.getElementById('login-hc-name');
+              let selectHtml = '<option value="">-- Select Your Role --</option>';
+              selectHtml += '<option value="Admin">Admin</option>';
+              
+              const spRoster = state.isDemo ? (state.records.stakePresidency || mockData.stakePresidency) : state.stakePresidency;
+              selectHtml += spRoster.map(name => `<option value="${name}">${name}</option>`).join('');
+              
+              selector.innerHTML = selectHtml;
+              document.getElementById('login-selector-label').innerText = 'Select Your Role';
+              document.getElementById('hc-name-selector').classList.remove('hidden');
+              showToast('PIN accepted. Please select your role.', 'info');
+              
+            } else if (res.role === 'hc_pending') {
+              // PIN matches High Council, show name selector
+              state.highCouncilors = res.highCouncilors;
+              state.highCouncilorUnits = res.highCouncilorUnits || [];
+              state.stakePresidency = res.stakePresidency || [];
+              
+              const selector = document.getElementById('login-hc-name');
+              let selectHtml = '<option value="">-- Select your Name --</option>';
+              
+              const hcRoster = state.isDemo ? (state.records.highCouncilors || mockData.highCouncilors) : state.highCouncilors;
+              selectHtml += hcRoster.map(name => `<option value="${name}">${name}</option>`).join('');
+              
+              selector.innerHTML = selectHtml;
+              document.getElementById('login-selector-label').innerText = 'Select your Name';
+              document.getElementById('hc-name-selector').classList.remove('hidden');
+              showToast('PIN accepted. Please select your name.', 'info');
+              
+            } else {
+              // Fully authenticated!
+              const isDemoSession = state.isDemo;
+              state.pin = pin;
+              state.role = res.role;
+              state.username = res.username;
+              state.highCouncilors = res.highCouncilors;
+              state.highCouncilorUnits = res.highCouncilorUnits || [];
+              state.stakePresidency = res.stakePresidency || [];
+              state.isDemo = isDemoSession;
+              
+              localStorage.setItem('tracker_pin', pin);
+              localStorage.setItem('tracker_username', res.username || '');
+              localStorage.setItem('tracker_is_demo', isDemoSession ? 'true' : 'false');
+              if (isDemoSession) {
+                document.getElementById('demo-indicator').classList.remove('hidden');
+                loadDemoData();
+              } else {
+                document.getElementById('demo-indicator').classList.add('hidden');
+              }
+              
+              showMainUI();
+              showToast(`Welcome back, ${res.username || 'Admin'}!`, 'success');
+            }
+          } else {
+            showToast(res.error || 'Authentication failed', 'error');
+          }
+        })
+        .catch(err => {
+          document.getElementById('btn-login').disabled = false;
+          showToast('Connection failed. Starting in demo mode.', 'warning');
+          toggleDemoMode();
+        });
+    }
+
+    function showMainUI() {
+      // Configure elements based on role
+      document.getElementById('user-profile').classList.remove('hidden');
+      document.getElementById('profile-name').innerText = state.username || 'Administrator';
+      document.getElementById('profile-role').innerText = 
+        state.role === 'admin' ? 'Stake Admin' : 
+        state.role === 'presidency' ? 'Stake Presidency' : 'High Councilor';
+      
+      document.getElementById('bottom-nav').classList.remove('hidden');
+      document.getElementById('bottom-nav').style.display = 'flex';
+      
+      if (state.role === 'admin') {
+        document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
+        document.getElementById('settings-pins-card').classList.remove('hidden');
+        document.getElementById('settings-roster-card').classList.remove('hidden');
+        document.getElementById('settings-presidency-card').classList.remove('hidden');
+        document.getElementById('db-tracker-toggle-card').classList.remove('hidden');
+      } else {
+        document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
+        document.getElementById('settings-pins-card').classList.add('hidden');
+        document.getElementById('settings-roster-card').classList.add('hidden');
+        document.getElementById('settings-presidency-card').classList.add('hidden');
+        document.getElementById('db-tracker-toggle-card').classList.add('hidden');
+      }
+
+      if (state.role === 'hc') {
+        document.getElementById('nav-settings').classList.add('hidden');
+        // Hide dashboard filter bar and search for HC Ã¢â‚¬â€ they see all records
+        document.getElementById('db-search-filter-container').classList.add('hidden');
+        
+        // Find their assigned unit for the Sunday pulpit dropdown default
+        const hcRoster = state.isDemo ? (state.records.highCouncilors || mockData.highCouncilors) : state.highCouncilors;
+        const hcUnits = state.isDemo ? (state.records.highCouncilorUnits || mockData.highCouncilorUnits) : state.highCouncilorUnits;
+        const hcIdx = hcRoster.indexOf(state.username);
+        let assignedUnit = '';
+        if (hcIdx !== -1) {
+          assignedUnit = hcUnits[hcIdx] || '';
+        }
+        
+        // Set the Sunday unit dropdown to the HC's assigned unit
+        if (assignedUnit) {
+          document.getElementById('sunday-unit-select').value = assignedUnit;
+        }
+        state.activeFilter = 'all';
+      } else if (state.role === 'presidency') {
+        // Presidency: hide settings, show filter bar (like admin), show tasks (like HC)
+        document.getElementById('nav-settings').classList.add('hidden');
+        document.getElementById('db-search-filter-container').classList.remove('hidden');
+        document.getElementById('filter-all').classList.remove('hidden');
+        setFilter('all');
+      } else {
+        // Admin: show filter bar and search
+        document.getElementById('db-search-filter-container').classList.remove('hidden');
+        document.getElementById('nav-settings').classList.remove('hidden');
+        document.getElementById('filter-all').classList.remove('hidden');
+        setFilter('all');
+      }
+      
+      updateRosterDatalist();
+      switchTab('dashboard');
+    }
+
+    function logout() {
+      state.pin = '';
+      state.role = null;
+      state.username = '';
+      state.isDemo = false;
+      localStorage.removeItem('tracker_pin');
+      localStorage.removeItem('tracker_username');
+      localStorage.removeItem('tracker_is_demo');
+      document.getElementById('user-profile').classList.add('hidden');
+      document.getElementById('bottom-nav').classList.add('hidden');
+      document.getElementById('bottom-nav').style.display = 'none';
+      document.getElementById('hc-name-selector').classList.add('hidden');
+      document.getElementById('login-pin').value = '';
+      
+      showView('login');
+      showToast('Logged out successfully', 'info');
+    }
+
+    // Core API Client Fetch Function
+    function apiCall(action, payload) {
+      if (state.isDemo || !state.apiUrl) {
+        state.isDemo = true;
+        document.getElementById('demo-indicator').classList.remove('hidden');
+        localStorage.setItem('tracker_is_demo', 'true');
+        return handleDemoApi(action, payload);
+      }
+      
+      const body = {
+        action: action,
+        pin: state.pin,
+        username: state.username,
+        ...payload
+      };
+      
+      return fetch(state.apiUrl, {
+        method: 'POST',
+        mode: 'cors',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8' // Crucial to prevent CORS preflight problems with GAS
+        },
+        body: JSON.stringify(body)
+      }).then(res => res.json());
+    }
+
+    // Simulated Demo Mode API Server
+    function handleDemoApi(action, payload) {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          if (action === 'login') {
+            if (payload.pin === '567890') {
+              if (payload.username) {
+                const role = payload.username === 'Admin' ? 'admin' : 'presidency';
+                resolve({ 
+                  success: true, 
+                  role: role, 
+                  username: payload.username, 
+                  highCouncilors: state.records.highCouncilors || mockData.highCouncilors, 
+                  highCouncilorUnits: state.records.highCouncilorUnits || mockData.highCouncilorUnits, 
+                  stakePresidency: state.records.stakePresidency || mockData.stakePresidency 
+                });
+              } else {
+                resolve({ 
+                  success: true, 
+                  role: 'admin_sp_pending', 
+                  highCouncilors: state.records.highCouncilors || mockData.highCouncilors, 
+                  highCouncilorUnits: state.records.highCouncilorUnits || mockData.highCouncilorUnits, 
+                  stakePresidency: state.records.stakePresidency || mockData.stakePresidency 
+                });
+              }
+            } else if (payload.pin === '123456') {
+              if (payload.username) {
+                resolve({ 
+                  success: true, 
+                  role: 'hc', 
+                  username: payload.username, 
+                  highCouncilors: state.records.highCouncilors || mockData.highCouncilors, 
+                  highCouncilorUnits: state.records.highCouncilorUnits || mockData.highCouncilorUnits, 
+                  stakePresidency: state.records.stakePresidency || mockData.stakePresidency 
+                });
+              } else {
+                resolve({ 
+                  success: true, 
+                  role: 'hc_pending', 
+                  highCouncilors: state.records.highCouncilors || mockData.highCouncilors, 
+                  highCouncilorUnits: state.records.highCouncilorUnits || mockData.highCouncilorUnits, 
+                  stakePresidency: state.records.stakePresidency || mockData.stakePresidency 
+                });
+              }
+            } else {
+              resolve({ success: false, error: 'Invalid PIN code' });
+            }
+          } else if (action === 'getData') {
+            if (!state.records.callings || state.records.callings.length === 0) {
+              loadDemoData();
+            }
+            resolve({ success: true, ...state.records });
+          } else if (action === 'updateRecord') {
+            if (payload.type === 'Sustainings') {
+              const item = state.records.sustainings.find(r => 
+                r["Individual"].toLowerCase() === payload.memberName.trim().toLowerCase() && 
+                r["Action"].toLowerCase() === payload.updates._action.trim().toLowerCase() && 
+                r["Calling"].toLowerCase() === payload.updates._calling.trim().toLowerCase()
+              );
+              
+              if (item) {
+                // Apply checkbox updates
+                for (var key in payload.updates) {
+                  if (!key.startsWith('_')) {
+                    item[key] = String(payload.updates[key]);
+                  }
+                }
+                
+                // Calculate percentage
+                let trueCount = 0;
+                let totalCount = 0;
+                STAKE_UNITS.forEach(u => {
+                  if (item[u] === 'True' || item[u] === 'False') {
+                    totalCount++;
+                    if (item[u] === 'True') trueCount++;
+                  }
+                });
+                
+                const percent = totalCount > 0 ? (trueCount / totalCount) : 0;
+                item["Percent"] = String(percent);
+                
+                if (percent === 1.0) {
+                  item["Status"] = "Complete";
+                  // Trigger main sheet update logic in demo too!
+                  updateMainSheetSustainDateDemo(payload.memberName, payload.updates._action);
+                } else {
+                  item["Status"] = "Pending";
+                }
+                
+                saveDemoDatabase();
+                resolve({ success: true, message: 'Sustaining updated in Demo' });
+              } else {
+                resolve({ success: false, error: 'Sustaining row not found in Demo' });
+              }
+            } else {
+              const list = payload.type === 'Callings Releasings' ? state.records.callings : 
+                           payload.type === 'Ordinations' ? state.records.ordinations : state.records.releases;
+              
+              const item = list.find(r => r["Timestamp"] === payload.timestamp && r["Member Name"] === payload.memberName);
+              if (item) {
+                Object.assign(item, payload.updates);
+                saveDemoDatabase();
+                resolve({ success: true, message: 'Record updated locally' });
+              } else {
+                resolve({ success: false, error: 'Record not found' });
+              }
+            }
+          } else if (action === 'addRecord') {
+            const recordWithMeta = {
+              "Timestamp": new Date().toISOString().replace('T', ' ').substring(0, 19),
+              ...payload.record
+            };
+            // Always push to the unified all array
+            if (!state.records.all) state.records.all = [];
+            state.records.all.push(recordWithMeta);
+            
+            if (payload.type === 'Callings Releasings') {
+              state.records.callings.push(recordWithMeta);
+              
+              // Append to sustainings demo
+              const pulpitSustaining = payload.record["Over the Pulpit Sustaining"] || "Home Unit Only";
+              addSustainingEntryDemo(payload.record["Member Name"], payload.record["Unit"], "Sustain", payload.record["Calling"], pulpitSustaining);
+              if (payload.record["Member to Release"]) {
+                addSustainingEntryDemo(payload.record["Member to Release"], payload.record["Unit"], "Release & Thank", payload.record["Calling"], pulpitSustaining);
+              }
+            } else if (payload.type === 'Ordinations') {
+              state.records.ordinations.push(recordWithMeta);
+              addSustainingEntryDemo(payload.record["Member Name"], payload.record["Unit"], "Sustain", payload.record["Priesthood Office"], "Home Unit Only");
+            } else {
+              state.records.releases.push(recordWithMeta);
+              const isStakeWide = payload.record["Stake-Wide Unit Release Required?"] === "Yes" ? "All Units" : "Home Unit Only";
+              addSustainingEntryDemo(payload.record["Member Name"], payload.record["Unit"], "Release & Thank", payload.record["Calling to be Released From"], isStakeWide);
+            }
+            saveDemoDatabase();
+            resolve({ success: true, message: 'Record added locally' });
+          } else if (action === 'searchHistory') {
+            const q = payload.query.toLowerCase().trim();
+            const results = [];
+            const match = (name) => {
+              if (q === "") return true;
+              return name && name.toLowerCase().includes(q);
+            };
+            
+            state.records.callings.forEach(r => {
+              if (match(r["Member Name"]) || match(r["Member to Release"])) {
+                results.push({
+                  type: "Calling / Release",
+                  name: r["Member Name"],
+                  unit: r["Unit"],
+                  details: r["Calling"] + " (Unit: " + r["Unit"] + ")",
+                  releasing: r["Member to Release"] ? r["Member to Release"] + " (Released)" : "",
+                  step: r["Current Step"],
+                  date: r["Timestamp"],
+                  record: r
+                });
+              }
+            });
+            state.records.ordinations.forEach(r => {
+              if (match(r["Member Name"])) {
+                results.push({
+                  type: "Ordination",
+                  name: r["Member Name"],
+                  unit: r["Unit"],
+                  details: r["Priesthood Office"] + " (Unit: " + r["Unit"] + ")",
+                  releasing: "",
+                  step: r["Current Step"],
+                  date: r["Timestamp"],
+                  record: r
+                });
+              }
+            });
+            state.records.releases.forEach(r => {
+              if (match(r["Member Name"])) {
+                results.push({
+                  type: "Release",
+                  name: r["Member Name"],
+                  unit: r["Unit"],
+                  details: r["Calling to be Released From"] + " (Unit: " + r["Unit"] + ")",
+                  releasing: "",
+                  step: r["Current Step"],
+                  date: r["Timestamp"],
+                  record: r
+                });
+              }
+            });
+            results.sort((a,b) => new Date(b.date) - new Date(a.date));
+            
+            if (q === "") {
+              resolve({ success: true, results: results.slice(0, 10) });
+            } else {
+              resolve({ success: true, results: results });
+            }
+          } else if (action === 'updateHighCouncilors') {
+            state.highCouncilors = payload.names;
+            resolve({ success: true, message: 'Roster updated' });
+          } else if (action === 'updateStakePresidency') {
+            state.records.stakePresidency = payload.names;
+            saveDemoDatabase();
+            resolve({ success: true, message: 'Presidency roster updated' });
+          } else if (action === 'updatePINs') {
+            resolve({ success: true, message: 'PINs updated locally' });
+          }
+        }, 300);
+      });
+    }
+
+    // Helper to simulate Sustainings appends in Demo Mode
+    function addSustainingEntryDemo(individual, unit, action, calling, pulpitSustaining) {
+      var row = {
+        "Individual": individual,
+        "Unit": unit,
+        "Action": action,
+        "Calling": calling,
+        "Percent": "0.0",
+        "Status": "Pending",
+        "Stake Conf Sustain Date": ""
+      };
+      
+      const isAllUnits = (pulpitSustaining === "All Units");
+      STAKE_UNITS.forEach(u => {
+        if (isAllUnits) {
+          row[u] = "False";
+        } else {
+          if (u.toLowerCase() === unit.toLowerCase()) {
+            row[u] = "False";
+          } else {
+            row[u] = "";
+          }
+        }
+      });
+      state.records.sustainings.push(row);
+    }
+
+    function updateMainSheetSustainDateDemo(memberName, action) {
+      const todayStr = new Date().toISOString().substring(0,10);
+      if (action.toLowerCase() === "sustain") {
+        var call = state.records.callings.find(r => r["Member Name"].toLowerCase() === memberName.toLowerCase());
+        if (call) {
+          call["Date Sustained"] = todayStr;
+          call["Current Step"] = "Set Apart";
+        }
+        var ord = state.records.ordinations.find(r => r["Member Name"].toLowerCase() === memberName.toLowerCase());
+        if (ord) {
+          ord["Date Sustained"] = todayStr;
+          ord["Current Step"] = "Ordination";
+        }
+      } else {
+        var rel = state.records.releases.find(r => r["Member Name"].toLowerCase() === memberName.toLowerCase());
+        if (rel) {
+          rel["Date Released"] = todayStr;
+          rel["Current Step"] = "Release Complete";
+        }
+      }
+    }
+
+    // Dashboard Fetch & Render Functions
+    function sortRecordsByStoredOrder(type, recordsList) {
+      const key = 'order_' + type.toLowerCase().replace(/\s/g, '');
+      const stored = localStorage.getItem(key);
+      if (!stored) return recordsList;
+      try {
+        const orderKeys = JSON.parse(stored);
+        return [...recordsList].sort((a, b) => {
+          const keyA = `${a.Timestamp}|${a["Member Name"]}`;
+          const keyB = `${b.Timestamp}|${b["Member Name"]}`;
+          let idxA = orderKeys.indexOf(keyA);
+          let idxB = orderKeys.indexOf(keyB);
+          
+          if (idxA === -1) idxA = 999999;
+          if (idxB === -1) idxB = 999999;
+          
+          return idxA - idxB;
+        });
+      } catch (e) {
+        return recordsList;
+      }
+    }
+
+    function moveRecord(type, timestamp, memberName, direction) {
+      let mainArray;
+      if (type === 'Callings Releasings') mainArray = state.records.callings;
+      else if (type === 'Ordinations') mainArray = state.records.ordinations;
+      else if (type === 'Release Only') mainArray = state.records.releases;
+      else return;
+
+      const search = document.getElementById('db-search').value.toLowerCase();
+      const unitFilter = state.activeFilter;
+      const filterFn = r => {
+        const matchesSearch = 
+          (r["Member Name"] && r["Member Name"].toLowerCase().includes(search)) ||
+          (r["Calling"] && r["Calling"].toLowerCase().includes(search)) ||
+          (r["Priesthood Office"] && r["Priesthood Office"].toLowerCase().includes(search)) ||
+          (r["Calling to be Released From"] && r["Calling to be Released From"].toLowerCase().includes(search));
+        
+        const matchesUnit = unitFilter === 'all' || r["Unit"] === unitFilter;
+        return matchesSearch && matchesUnit;
+      };
+      
+      const filteredList = mainArray.filter(filterFn);
+      const currentFilteredIdx = filteredList.findIndex(r => r.Timestamp === timestamp && r["Member Name"] === memberName);
+      if (currentFilteredIdx === -1) return;
+
+      const targetFilteredIdx = currentFilteredIdx + direction;
+      if (targetFilteredIdx < 0 || targetFilteredIdx >= filteredList.length) return;
+
+      const itemA = filteredList[currentFilteredIdx];
+      const itemB = filteredList[targetFilteredIdx];
+
+      const idxA = mainArray.indexOf(itemA);
+      const idxB = mainArray.indexOf(itemB);
+
+      if (idxA !== -1 && idxB !== -1) {
+        const temp = mainArray[idxA];
+        mainArray[idxA] = mainArray[idxB];
+        mainArray[idxB] = temp;
+
+        const key = 'order_' + type.toLowerCase().replace(/\s/g, '');
+        const keys = mainArray.map(r => `${r.Timestamp}|${r["Member Name"]}`);
+        localStorage.setItem(key, JSON.stringify(keys));
+
+        if (state.isDemo) {
+          saveDemoDatabase();
+        }
+
+        renderDashboard();
+      }
+    }
+
+    function fetchDashboardData() {
+      apiCall('getData')
+        .then(res => {
+          if (res.success) {
+            state.records.callings = sortRecordsByStoredOrder('Callings Releasings', res.callings || []);
+            state.records.ordinations = sortRecordsByStoredOrder('Ordinations', res.ordinations || []);
+            state.records.releases = sortRecordsByStoredOrder('Release Only', res.releases || []);
+            state.records.sustainings = normalizeSustainings(res.sustainings || []);
+            updateRosterDatalist();
+            renderDashboard();
+          } else {
+            showToast(res.error || 'Failed to fetch dashboard data', 'error');
+          }
+        })
+        .catch(err => {
+          showToast('Failed to connect to spreadsheet API', 'error');
+        });
+    }
+
+    function setDashboardViewType(viewType) {
+      state.dashboardViewType = viewType;
+      
+      const btnActive = document.getElementById('btn-db-active');
+      const btnStake = document.getElementById('btn-db-stakeconf');
+      
+      if (viewType === 'active') {
+        btnActive.classList.add('bg-indigo-600', 'text-white');
+        btnActive.classList.remove('text-slate-400');
+        btnStake.classList.remove('bg-indigo-600', 'text-white');
+        btnStake.classList.add('text-slate-400');
+        
+        document.getElementById('db-active-panel').classList.remove('hidden');
+        document.getElementById('db-stakeconf-panel').classList.add('hidden');
+      } else {
+        btnStake.classList.add('bg-indigo-600', 'text-white');
+        btnStake.classList.remove('text-slate-400');
+        btnActive.classList.remove('bg-indigo-600', 'text-white');
+        btnActive.classList.add('text-slate-400');
+        
+        document.getElementById('db-stakeconf-panel').classList.remove('hidden');
+        document.getElementById('db-active-panel').classList.add('hidden');
+      }
+      renderDashboard();
+    }
+
+    function setFilter(unit) {
+      state.activeFilter = unit;
+      
+      const sundaySelect = document.getElementById('sunday-unit-select');
+      if (sundaySelect) {
+        sundaySelect.value = unit;
+      }
+      
+      const buttons = document.querySelectorAll('#view-dashboard button[id^="filter-"]');
+      buttons.forEach(btn => {
+        btn.classList.remove('bg-indigo-600', 'text-white');
+        btn.classList.add('glass', 'text-slate-300');
+      });
+      
+      const activeBtnId = unit === 'all' ? 'filter-all' : `filter-${unit.replace(/\s+/g, '')}`;
+      const activeBtn = document.getElementById(activeBtnId);
+      if (activeBtn) {
+        activeBtn.classList.remove('glass', 'text-slate-300');
+        activeBtn.classList.add('bg-indigo-600', 'text-white');
+      }
+      renderDashboard();
+    }
+
+    function filterDashboard() {
+      renderDashboard();
+    }
+
+    function renderDashboard() {
+      if (state.dashboardViewType === 'active') {
+        const search = document.getElementById('db-search').value.toLowerCase();
+        const unitFilter = state.activeFilter;
+        const isHC = (state.role === 'hc');
+        const isPresidency = (state.role === 'presidency');
+        
+        const filterFn = r => {
+          const matchesSearch = 
+            (r["Member Name"] && r["Member Name"].toLowerCase().includes(search)) ||
+            (r["Calling"] && r["Calling"].toLowerCase().includes(search)) ||
+            (r["Priesthood Office"] && r["Priesthood Office"].toLowerCase().includes(search)) ||
+            (r["Calling to be Released From"] && r["Calling to be Released From"].toLowerCase().includes(search));
+          
+          // HC sees ALL records (no unit filter)
+          if (isHC) return matchesSearch;
+          
+          // Admin and Presidency use unit filter
+          let matchesUnit = unitFilter === 'all' || r["Unit"] === unitFilter;
+          return matchesSearch && matchesUnit;
+        };
+
+        let callings = state.records.callings.filter(filterFn);
+        let ordinations = state.records.ordinations.filter(filterFn);
+        const releases = state.records.releases.filter(filterFn);
+        
+        // HC only sees callings at "Approval" and ordinations at "HC Approval"
+        if (isHC) {
+          callings = callings.filter(r => r["Current Step"] === "Approval");
+          ordinations = ordinations.filter(r => r["Current Step"] === "HC Approval");
+        }
+        
+        const releasesContainer = document.getElementById('dashboard-releases-container');
+        const hcTasksContainer = document.getElementById('hc-dashboard-tasks-container');
+        
+        if (isHC || isPresidency) {
+          if (releasesContainer) releasesContainer.classList.add('hidden');
+          if (hcTasksContainer) hcTasksContainer.classList.remove('hidden');
+
+          // Dynamically update the header for My Assigned Tasks with username
+          const dbTasksHeader = document.querySelector('#hc-dashboard-tasks-container h3');
+          if (dbTasksHeader) {
+            dbTasksHeader.innerHTML = `
+              <i data-lucide="check-square" class="w-4 h-4 text-indigo-400"></i>
+              My Assigned Tasks (${state.username || 'Admin'})
+            `;
+          }
+
+          // Render HC/Presidency Personal Tasks in Dashboard
+          const usernameLower = state.username.toLowerCase();
+          const personalTasks = [];
+          
+          state.records.callings.forEach(c => {
+            const ext = String(c["Assigned to Extend Calling / Release"] || "").toLowerCase();
+            const tr = String(c["Assigned Trainer"] || "").toLowerCase();
+            const step = c["Current Step"];
+            
+            if (usernameLower && (ext.includes(usernameLower) || tr.includes(usernameLower))) {
+              if (step === 'Call / Release') {
+                personalTasks.push({ record: c, name: c["Member Name"], task: "Extend Calling & Release", details: `${c["Calling"]} (${c["Unit"]})`, type: 'calling' });
+              } else if (step === 'Set Apart' && tr.includes(usernameLower)) {
+                personalTasks.push({ record: c, name: c["Member Name"], task: "Set Apart", details: `${c["Calling"]} (${c["Unit"]})`, type: 'calling' });
+              } else if (step === 'Training' && tr.includes(usernameLower)) {
+                personalTasks.push({ record: c, name: c["Member Name"], task: "Provide Training", details: `${c["Calling"]} (${c["Unit"]})`, type: 'calling' });
+              }
+            }
+          });
+          
+          state.records.ordinations.forEach(o => {
+            const overseer = String(o["Assigned to Oversee Sustaining / Ordination"] || "").toLowerCase();
+            const step = o["Current Step"];
+            
+            if (usernameLower && overseer.includes(usernameLower)) {
+              if (step === 'Interview') {
+                personalTasks.push({ record: o, name: o["Member Name"], task: "Conduct HP Interview", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination' });
+              } else if (step === 'Ordination') {
+                personalTasks.push({ record: o, name: o["Member Name"], task: "HP Ordination", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination' });
+              }
+            }
+          });
+          
+          state.records.releases.forEach(r => {
+            let assignee = r["Assigned to Extend Release"] || "";
+            const matchingCalling = state.records.callings.find(c => 
+              c["Member to Release"] && 
+              c["Member to Release"].trim().toLowerCase() === r["Member Name"].trim().toLowerCase()
+            );
+            if (matchingCalling) {
+              assignee = matchingCalling["Assigned to Extend Calling / Release"] || assignee;
+            }
+            const ext = String(assignee).toLowerCase();
+            if (usernameLower && ext.includes(usernameLower) && r["Current Step"] === 'Release Pending') {
+              personalTasks.push({ record: r, name: r["Member Name"], task: "Extend Release", details: `${r["Calling to be Released From"]} (${r["Unit"]})`, type: 'release' });
+            }
+          });
+
+          document.getElementById('count-hc-tasks').innerText = personalTasks.length;
+          
+          const personalContainer = document.getElementById('hc-dashboard-tasks');
+          if (personalTasks.length === 0) {
+            personalContainer.innerHTML = `<p class="text-xs text-slate-500 italic text-center py-4">You have no pending assigned tasks</p>`;
+          } else {
+            personalContainer.innerHTML = personalTasks.map(t => `
+              <div class="glass p-3.5 rounded-xl border border-slate-800 flex justify-between items-center shadow-md">
+                <div>
+                  <p class="text-xs font-bold text-slate-100">${t.task}: ${t.name}</p>
+                  <p class="text-[10px] text-slate-400 font-medium">${t.details}</p>
+                </div>
+                <button onclick="openRecordDetails('${t.type === 'calling' ? 'Callings Releasings' : t.type === 'ordination' ? 'Ordinations' : 'Release Only'}', '${t.record["Timestamp"]}', '${t.name.replace(/'/g, "\\'")}')" class="px-2.5 py-1 text-[10px] font-bold bg-indigo-600 text-white rounded hover:bg-indigo-500 active:scale-95 transition-all">
+                  Update
+                </button>
+              </div>
+            `).join('');
+          }
+        } else {
+          if (releasesContainer) releasesContainer.classList.remove('hidden');
+          if (hcTasksContainer) hcTasksContainer.classList.add('hidden');
+        }
+
+        // Counts
+        document.getElementById('count-callings').innerText = callings.length;
+        document.getElementById('count-ordinations').innerText = ordinations.length;
+        document.getElementById('count-releases').innerText = releases.length;
+
+        // Render Lists
+        renderCardList('list-callings', callings, 'Callings Releasings', 'user-plus', 'border-emerald-500/30');
+        renderCardList('list-ordinations', ordinations, 'Ordinations', 'award', 'border-purple-500/30');
+        renderCardList('list-releases', releases, 'Release Only', 'user-minus', 'border-amber-500/30');
+      } else {
+        // Stake Conference View rendering
+        const showPending = document.getElementById('sc-filter-pending').checked;
+        const showStakeConf = document.getElementById('sc-filter-stakeconf').checked;
+        const showComplete = document.getElementById('sc-filter-complete').checked;
+        
+        // Show bulk update section only for admin
+        const bulkEl = document.getElementById('sc-bulk-update');
+        if (bulkEl) bulkEl.classList.toggle('hidden', state.role !== 'admin');
+        
+        // Use Pulpit Tracker sustainings data filtered by Status
+        const scList = (state.records.sustainings || []).filter(s => {
+          const status = (s["Status"] || "").trim();
+          if (status === 'Pending' && showPending) return true;
+          if (status === 'Stake Conf' && showStakeConf) return true;
+          if (status === 'Complete' && showComplete) return true;
+          return false;
+        });
+        
+        document.getElementById('count-stakeconf').innerText = scList.length;
+        
+        const container = document.getElementById('list-stakeconf');
+        if (scList.length === 0) {
+          container.innerHTML = `<p class="text-xs text-slate-500 italic text-center py-8">No records match filters</p>`;
+          return;
+        }
+        
+        container.innerHTML = scList.map(item => {
+          const status = (item["Status"] || "Pending").trim();
+          const stakeConfDate = item["Stake Conf Sustain Date"] || "";
+          const individual = item["Individual"] || "";
+          const unit = item["Unit"] || "";
+          const calling = item["Calling"] || item["Calling / Office"] || "";
+          const action = item["Action"] || "";
+          
+          // Status badge colors
+          let badgeColor, badgeText;
+          if (status === 'Complete') {
+            badgeColor = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+            badgeText = 'Complete';
+          } else if (status === 'Stake Conf') {
+            badgeColor = 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+            badgeText = 'Stake Conf';
+          } else {
+            badgeColor = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+            badgeText = 'Pending';
+          }
+          
+          // Date display
+          const dateHtml = stakeConfDate ? `<span class="text-[9px] text-slate-400 font-medium ml-2">${stakeConfDate}</span>` : '';
+          
+          // Admin status buttons
+          const isAdmin = state.role === 'admin';
+          let statusBtnsHtml = '';
+          if (isAdmin) {
+            const scActive = status === 'Stake Conf' ? 'ring-2 ring-purple-400 bg-purple-500/20' : 'bg-slate-800 hover:bg-slate-700';
+            const completeActive = status === 'Complete' ? 'ring-2 ring-emerald-400 bg-emerald-500/20' : 'bg-slate-800 hover:bg-slate-700';
+            statusBtnsHtml = `
+              <div class="flex items-center gap-1.5 flex-shrink-0">
+                <button onclick="event.stopPropagation(); updateStakeConfStatus('${individual.replace(/'/g, "\\'")}', '${action}', '${calling.replace(/'/g, "\\'")}', 'Stake Conf')" class="px-2 py-1 text-[9px] font-bold rounded-md text-purple-300 transition-all active:scale-95 ${scActive}">Stake Conf</button>
+                <button onclick="event.stopPropagation(); updateStakeConfStatus('${individual.replace(/'/g, "\\'")}', '${action}', '${calling.replace(/'/g, "\\'")}', 'Complete')" class="px-2 py-1 text-[9px] font-bold rounded-md text-emerald-300 transition-all active:scale-95 ${completeActive}">Complete</button>
+              </div>
+            `;
+          }
+          
+          return `
+            <div class="glass p-4 rounded-xl border-l-4 ${status === 'Stake Conf' ? 'border-purple-500/50' : status === 'Complete' ? 'border-emerald-500/50' : 'border-amber-500/50'} transition-all shadow-lg">
+              <div class="flex justify-between items-start gap-3">
+                <div class="space-y-1 min-w-0 flex-1">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-slate-100">${individual}</span>
+                    <span class="text-[9px] font-semibold bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded-md border border-slate-700">${unit}</span>
+                  </div>
+                  <p class="text-xs text-slate-400 font-medium">${calling}</p>
+                  <div class="flex items-center gap-2 pt-1">
+                    <span class="text-[9px] font-medium border px-2 py-0.5 rounded-full ${badgeColor}">${badgeText}</span>
+                    ${dateHtml}
+                  </div>
+                </div>
+                ${statusBtnsHtml}
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+      lucide.createIcons();
+    }
+
+    function renderCardList(containerId, list, type, icon, borderColorClass) {
+      const container = document.getElementById(containerId);
+      if (list.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-500 italic text-center py-4">No records found</p>`;
+        return;
+      }
+
+      container.innerHTML = list.map(r => {
+        const step = r["Current Step"] || 'Pending';
+        const name = r["Member Name"] || 'Unknown';
+        const desc = type === 'Callings Releasings' ? r["Calling"] : 
+                     type === 'Ordinations' ? r["Priesthood Office"] : r["Calling to be Released From"];
+        const unit = r["Unit"] || 'No Unit';
+        
+        // Color badge by step
+        let badgeColor = 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
+        if (step.includes('Training')) badgeColor = 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+        else if (step.includes('Call') || step.includes('Extend')) badgeColor = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+        else if (step.includes('Sustain') || step.includes('Apart') || step.includes('Ordained')) badgeColor = 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+        
+        // Calculate approvals count
+        let votePillHtml = '';
+        if (type !== 'Release Only') {
+          const approves = r["Approvals"] || 0;
+          votePillHtml = `<span class="text-[10px] bg-slate-800 text-slate-400 border border-slate-700 px-2 py-0.5 rounded-full flex items-center gap-1 font-semibold">
+            <i data-lucide="check" class="w-3 h-3 text-emerald-400"></i> ${approves} Vote${approves === 1 ? '' : 's'}
+          </span>`;
+        }
+
+        const isHC = (state.role === 'hc');
+        const username = state.username;
+        const colHeader = `Approval [${username}]`;
+        const hasVoted = isHC && r[colHeader] && (r[colHeader] === 'Yes' || r[colHeader] === 'No');
+        
+        let votedBadgeHtml = '';
+        if (hasVoted) {
+          votedBadgeHtml = `<span class="text-[9px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full flex items-center gap-1 leading-none shadow-sm">
+            <i data-lucide="check" class="w-2.5 h-2.5 text-emerald-400"></i> You Voted
+          </span>`;
+        }
+
+        const reorderButtons = (state.role === 'admin') ? `
+          <div class="flex flex-col gap-0.5 mr-2" onclick="event.stopPropagation()">
+            <button onclick="moveRecord('${type}', '${r["Timestamp"]}', '${name.replace(/'/g, "\\'")}', -1)" class="p-1 hover:bg-slate-700/50 rounded text-slate-400 hover:text-slate-200 transition-colors">
+              <i data-lucide="chevron-up" class="w-3.5 h-3.5"></i>
+            </button>
+            <button onclick="moveRecord('${type}', '${r["Timestamp"]}', '${name.replace(/'/g, "\\'")}', 1)" class="p-1 hover:bg-slate-700/50 rounded text-slate-400 hover:text-slate-200 transition-colors">
+              <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        ` : '';
+
+        return `
+          <div onclick='openRecordDetails("${type}", "${r["Timestamp"]}", "${name.replace(/'/g, "\\'")}")' class="glass hover:bg-slate-800/50 p-4 rounded-xl border-l-4 ${borderColorClass} cursor-pointer active:scale-[0.99] transition-all flex justify-between items-center shadow-lg">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-slate-100">${name}</span>
+                <span class="text-[9px] font-semibold bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded-md border border-slate-700">${unit}</span>
+              </div>
+              <p class="text-xs text-slate-400 font-medium">${desc}</p>
+              <div class="flex items-center gap-2 pt-1.5 flex-wrap">
+                ${votePillHtml}
+                <span class="text-[9px] font-medium border px-2 py-0.5 rounded-full ${badgeColor}">${step}</span>
+                ${votedBadgeHtml}
+              </div>
+            </div>
+            <div class="flex items-center">
+              ${reorderButtons}
+              <i data-lucide="chevron-right" class="w-5 h-5 text-slate-500"></i>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Modal Details Screen & Workflows
+    function openRecordDetails(type, timestamp, memberName) {
+      const list = type === 'Callings Releasings' ? state.records.callings : 
+                   type === 'Ordinations' ? state.records.ordinations : state.records.releases;
+      
+      const record = list.find(r => r["Timestamp"] === timestamp && r["Member Name"] === memberName);
+      if (!record) return;
+
+      state.activeRecord = { type, timestamp, memberName, record };
+
+      // Set Header Details
+      const badge = document.getElementById('modal-type-badge');
+      badge.innerText = type === 'Callings Releasings' ? 'Calling & Release' : 
+                        type === 'Ordinations' ? 'Priesthood Ordination' : 'Release Only';
+      
+      let badgeBg = 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+      if (type === 'Ordinations') badgeBg = 'bg-purple-500/10 text-purple-400 border border-purple-500/20';
+      if (type === 'Release Only') badgeBg = 'bg-amber-500/10 text-amber-400 border border-amber-500/20';
+      badge.className = `text-[9px] font-bold uppercase px-2.5 py-0.5 rounded-full ${badgeBg}`;
+
+      document.getElementById('modal-title').innerText = record["Member Name"];
+      
+      const desc = type === 'Callings Releasings' ? `${record["Calling"]} (${record["Unit"]})` : 
+                   type === 'Ordinations' ? `${record["Priesthood Office"]} (${record["Unit"]})` : 
+                   `${record["Calling to be Released From"]} (${record["Unit"]})`;
+      document.getElementById('modal-subtitle').innerText = desc;
+
+      // Render Modal Content Form Fields
+      renderModalContent(type, record);
+
+      // Open Modal Animations
+      const modal = document.getElementById('record-modal');
+      const drawer = modal.querySelector('div');
+      
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        drawer.classList.remove('translate-y-full');
+      }, 50);
+      
+      lucide.createIcons();
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('record-modal');
+      const drawer = modal.querySelector('div');
+      
+      modal.classList.add('opacity-0');
+      drawer.classList.add('translate-y-full');
+      
+      setTimeout(() => {
+        modal.classList.add('hidden');
+        state.activeRecord = null;
+      }, 300);
+    }
+
+    function renderModalContent(type, record) {
+      const content = document.getElementById('modal-content');
+      const isAdmin = state.role === 'admin';
+      const isHC = state.role === 'hc';
+      const isPres = state.role === 'presidency';
+      
+      let html = '';
+
+      if (type === 'Callings Releasings') {
+        // High Council Approvals calculation
+        let yesVotes = 0;
+        if (state.highCouncilors) {
+          state.highCouncilors.forEach(name => {
+            if (record[`Approval [${name}]`] === 'Yes') yesVotes++;
+          });
+        }
+        const isApproved = yesVotes >= 7;
+        const approvalBannerHtml = isApproved ? `
+          <div class="mb-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 flex items-center gap-3 text-emerald-400">
+            <i data-lucide="check-circle" class="w-5 h-5 text-emerald-400 shrink-0"></i>
+            <div>
+              <div class="text-xs font-bold uppercase tracking-wider">&#10004; High Council Approved</div>
+              <div class="text-[10px] opacity-80">This record has received ${yesVotes} approval votes from the High Council.</div>
+            </div>
+          </div>
+        ` : '';
+
+        const approvalsList = state.highCouncilors.map(name => {
+          const colHeader = `Approval [${name}]`;
+          const vote = record[colHeader] || '';
+          
+          let voteColor = 'bg-slate-800 text-slate-400 border-slate-700';
+          if (vote === 'Yes') voteColor = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+          if (vote === 'No') voteColor = 'bg-red-500/10 text-red-400 border-red-500/20';
+          
+          const canToggle = isAdmin || (isHC && state.username === name);
+          const toggleActionHtml = canToggle ? 
+            `onclick="toggleApprovalVote('Callings Releasings', '${colHeader}', '${vote === 'Yes' ? 'No' : vote === 'No' ? '' : 'Yes'}')"` : '';
+          
+          return `
+            <button ${toggleActionHtml} class="px-2.5 py-1.5 rounded-lg border text-xs font-semibold ${voteColor} active:scale-95 transition-all text-center">
+              ${name}: ${vote || 'Pending'}
+            </button>
+          `;
+        }).join('');
+
+        html += `
+          ${approvalBannerHtml}
+          
+          <!-- Approval Vote grid -->
+          <div class="space-y-2.5">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+              <span>High Council Approvals</span>
+              <span class="text-[10px] text-slate-500">${record["Approvals"] || 0} Yes / ${record["Votes Against"] || 0} No</span>
+            </h4>
+            <div class="grid grid-cols-3 gap-2">
+              ${approvalsList}
+            </div>
+          </div>
+          
+          <hr class="border-slate-800">
+
+          <!-- Section 1: Workflow & Key Info -->
+          <div class="space-y-4">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Workflow & Key Info</h4>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[10px] text-slate-400 font-medium mb-1">Calling Name</label>
+                <input type="text" value="${record['Calling'] || ''}" onchange="updateRecordField('Calling', this.value)" ${isHC ? 'readonly disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+              </div>
+              <div>
+                <label class="block text-[10px] text-slate-400 font-medium mb-1">Current Step</label>
+                <select onchange="updateRecordField('Current Step', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                  <option value=""></option>
+                  <option value="Approval" ${record['Current Step'] === 'Approval' ? 'selected' : ''}>Approval</option>
+                  <option value="Call / Release" ${record['Current Step'] === 'Call / Release' ? 'selected' : ''}>Call / Release</option>
+                  <option value="Sustain" ${record['Current Step'] === 'Sustain' ? 'selected' : ''}>Sustain</option>
+                  <option value="Set Apart" ${record['Current Step'] === 'Set Apart' ? 'selected' : ''}>Set Apart</option>
+                  <option value="Training" ${record['Current Step'] === 'Training' ? 'selected' : ''}>Training</option>
+                  <option value="Complete" ${record['Current Step'] === 'Complete' ? 'selected' : ''}>Complete</option>
+                  <option value="Declined" ${record['Current Step'] === 'Declined' ? 'selected' : ''}>Declined</option>
+                  <option value="Cancelled" ${record['Current Step'] === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              ${renderNameInputField('Recommended By', 'Recommended By', record)}
+              ${renderNameInputField('Assigned to Extend Calling / Release', 'Assigned to Extend Calling / Release', record)}
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[10px] text-slate-400 font-medium mb-1">Current Calling</label>
+                <input type="text" value="${record['Current Calling'] || ''}" onchange="updateRecordField('Current Calling', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+              </div>
+              ${renderSelectField('Calling Accepted?', 'Calling Accepted?', ['Accepted', 'Declined', 'Waiting for Answer'], record)}
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              ${renderSelectField('Need to be Released?', 'Need to be Released?', ['Yes', 'No'], record)}
+            </div>
+          </div>
+
+          <hr class="border-slate-800">
+
+          <!-- Section 2: Member to Release -->
+          <div class="space-y-4">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Member to Release</h4>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[10px] text-slate-400 font-medium mb-1">Member to Release</label>
+                <input type="text" value="${record['Member to Release'] || ''}" onchange="updateRecordField('Member to Release', this.value)" placeholder="Name" class="w-full glass rounded-lg px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+              </div>
+              ${renderSelectField('Notified of Release?', 'Notified of Release?', ['Yes', 'No'], record)}
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              ${renderSelectField('Key Returned?', 'Key Returned?', ['Yes', 'No', 'N/A'], record)}
+              ${renderSelectField('Removed from Google Drive and Calendar Invites?', 'Removed from Drive / Calendar?', ['Yes', 'No', 'N/A'], record)}
+            </div>
+          </div>
+
+          <hr class="border-slate-800">
+
+          <!-- Section 3: Sustaining & Setting Apart -->
+          <div class="space-y-4">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Sustain & Set Apart</h4>
+            <div class="grid grid-cols-2 gap-3">
+              ${renderSelectField('Ready for Sustaining / Setting Apart?', 'Ready for Sustaining?', ['Yes', 'No'], record)}
+              ${renderSelectField('Over the Pulpit Sustaining', 'Pulpit Sustaining Type', ['All Units', 'Home Unit Only', 'None'], record)}
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[10px] text-slate-400 font-medium mb-1">Date Sustained</label>
+                <input type="date" value="${record['Date Sustained'] || ''}" onchange="updateRecordField('Date Sustained', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+              </div>
+              <div>
+                <label class="block text-[10px] text-slate-400 font-medium mb-1">Date Set Apart</label>
+                <input type="date" value="${record['Date Set Apart'] || ''}" onchange="updateRecordField('Date Set Apart', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              ${renderNameInputField('Set Apart By', 'Set Apart By', record)}
+              ${renderSelectField('LCR Updated?', 'LCR Updated?', ['Yes', 'No'], record)}
+            </div>
+          </div>
+
+          <hr class="border-slate-800">
+
+          <!-- Section 4: Training & Onboarding -->
+          <div class="space-y-4">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Training & Onboarding</h4>
+            <div class="grid grid-cols-2 gap-3">
+              ${renderSelectField('Ready for Training?', 'Ready for Training?', ['Yes', 'No'], record)}
+              ${renderNameInputField('Assigned Trainer', 'Assigned Trainer', record)}
+            </div>
+            <div class="grid grid-cols-3 gap-2">
+              ${renderSelectField('Key Provided?', 'Key Provided?', ['Yes', 'No', 'N/A'], record)}
+              ${renderSelectField('Added to Google Drive and Calendar Invites?', 'Added to Drive/Calendar?', ['Yes', 'No', 'N/A'], record)}
+              ${renderSelectField('Training Provided?', 'Training Provided?', ['Yes', 'No'], record)}
+            </div>
+          </div>
+
+          <hr class="border-slate-800">
+
+          <!-- Notes -->
+          <div>
+            <label class="block text-[10px] text-slate-400 font-medium mb-1">Notes</label>
+            <textarea onchange="updateRecordField('Notes', this.value)" rows="2" class="w-full glass rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Notes'] || ''}</textarea>
+          </div>
+        `;
+      } 
+      
+      else if (type === 'Ordinations') {
+        // High Council Approvals calculation
+        let yesVotes = 0;
+        if (state.highCouncilors) {
+          state.highCouncilors.forEach(name => {
+            if (record[`Approval [${name}]`] === 'Yes') yesVotes++;
+          });
+        }
+        const isApproved = yesVotes >= 7;
+        const approvalBannerHtml = isApproved ? `
+          <div class="mb-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 flex items-center gap-3 text-emerald-400">
+            <i data-lucide="check-circle" class="w-5 h-5 text-emerald-400 shrink-0"></i>
+            <div>
+              <div class="text-xs font-bold uppercase tracking-wider">&#10004; High Council Approved</div>
+              <div class="text-[10px] opacity-80">This record has received ${yesVotes} approval votes from the High Council.</div>
+            </div>
+          </div>
+        ` : '';
+
+        const approvalsList = state.highCouncilors.map(name => {
+          const colHeader = `Approval [${name}]`;
+          const vote = record[colHeader] || '';
+          
+          let voteColor = 'bg-slate-800 text-slate-400 border-slate-700';
+          if (vote === 'Yes') voteColor = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+          if (vote === 'No') voteColor = 'bg-red-500/10 text-red-400 border-red-500/20';
+          
+          const canToggle = isAdmin || (isHC && state.username === name);
+          const toggleActionHtml = canToggle ? 
+            `onclick="toggleApprovalVote('Ordinations', '${colHeader}', '${vote === 'Yes' ? 'No' : vote === 'No' ? '' : 'Yes'}')"` : '';
+          
+          return `
+            <button ${toggleActionHtml} class="px-2.5 py-1.5 rounded-lg border text-xs font-semibold ${voteColor} active:scale-95 transition-all text-center">
+              ${name}: ${vote || 'Pending'}
+            </button>
+          `;
+        }).join('');
+
+        html += `
+          ${approvalBannerHtml}
+
+          <!-- Approval Vote grid -->
+          <div class="space-y-2.5">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">High Council Approvals</h4>
+            <div class="grid grid-cols-3 gap-2">
+              ${approvalsList}
+            </div>
+          </div>
+          
+          <hr class="border-slate-800">
+
+          <!-- Section 1: Workflow & Key Info -->
+          <div class="space-y-4">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Workflow & Key Info</h4>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[10px] text-slate-400 font-medium mb-1">Current Step</label>
+                <select onchange="updateRecordField('Current Step', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                  <option value=""></option>
+                  <option value="Stake Interview" ${record['Current Step'] === 'Stake Interview' ? 'selected' : ''}>Stake Interview</option>
+                  <option value="HC Approval" ${record['Current Step'] === 'HC Approval' ? 'selected' : ''}>HC Approval</option>
+                  <option value="Sustaining" ${record['Current Step'] === 'Sustaining' ? 'selected' : ''}>Sustaining</option>
+                  <option value="Ordination" ${record['Current Step'] === 'Ordination' ? 'selected' : ''}>Ordination</option>
+                  <option value="Certificate" ${record['Current Step'] === 'Certificate' ? 'selected' : ''}>Certificate</option>
+                  <option value="Cancelled" ${record['Current Step'] === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                  <option value="Complete" ${record['Current Step'] === 'Complete' ? 'selected' : ''}>Complete</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[10px] text-slate-400 font-medium mb-1">Interview Status</label>
+                <select onchange="updateRecordField('Interview Status', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                  <option value="Pending" ${(record['Interview Status'] || 'Pending') === 'Pending' ? 'selected' : ''}>Pending</option>
+                  <option value="Scheduled" ${record['Interview Status'] === 'Scheduled' ? 'selected' : ''}>Scheduled</option>
+                  <option value="Complete" ${record['Interview Status'] === 'Complete' || record['Interview Status'] === 'Completed' ? 'selected' : ''}>Complete</option>
+                </select>
+              </div>
+            </div>
+            ${renderNameInputField('Assigned to Oversee Sustaining / Ordination', 'Assigned to Oversee Sustaining / Ordination', record)}
+          </div>
+
+          <hr class="border-slate-800">
+
+          <!-- Section 2: Sustaining & Ordination -->
+          <div class="space-y-4">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Sustain & Ordain</h4>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[10px] text-slate-400 font-medium mb-1">Date Sustained</label>
+                <input type="date" value="${record['Date Sustained'] || ''}" onchange="updateRecordField('Date Sustained', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+              </div>
+              <div>
+                <label class="block text-[10px] text-slate-400 font-medium mb-1">Ordained Date</label>
+                <input type="date" value="${record['Ordained Date'] || ''}" onchange="updateRecordField('Ordained Date', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+              </div>
+            </div>
+            ${renderNameInputField('Ordained By', 'Ordained By', record)}
+            
+            <!-- Stake Conference Section (Ordination only) -->
+            ${renderSelectField('Stake Conference Sustaining', 'Stake Conference Sustaining', ['Pending', 'Complete'], record)}
+          </div>
+
+          <hr class="border-slate-800">
+
+          <!-- Section 3: Certificate & Office Admin -->
+          <div class="space-y-4">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Certificate & LCR</h4>
+            <div class="grid grid-cols-3 gap-2">
+              ${renderSelectField('Certificate Printed?', 'Cert Printed?', ['Yes', 'No'], record)}
+              ${renderSelectField('Certificate Signed?', 'Cert Signed?', ['Yes', 'No'], record)}
+              ${renderSelectField('Certificate Delivered?', 'Cert Delivered?', ['Yes', 'No'], record)}
+            </div>
+            <div class="grid grid-cols-3 gap-2">
+              ${renderSelectField('LCR Updated?', 'LCR Updated?', ['Yes', 'Pending'], record)}
+              <div>
+                <label class="block text-[10px] text-slate-400 font-medium mb-1">Entered By</label>
+                <input type="text" value="${record['Entered By'] || ''}" onchange="updateRecordField('Entered By', this.value)" placeholder="Type name" class="w-full glass rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+              </div>
+              <div>
+                <label class="block text-[10px] text-slate-400 font-medium mb-1">Date Entered</label>
+                <input type="date" value="${record['Date Entered'] || ''}" onchange="updateRecordField('Date Entered', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+              </div>
+            </div>
+          </div>
+
+          <hr class="border-slate-800">
+
+          <!-- Notes -->
+          <div>
+            <label class="block text-[10px] text-slate-400 font-medium mb-1">Notes</label>
+            <textarea onchange="updateRecordField('Notes', this.value)" rows="2" class="w-full glass rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Notes'] || ''}</textarea>
+          </div>
+        `;
+      }
+      
+      else if (type === 'Release Only') {
+        html += `
+          <!-- Section 1: Workflow & Key Info -->
+          <div class="space-y-4">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Workflow & Key Info</h4>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[10px] text-slate-400 font-medium mb-1">Calling to be Released From</label>
+                <input type="text" value="${record['Calling to be Released From'] || ''}" onchange="updateRecordField('Calling to be Released From', this.value)" ${isHC ? 'readonly disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+              </div>
+              <div>
+                <label class="block text-[10px] text-slate-400 font-medium mb-1">Current Step</label>
+                <select onchange="updateRecordField('Current Step', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                  <option value=""></option>
+                  <option value="Pending Approval" ${record['Current Step'] === 'Pending Approval' ? 'selected' : ''}>Pending Approval</option>
+                  <option value="Assigned" ${record['Current Step'] === 'Assigned' ? 'selected' : ''}>Assigned</option>
+                  <option value="Update System + LCR" ${record['Current Step'] === 'Update System + LCR' ? 'selected' : ''}>Update System + LCR</option>
+                  <option value="Cancelled" ${record['Current Step'] === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                  <option value="Complete" ${record['Current Step'] === 'Complete' ? 'selected' : ''}>Complete</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[10px] text-slate-400 font-medium mb-1">Reason for Release</label>
+                <input type="text" value="${record['Reason for Release'] || ''}" onchange="updateRecordField('Reason for Release', this.value)" placeholder="Reason" class="w-full glass rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+              </div>
+              ${renderNameInputField('Assigned to Extend Release', 'Assigned to Extend Release', record)}
+            </div>
+          </div>
+
+          <hr class="border-slate-800">
+
+          <!-- Section 2: Release Status & System Updates -->
+          <div class="space-y-4">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Release Status & Updates</h4>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[10px] text-slate-400 font-medium mb-1">Date Released</label>
+                <input type="date" value="${record['Date Released'] || ''}" onchange="updateRecordField('Date Released', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+              </div>
+              ${renderSelectField('Release Complete?', 'Release Complete?', ['Yes', 'No'], record)}
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              ${renderSelectField('Key Returned?', 'Key Returned?', ['Yes', 'No', 'N/A'], record)}
+              ${renderSelectField('Removed from Google Drive and Calendar Invites (if applicable)?', 'Removed from Invites?', ['Yes', 'No', 'N/A'], record)}
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              ${renderSelectField('LCR Updated?', 'LCR Updated?', ['Yes', 'No'], record)}
+              ${renderSelectField('Stake-Wide Unit Release Required?', 'Stake-Wide Release Required?', ['Yes', 'No'], record)}
+            </div>
+          </div>
+
+          <hr class="border-slate-800">
+
+          <!-- Notes -->
+          <div>
+            <label class="block text-[10px] text-slate-400 font-medium mb-1">Notes</label>
+            <textarea onchange="updateRecordField('Notes', this.value)" rows="2" class="w-full glass rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Notes'] || ''}</textarea>
+          </div>
+        `;
+      }
+
+      content.innerHTML = html;
+    }
+
+    function renderChecklistField(fieldKey, isChecked, labelText) {
+      const isAdmin = state.role === 'admin';
+      const isHC = state.role === 'hc';
+      const isPres = state.role === 'presidency';
+      
+      const hcWhitelist = [
+        "Calling Accepted?",
+        "Notified of Release?",
+        "Key Returned?",
+        "Date Sustained",
+        "Date Set Apart", "Ordained Date",
+        "Set Apart By", "Ordained By",
+        "Ready for Training?", "Ready for Training",
+        "Key Provided?", "Key Provided",
+        "Training Provided?", "Training Provided"
+      ];
+      
+      const presWhitelist = [
+        ...hcWhitelist,
+        "Removed from Google Drive and Calendar Invites?",
+        "Removed from Google Drive and Calendar Invites (if applicable)?",
+        "Added to Google Drive and Calendar Invites?"
+      ];
+      
+      const canEdit = isAdmin || (isHC && hcWhitelist.includes(fieldKey)) || (isPres && presWhitelist.includes(fieldKey));
+      
+      const onchangeHtml = canEdit ? 
+        `onchange="updateRecordField('${fieldKey}', this.checked ? 'Yes' : 'No')"` : 'disabled';
+      
+      // Customize special return values
+      let checkedValue = isChecked;
+      if (fieldKey === 'Calling Accepted?') {
+        checkedValue = state.activeRecord.record['Calling Accepted?'] === 'Accepted';
+        const hcOnchangeHtml = canEdit ? 
+          `onchange="updateRecordField('${fieldKey}', this.checked ? 'Accepted' : 'Declined')"` : 'disabled';
+        return `
+          <label class="flex items-center gap-3 cursor-pointer text-xs select-none">
+            <input type="checkbox" ${checkedValue ? 'checked' : ''} ${hcOnchangeHtml} class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 bg-slate-800 border-slate-700">
+            <span class="${checkedValue ? 'text-slate-200 font-semibold' : 'text-slate-400'}">${labelText}</span>
+          </label>
+        `;
+      }
+      
+      return `
+        <label class="flex items-center gap-3 cursor-pointer text-xs select-none">
+          <input type="checkbox" ${checkedValue ? 'checked' : ''} ${onchangeHtml} class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 bg-slate-800 border-slate-700">
+          <span class="${checkedValue ? 'text-slate-200 font-semibold' : 'text-slate-400'}">${labelText}</span>
+        </label>
+      `;
+    }
+
+    function renderSelectField(fieldKey, labelText, options, record) {
+      const isAdmin = state.role === 'admin';
+      const isHC = state.role === 'hc';
+      const isPres = state.role === 'presidency';
+      
+      const hcWhitelist = [
+        "Calling Accepted?",
+        "Notified of Release?",
+        "Key Returned?",
+        "Date Sustained",
+        "Date Set Apart", "Ordained Date",
+        "Set Apart By", "Ordained By",
+        "Ready for Training?", "Ready for Training",
+        "Key Provided?", "Key Provided",
+        "Training Provided?", "Training Provided",
+        "Ready for High Council Approval?",
+        "Ready for Sustaining?",
+        "Ready for Certificate?",
+        "Certificate Printed?",
+        "Certificate Signed?",
+        "Certificate Delivered?",
+        "Entered By",
+        "Date Entered",
+        "Stake-Wide Unit Release Required?",
+        "Release Complete?"
+      ];
+      
+      const presWhitelist = [
+        ...hcWhitelist,
+        "Removed from Google Drive and Calendar Invites?",
+        "Removed from Google Drive and Calendar Invites (if applicable)?",
+        "Added to Google Drive and Calendar Invites?",
+        "Need to be Released?",
+        "LCR Updated?",
+        "Current Step",
+        "Over the Pulpit Sustaining",
+        "Stake Conference Sustaining"
+      ];
+      
+      const canEdit = isAdmin || (isHC && hcWhitelist.includes(fieldKey)) || (isPres && presWhitelist.includes(fieldKey));
+      const disabledHtml = canEdit ? '' : 'disabled';
+      const currentValue = record[fieldKey] || '';
+      
+      const optionsHtml = options.map(opt => {
+        const val = typeof opt === 'string' ? opt : opt.value;
+        const label = typeof opt === 'string' ? opt : opt.label;
+        return `<option value="${val}" ${currentValue === val ? 'selected' : ''}>${label}</option>`;
+      }).join('');
+      
+      return `
+        <div>
+          <label class="block text-[10px] text-slate-400 font-medium mb-1">${labelText}</label>
+          <select onchange="updateRecordField('${fieldKey}', this.value)" ${disabledHtml} class="w-full glass rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+            <option value=""></option>
+            ${optionsHtml}
+          </select>
+        </div>
+      `;
+    }
+
+    function renderNameInputField(fieldKey, labelText, record) {
+      const isAdmin = state.role === 'admin';
+      const isHC = state.role === 'hc';
+      const isPres = state.role === 'presidency';
+      
+      const hcWhitelist = [
+        "Set Apart By", "Ordained By", "Assigned Trainer", "Entered By",
+        "Assigned to Extend Calling / Release", "Assigned to Oversee Sustaining / Ordination", "Assigned to Extend Release",
+        "Recommended By"
+      ];
+      
+      const presWhitelist = [
+        ...hcWhitelist
+      ];
+      
+      const canEdit = isAdmin || (isHC && hcWhitelist.includes(fieldKey)) || (isPres && presWhitelist.includes(fieldKey));
+      const disabledHtml = canEdit ? '' : 'readonly';
+      const currentValue = record[fieldKey] || '';
+      
+      return `
+        <div>
+          <label class="block text-[10px] text-slate-400 font-medium mb-1">${labelText}</label>
+          <input type="text" list="stake-presidency-hc-list" value="${currentValue}" onchange="updateRecordField('${fieldKey}', this.value)" ${disabledHtml} placeholder="Select or type name" class="w-full glass rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+        </div>
+      `;
+    }
+
+    function updateRosterDatalist() {
+      const spRoster = state.isDemo ? (state.records.stakePresidency || mockData.stakePresidency) : state.stakePresidency;
+      const hcRoster = state.isDemo ? (state.records.highCouncilors || mockData.highCouncilors) : state.highCouncilors;
+      const allNames = [...(spRoster || []), ...(hcRoster || [])];
+      
+      let datalist = document.getElementById('stake-presidency-hc-list');
+      if (!datalist) {
+        datalist = document.createElement('datalist');
+        datalist.id = 'stake-presidency-hc-list';
+        document.body.appendChild(datalist);
+      }
+      datalist.innerHTML = allNames.map(name => `<option value="${name}"></option>`).join('');
+    }
+
+    // Toggle high council approvals immediately in the modal UI
+    function toggleApprovalVote(type, voteHeader, voteValue) {
+      if (!state.activeRecord) return;
+      
+      const updates = {};
+      updates[voteHeader] = voteValue;
+      
+      const loadingToast = showToast('Submitting vote...', 'info', 0);
+      
+      apiCall('updateRecord', {
+        type: type,
+        timestamp: state.activeRecord.timestamp,
+        memberName: state.activeRecord.memberName,
+        updates: updates
+      })
+      .then(res => {
+        dismissToast(loadingToast);
+        if (res.success) {
+          showToast('Vote registered successfully!', 'success');
+          
+          state.activeRecord.record[voteHeader] = voteValue;
+          
+          // Re-calculate approvals count locally
+          let yesCount = 0;
+          let noCount = 0;
+          state.highCouncilors.forEach(name => {
+            const val = state.activeRecord.record[`Approval [${name}]`] || '';
+            if (val === 'Yes') yesCount++;
+            if (val === 'No') noCount++;
+          });
+          state.activeRecord.record["Approvals"] = String(yesCount);
+          state.activeRecord.record["Votes Against"] = String(noCount);
+          
+          renderModalContent(type, state.activeRecord.record);
+          renderDashboard();
+        } else {
+          showToast(res.error || 'Failed to register vote', 'error');
+        }
+      })
+      .catch(err => {
+        dismissToast(loadingToast);
+        showToast('API Connection error', 'error');
+      });
+    }
+
+    // Update single fields (checklist options, text, dates)
+    function updateRecordField(fieldKey, value) {
+      if (!state.activeRecord) return;
+      
+      const updates = {};
+      updates[fieldKey] = value;
+      
+      const loadingToast = showToast('Saving changes...', 'info', 0);
+      
+      apiCall('updateRecord', {
+        type: state.activeRecord.type,
+        timestamp: state.activeRecord.timestamp,
+        memberName: state.activeRecord.memberName,
+        updates: updates
+      })
+      .then(res => {
+        dismissToast(loadingToast);
+        if (res.success) {
+          showToast('Changes saved!', 'success');
+          state.activeRecord.record[fieldKey] = value;
+          
+          // Dynamically update header subtitle in case Calling was modified
+          const subtitle = state.activeRecord.type === 'Callings Releasings' ? `${state.activeRecord.record["Calling"]} (${state.activeRecord.record["Unit"]})` : 
+                           state.activeRecord.type === 'Ordinations' ? `${state.activeRecord.record["Priesthood Office"]} (${state.activeRecord.record["Unit"]})` : 
+                           `${state.activeRecord.record["Calling to be Released From"]} (${state.activeRecord.record["Unit"]})`;
+          document.getElementById('modal-subtitle').innerText = subtitle;
+
+          renderModalContent(state.activeRecord.type, state.activeRecord.record);
+          renderDashboard();
+          
+          if (state.activeTab === 'history') {
+            const histItem = state.historyResults.find(r => r.date === state.activeRecord.timestamp && r.name === state.activeRecord.memberName);
+            if (histItem) {
+              histItem.step = state.activeRecord.record["Current Step"] || histItem.step;
+              if (fieldKey === 'Calling') {
+                histItem.details = value + " (Unit: " + state.activeRecord.record["Unit"] + ")";
+              } else if (fieldKey === 'Priesthood Office') {
+                histItem.details = value + " (Unit: " + state.activeRecord.record["Unit"] + ")";
+              } else if (fieldKey === 'Calling to be Released From') {
+                histItem.details = value + " (Unit: " + state.activeRecord.record["Unit"] + ")";
+              }
+            }
+            renderHistoryResults();
+          }
+        } else {
+          showToast(res.error || 'Failed to save changes', 'error');
+          renderModalContent(state.activeRecord.type, state.activeRecord.record);
+        }
+      })
+      .catch(err => {
+        dismissToast(loadingToast);
+        showToast('Connection error, field not saved', 'error');
+        renderModalContent(state.activeRecord.type, state.activeRecord.record);
+      });
+    }
+
+    // Fetch active records for Sunday Unit View
+    function fetchSundayData() {
+      apiCall('getData')
+        .then(res => {
+          if (res.success) {
+            state.records.callings = res.callings || [];
+            state.records.ordinations = res.ordinations || [];
+            state.records.releases = res.releases || [];
+            state.records.sustainings = normalizeSustainings(res.sustainings || []);
+            
+            // Re-initialize Sunday ordering cache if it's empty
+            initializeSundayOrders();
+            renderSundayView();
+          } else {
+            showToast('Failed to retrieve Sunday checklist data', 'error');
+          }
+        })
+        .catch(() => showToast('API connection error', 'error'));
+    }
+
+    // Normalize Pulpit Tracker records: map alternate column names to expected ones
+    function normalizeSustainings(records) {
+      return records.map(s => {
+        // Map "Calling / Office" -> "Calling" if "Calling" is missing
+        if (!s["Calling"] && s["Calling / Office"]) {
+          s["Calling"] = s["Calling / Office"];
+        }
+        // Normalize unit column booleans to strings
+        STAKE_UNITS.forEach(u => {
+          if (s[u] === true) s[u] = 'True';
+          if (s[u] === false) s[u] = 'False';
+        });
+        return s;
+      });
+    }
+
+    // Setup Sunday Candidate Orderings arrays if they have new items
+    function initializeSundayOrders() {
+      const selectedUnit = document.getElementById('sunday-unit-select').value;
+      
+      // Merge sessionSustainings that are not already in state.records.sustainings
+      state.sessionSustainings = state.sessionSustainings || {};
+      
+      // Clean up sessionSustainings if they are back in the active returned records
+      (state.records.sustainings || []).forEach(s => {
+        const key = `${s["Individual"]}|${s["Action"]}|${s["Calling"]}`;
+        if (s["Status"] !== 'Complete' && state.sessionSustainings[key]) {
+          delete state.sessionSustainings[key];
+        }
+      });
+
+      const activeSustainings = [];
+      const keysSeen = new Set();
+      
+      // Build a set of keys that were checked off THIS session (should remain visible with Done badge)
+      const sessionKeys = new Set(Object.keys(state.sessionSustainings || {}));
+      
+      // Add ones returned from backend that match criteria
+      (state.records.sustainings || []).forEach(s => {
+        const key = `${s["Individual"]}|${s["Action"]}|${s["Calling"]}`;
+        if (s["Status"] === 'Complete') return; // Fully complete, skip
+        
+        // Helper to check if a unit column has sustaining data (any value set)
+        const hasData = (val) => val === 'Complete' || val === 'True' || val === 'False' || val === true || val === false;
+        const isDone = (val) => val === 'Complete' || val === 'True' || val === true;
+        
+        // Check if this item is already checked off for the target unit
+        let isAlreadyCheckedOff = false;
+        if (selectedUnit === 'all') {
+          isAlreadyCheckedOff = false; // Show all for "all" view
+        } else {
+          isAlreadyCheckedOff = isDone(s[selectedUnit]);
+        }
+        
+        // Determine if item has sustaining data for this unit
+        let hasSustainingData = false;
+        if (selectedUnit === 'all') {
+          hasSustainingData = STAKE_UNITS.some(u => hasData(s[u]));
+        } else {
+          hasSustainingData = hasData(s[selectedUnit]);
+        }
+        
+        if (hasSustainingData) {
+          // If already checked off, only show if it's a session check-off (just done now)
+          if (isAlreadyCheckedOff && !sessionKeys.has(key)) {
+            // Already completed before this session Ã¢â‚¬â€ hide it
+            keysSeen.add(key);
+            return;
+          }
+          activeSustainings.push(s);
+          keysSeen.add(key);
+        }
+      });
+      
+      // Add ones from sessionSustainings for this unit (items checked off this session)
+      Object.keys(state.sessionSustainings).forEach(key => {
+        if (!keysSeen.has(key)) {
+          const s = state.sessionSustainings[key];
+          let hasSustainingData = false;
+          if (selectedUnit === 'all') {
+            hasSustainingData = STAKE_UNITS.some(u => s[u] === 'Complete' || s[u] === 'True' || s[u] === 'False');
+          } else {
+            hasSustainingData = s[selectedUnit] === 'Complete' || s[selectedUnit] === 'True' || s[selectedUnit] === 'False';
+          }
+          if (hasSustainingData) {
+            activeSustainings.push(s);
+            keysSeen.add(key);
+          }
+        }
+      });
+      
+      // Filter list of ordinations (Action === "Sustain" && (Calling === "Elder" || Calling === "High Priest"))
+      const ordinations = activeSustainings.filter(s => s["Action"] === "Sustain" && (s["Calling"] === "Elder" || s["Calling"] === "High Priest"));
+      
+      // Filter list of releases (Action === "Release & Thank")
+      const releases = activeSustainings.filter(s => s["Action"] === "Release & Thank");
+      
+      // Filter list of callings sustainings (Action === "Sustain" && Calling !== "Elder" && Calling !== "High Priest")
+      const sustains = activeSustainings.filter(s => s["Action"] === "Sustain" && s["Calling"] !== "Elder" && s["Calling"] !== "High Priest");
+      
+      // Compare and align order arrays, adding any new ones at the end
+      state.sundayOrdinationsOrder = alignOrderArray(state.sundayOrdinationsOrder || [], ordinations);
+      state.sundayReleasesOrder = alignOrderArray(state.sundayReleasesOrder || [], releases);
+      state.sundaySustainingsOrder = alignOrderArray(state.sundaySustainingsOrder || [], sustains);
+    }
+
+    function alignOrderArray(existingOrder, currentCandidates) {
+      // Return order of current candidates, keeping indices of matching existing ones
+      const aligned = [];
+      
+      // First copy items from existing order that are still in current candidates list
+      existingOrder.forEach(cand => {
+        const stillExists = currentCandidates.find(c => c["Individual"] === cand["Individual"] && c["Calling"] === cand["Calling"]);
+        if (stillExists) aligned.push(stillExists);
+      });
+      
+      // Next append any new ones that weren't in existing order
+      currentCandidates.forEach(cand => {
+        const alreadyIn = aligned.find(c => c["Individual"] === cand["Individual"] && c["Calling"] === cand["Calling"]);
+        if (!alreadyIn) aligned.push(cand);
+      });
+      
+      return aligned;
+    }
+
+    function renderSundayView() {
+      const selectedUnit = document.getElementById('sunday-unit-select').value;
+      
+      initializeSundayOrders(); // Make sure order arrays are ready
+      renderSundayPulpitAnnouncements(selectedUnit);
+    }
+
+    // Sunday View Section A: Pulpit Scripts & Up/Down Candidate Reorder
+    function renderSundayPulpitAnnouncements(unit) {
+      const ordinations = state.sundayOrdinationsOrder || [];
+      const releases = state.sundayReleasesOrder || [];
+      const sustains = state.sundaySustainingsOrder || [];
+      
+      // 1. Render Priesthood Ordinations
+      const ordContainer = document.getElementById('sunday-ordination-list');
+      const ordScriptBox = document.getElementById('sunday-ordination-script-text');
+      
+      if (ordinations.length === 0) {
+        ordContainer.innerHTML = `<p class="text-xs text-slate-500 italic text-center py-4">No active ordinations</p>`;
+        ordScriptBox.innerHTML = `No ordinations scheduled for this unit.`;
+      } else {
+        const ordString = ordinations.map(o => {
+          const officeWord = (o["Calling"] || "").toLowerCase().includes("high priest") ? "a High Priest" : "an Elder";
+          return `<span class="text-indigo-400 font-bold">${o["Individual"]}</span> of <span class="text-slate-200 font-semibold">${o["Unit"]}</span> to the office of <span class="text-slate-200 font-semibold">${officeWord}</span>.`;
+        }).join('<br>');
+        
+        ordScriptBox.innerHTML = `
+          "The following have been found worthy to advance in the priesthood and we propose they be sustained:<br><br>
+          ${ordString}<br><br>
+          Those in favor may manifest it by the uplifted hand.<br>
+          [Pause for Vote]<br>
+          Those opposed, if any, may manifest it."
+        `;
+        ordContainer.innerHTML = ordinations.map((o, i) => renderSundayCandidateRow(o, i, 'ordination')).join('');
+      }
+
+      // 2. Render Release Announcements
+      const relContainer = document.getElementById('sunday-release-list');
+      const relScriptBox = document.getElementById('sunday-release-script-text');
+      
+      if (releases.length === 0) {
+        relContainer.innerHTML = `<p class="text-xs text-slate-500 italic text-center py-4">No active releases</p>`;
+        relScriptBox.innerHTML = `No releases scheduled for this unit.`;
+      } else {
+        const namesString = releases.map(r => `<span class="text-indigo-400 font-bold">${r["Individual"]}</span> of <span class="text-slate-200 font-semibold">${r["Unit"]}</span> as <span class="text-slate-200 font-semibold">${r["Calling"]}</span>.`).join('<br>');
+        relScriptBox.innerHTML = `
+          "The following have been released, and we propose that they be given a vote of thanks for their service:<br><br>
+          ${namesString}<br><br>
+          Those who wish to express their appreciation may manifest it by the uplifted hand."
+        `;
+        relContainer.innerHTML = releases.map((r, i) => renderSundayCandidateRow(r, i, 'release')).join('');
+      }
+
+      // 3. Render Sustaining Announcements
+      const susContainer = document.getElementById('sunday-sustain-list');
+      const susScriptBox = document.getElementById('sunday-sustain-script-text');
+      
+      if (sustains.length === 0) {
+        susContainer.innerHTML = `<p class="text-xs text-slate-500 italic text-center py-4">No active sustainings</p>`;
+        susScriptBox.innerHTML = `No sustainings scheduled for this unit.`;
+      } else {
+        const susWording = sustains.map(s => {
+          return `<span class="text-indigo-400 font-bold">${s["Individual"]}</span> of <span class="text-slate-200 font-semibold">${s["Unit"]}</span> as <span class="text-slate-200 font-semibold">${s["Calling"]}</span>.`;
+        }).join('<br>');
+        
+        susScriptBox.innerHTML = `
+          "The following have been extended callings, and we propose that they be sustained:<br><br>
+          ${susWording}<br><br>
+          Those in favor may manifest it by the uplifted hand.<br>
+          [Pause for Vote]<br>
+          Those opposed, if any, may manifest it."
+        `;
+        susContainer.innerHTML = sustains.map((s, i) => renderSundayCandidateRow(s, i, 'sustain')).join('');
+      }
+      lucide.createIcons();
+    }
+
+    function renderSundayCandidateRow(cand, idx, type) {
+      const selectedUnit = document.getElementById('sunday-unit-select').value;
+      const targetUnit = selectedUnit === 'all' ? (cand.Unit || cand["Unit"] || '') : selectedUnit;
+      const isChecked = cand[targetUnit] === 'Complete' || cand[targetUnit] === 'True' || cand[targetUnit] === true;
+      const callingVal = cand["Calling"] || cand["Calling / Office"] || '';
+      const individualVal = cand["Individual"] || '';
+      
+      // Determine list max length for reordering bounds
+      const listLen = type === 'ordination' ? (state.sundayOrdinationsOrder || []).length :
+                      type === 'release' ? (state.sundayReleasesOrder || []).length : (state.sundaySustainingsOrder || []).length;
+      
+      const upDisabled = idx === 0 ? 'opacity-20 pointer-events-none' : '';
+      const downDisabled = idx === listLen - 1 ? 'opacity-20 pointer-events-none' : '';
+      
+      const actionButtonHtml = isChecked 
+        ? `<span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold flex items-center gap-1"><i data-lucide="check-circle" class="w-3 h-3 text-emerald-400"></i> Done</span>`
+        : `<button onclick="toggleSustaining('${individualVal.replace(/'/g, "\\'")}', '${cand["Action"]}', '${callingVal.replace(/'/g, "\\'")}', true)" class="px-2.5 py-1 text-[10px] font-bold bg-emerald-600 hover:bg-emerald-500 active:scale-95 transition-all text-white rounded flex items-center gap-1">
+            <i data-lucide="check" class="w-3 h-3"></i> Check Off
+           </button>`;
+      
+      return `
+        <div class="glass p-3 rounded-xl flex items-center justify-between gap-3 border border-slate-800">
+          <div class="flex items-center gap-3 min-w-0 flex-1">
+            <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleSustaining('${individualVal.replace(/'/g, "\\'")}', '${cand["Action"]}', '${callingVal.replace(/'/g, "\\'")}', this.checked)" class="w-4.5 h-4.5 rounded text-indigo-600 bg-slate-800 border-slate-700 flex-shrink-0">
+            <div class="min-w-0">
+              <p class="text-xs font-bold text-slate-100 truncate">${individualVal} (${cand["Unit"] || ''})</p>
+              <p class="text-[10px] text-slate-400 font-medium break-words">${callingVal}</p>
+            </div>
+          </div>
+          
+          <div class="flex items-center gap-1.5 font-sans flex-shrink-0">
+            ${actionButtonHtml}
+            <button onclick="moveSundayCandidate('${type}', ${idx}, -1)" class="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 ${upDisabled}">
+              <i data-lucide="arrow-up" class="w-3.5 h-3.5"></i>
+            </button>
+            <button onclick="moveSundayCandidate('${type}', ${idx}, 1)" class="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 ${downDisabled}">
+              <i data-lucide="arrow-down" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    // Swap indexes in sunday lists client side
+    function moveSundayCandidate(type, idx, direction) {
+      const arr = type === 'ordination' ? state.sundayOrdinationsOrder :
+                  type === 'release' ? state.sundayReleasesOrder : state.sundaySustainingsOrder;
+      const targetIdx = idx + direction;
+      if (targetIdx < 0 || targetIdx >= arr.length) return;
+      
+      // Swap elements
+      const temp = arr[idx];
+      arr[idx] = arr[targetIdx];
+      arr[targetIdx] = temp;
+      
+      renderSundayView();
+    }
+
+    // Unified toggle sustaining checkbox / check-off event
+    function toggleSustaining(individual, action, calling, isChecked) {
+      const selectedUnit = document.getElementById('sunday-unit-select').value;
+      const todayStr = isChecked ? new Date().toISOString().split('T')[0] : "";
+      
+      const load = showToast(isChecked ? 'Checking off sustaining & advancing status...' : 'Undoing sustaining...', 'info', 0);
+      
+      let targetUnit = selectedUnit;
+      if (selectedUnit === 'all') {
+        const key = `${individual}|${action}|${calling}`;
+        let found = (state.records.sustainings || []).find(s => s["Individual"] === individual && s["Action"] === action && s["Calling"] === calling);
+        if (!found && state.sessionSustainings) {
+          found = state.sessionSustainings[key];
+        }
+        if (found) {
+          targetUnit = found["Unit"] || '';
+        }
+      }
+
+      // 1. Prepare Sustainings update
+      const sustainUpdates = {
+        _action: action,
+        _calling: calling
+      };
+      sustainUpdates[targetUnit] = isChecked ? "True" : "False";
+      
+      const promises = [
+        apiCall('updateRecord', {
+          type: 'Sustainings',
+          memberName: individual,
+          updates: sustainUpdates
+        })
+      ];
+      
+      // 2. Find and prepare underlying record update
+      let targetType = '';
+      let targetTimestamp = '';
+      let targetMemberName = '';
+      let recordUpdates = {};
+      
+      if (action === "Release & Thank") {
+        // Try releases (Release Only) sheet first
+        const relRecord = (state.records.releases || []).find(r => 
+          r["Member Name"] === individual && r["Calling to be Released From"] === calling
+        );
+        if (relRecord) {
+          targetType = 'Release Only';
+          targetTimestamp = relRecord["Timestamp"];
+          targetMemberName = relRecord["Member Name"];
+          recordUpdates = isChecked ? {
+            "Current Step": "Update System + LCR",
+            "Date Released": todayStr,
+            "Release Complete?": "Yes"
+          } : {
+            "Current Step": "Release Pending",
+            "Date Released": "",
+            "Release Complete?": "No"
+          };
+        } else {
+          // Try callings (Callings Releasings) sheet where they are the Member to Release
+          const callRecord = (state.records.callings || []).find(r => 
+            r["Member to Release"] === individual
+          );
+          if (callRecord) {
+            targetType = 'Callings Releasings';
+            targetTimestamp = callRecord["Timestamp"];
+            targetMemberName = callRecord["Member Name"];
+            recordUpdates = isChecked ? {
+              "Notified of Release?": "Yes",
+              "Key Returned?": "Yes"
+            } : {
+              "Notified of Release?": "No",
+              "Key Returned?": "No"
+            };
+          }
+        }
+      } else {
+        // Sustain
+        if (calling === "Elder" || calling === "High Priest") {
+          // Ordination
+          const ordRecord = (state.records.ordinations || []).find(r => 
+            r["Member Name"] === individual && r["Priesthood Office"] === calling
+          );
+          if (ordRecord) {
+            targetType = 'Ordinations';
+            targetTimestamp = ordRecord["Timestamp"];
+            targetMemberName = ordRecord["Member Name"];
+            recordUpdates = isChecked ? {
+              "Current Step": "Ordination",
+              "Date Sustained": todayStr,
+              "Ready for Sustaining?": "Yes"
+            } : {
+              "Current Step": "Sustaining",
+              "Date Sustained": "",
+              "Ready for Sustaining?": "Yes"
+            };
+          }
+        } else {
+          // Calling
+          const callRecord = (state.records.callings || []).find(r => 
+            r["Member Name"] === individual && r["Calling"] === calling
+          );
+          if (callRecord) {
+            targetType = 'Callings Releasings';
+            targetTimestamp = callRecord["Timestamp"];
+            targetMemberName = callRecord["Member Name"];
+            recordUpdates = isChecked ? {
+              "Current Step": "Set Apart",
+              "Date Sustained": todayStr,
+              "Ready for Sustaining / Setting Apart?": "Yes"
+            } : {
+              "Current Step": "Sustain",
+              "Date Sustained": "",
+              "Ready for Sustaining / Setting Apart?": "Yes"
+            };
+          }
+        }
+      }
+      
+      if (targetType) {
+        promises.push(
+          apiCall('updateRecord', {
+            type: targetType,
+            timestamp: targetTimestamp,
+            memberName: targetMemberName,
+            updates: recordUpdates
+          })
+        );
+      }
+      
+      // Update local cache state before fetching to make it responsive
+      const key = `${individual}|${action}|${calling}`;
+      state.sessionSustainings = state.sessionSustainings || {};
+      
+      let candItem = state.records.sustainings.find(s => s["Individual"] === individual && s["Action"] === action && s["Calling"] === calling);
+      if (candItem) {
+        candItem[targetUnit] = isChecked ? "True" : "False";
+        state.sessionSustainings[key] = candItem;
+      }
+      
+      Promise.all(promises)
+        .then(results => {
+          dismissToast(load);
+          const failed = results.find(r => !r.success);
+          if (failed) {
+            showToast(failed.error || 'Failed to complete update', 'error');
+          } else {
+            showToast('Sustaining / Releasing Recorded', 'success');
+          }
+          fetchSundayData();
+        })
+        .catch(err => {
+          dismissToast(load);
+          showToast('Connection error updating sustaining', 'error');
+          fetchSundayData();
+        });
+    }
+
+    // Update a single sustaining's Status in Pulpit Tracker (for Stake Conference tab)
+    function updateStakeConfStatus(individual, action, calling, newStatus) {
+      const load = showToast(`Setting status to ${newStatus}...`, 'info', 0);
+      apiCall('updateRecord', {
+        type: 'Sustainings',
+        memberName: individual,
+        updates: {
+          _action: action,
+          _calling: calling,
+          Status: newStatus
+        }
+      }).then(res => {
+        dismissToast(load);
+        if (res.success) {
+          showToast(`Status updated to ${newStatus}`, 'success');
+          // Update local cache
+          const item = (state.records.sustainings || []).find(s =>
+            s["Individual"] === individual && s["Action"] === action && s["Calling"] === calling
+          );
+          if (item) item["Status"] = newStatus;
+          renderDashboard();
+        } else {
+          showToast(res.error || 'Failed to update status', 'error');
+        }
+      }).catch(() => {
+        dismissToast(load);
+        showToast('Connection error', 'error');
+      });
+    }
+
+    // Bulk update all "Stake Conf" items with a sustain date and set status to Complete
+    function bulkUpdateStakeConfDate() {
+      const dateInput = document.getElementById('sc-bulk-date');
+      const dateVal = dateInput.value;
+      if (!dateVal) {
+        showToast('Please select a date first', 'error');
+        return;
+      }
+
+      const stakeConfItems = (state.records.sustainings || []).filter(s =>
+        (s["Status"] || "").trim() === 'Stake Conf'
+      );
+
+      if (stakeConfItems.length === 0) {
+        showToast('No items with "Stake Conf" status to update', 'error');
+        return;
+      }
+
+      const load = showToast(`Updating ${stakeConfItems.length} records...`, 'info', 0);
+      const promises = stakeConfItems.map(item => {
+        const individual = item["Individual"] || "";
+        const action = item["Action"] || "";
+        const calling = item["Calling"] || item["Calling / Office"] || "";
+        return apiCall('updateRecord', {
+          type: 'Sustainings',
+          memberName: individual,
+          updates: {
+            _action: action,
+            _calling: calling,
+            "Stake Conf Sustain Date": dateVal,
+            Status: "Complete"
+          }
+        });
+      });
+
+      Promise.all(promises)
+        .then(results => {
+          dismissToast(load);
+          const failed = results.filter(r => !r.success);
+          if (failed.length > 0) {
+            showToast(`${failed.length} records failed to update`, 'error');
+          } else {
+            showToast(`All ${stakeConfItems.length} records updated with date ${dateVal}`, 'success');
+          }
+          // Update local cache
+          stakeConfItems.forEach(item => {
+            item["Stake Conf Sustain Date"] = dateVal;
+            item["Status"] = "Complete";
+          });
+          renderDashboard();
+        })
+        .catch(() => {
+          dismissToast(load);
+          showToast('Connection error during bulk update', 'error');
+        });
+    }
+
+    // renderSundayTodoChecklists removed - tasks consolidated on Dashboard
+
+    function renderTodoTaskRow(t) {
+      let actionBtnHtml = '';
+      
+      if (t.task === "Set Apart") {
+        actionBtnHtml = `<button onclick="triggerCompleteSetApart('${t.record["Timestamp"]}', '${t.name.replace(/'/g, "\\'")}')" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] rounded active:scale-95 transition-all">Mark Set Apart</button>`;
+      } else if (t.task === "Ordain") {
+        actionBtnHtml = `<button onclick="triggerCompleteOrdination('${t.record["Timestamp"]}', '${t.name.replace(/'/g, "\\'")}')" class="px-3 py-1 bg-purple-600 hover:bg-purple-500 text-white font-bold text-[10px] rounded active:scale-95 transition-all">Mark Ordained</button>`;
+      } else if (t.task === "Train") {
+        actionBtnHtml = `<button onclick="triggerCompleteTraining('${t.record["Timestamp"]}', '${t.name.replace(/'/g, "\\'")}')" class="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[10px] rounded active:scale-95 transition-all">Training Complete</button>`;
+      } else {
+        actionBtnHtml = `<button onclick="openRecordDetails('Callings Releasings', '${t.record["Timestamp"]}', '${t.name.replace(/'/g, "\\'")}')" class="px-3 py-1 bg-slate-800 border border-slate-700 text-slate-300 font-bold text-[10px] rounded active:scale-95 transition-all">View Details</button>`;
+      }
+
+      return `
+        <div class="glass p-3.5 rounded-xl flex items-center justify-between gap-3 border border-slate-800 shadow-md">
+          <div class="space-y-0.5">
+            <span class="text-[9px] uppercase tracking-wider bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded-md border border-slate-700 font-bold">${t.task}</span>
+            <p class="text-xs font-bold text-slate-100 pt-1">${t.name}</p>
+            <p class="text-[10px] text-slate-400 font-medium">${t.details}</p>
+            <p class="text-[9px] text-slate-500 italic">Assigned: ${t.performer || 'Not assigned'}</p>
+          </div>
+          ${actionBtnHtml}
+        </div>
+      `;
+    }
+
+    // Set Apart task complete prompt
+    function triggerCompleteSetApart(timestamp, name) {
+      const performer = prompt("Who set apart " + name + "?", state.username || "Earl");
+      if (performer === null) return; // Cancelled
+      
+      const todayStr = new Date().toISOString().substring(0, 10);
+      const updates = {
+        "Date Set Apart": todayStr,
+        "Set Apart By": performer,
+        "Current Step": "Training",
+        "Ready for Training?": "Yes"
+      };
+
+      const load = showToast("Saving ordinances...", "info", 0);
+      apiCall("updateRecord", {
+        type: "Callings Releasings",
+        timestamp: timestamp,
+        memberName: name,
+        updates: updates
+      })
+      .then(res => {
+        dismissToast(load);
+        if (res.success) {
+          showToast("Set Apart recorded successfully!", "success");
+          fetchSundayData();
+        } else {
+          showToast(res.error || "Failed to update record", "error");
+        }
+      })
+      .catch(() => {
+        dismissToast(load);
+        showToast("API connection error", "error");
+      });
+    }
+
+    // Ordination task complete prompt
+    function triggerCompleteOrdination(timestamp, name) {
+      const performer = prompt("Who ordained " + name + "?", state.username || "Earl");
+      if (performer === null) return;
+      
+      const todayStr = new Date().toISOString().substring(0, 10);
+      const updates = {
+        "Ordained Date": todayStr,
+        "Ordained By": performer,
+        "Current Step": "Complete"
+      };
+
+      const load = showToast("Saving ordination...", "info", 0);
+      apiCall("updateRecord", {
+        type: "Ordinations",
+        timestamp: timestamp,
+        memberName: name,
+        updates: updates
+      })
+      .then(res => {
+        dismissToast(load);
+        if (res.success) {
+          showToast("Ordination recorded successfully!", "success");
+          fetchSundayData();
+        } else {
+          showToast(res.error || "Failed to update record", "error");
+        }
+      })
+      .catch(() => {
+        dismissToast(load);
+        showToast("API connection error", "error");
+      });
+    }
+
+    // Training task complete prompt
+    function triggerCompleteTraining(timestamp, name) {
+      if (!confirm("Has training been fully provided to " + name + "?")) return;
+      
+      const updates = {
+        "Training Provided?": "Yes",
+        "Current Step": "Complete"
+      };
+
+      const load = showToast("Completing training...", "info", 0);
+      apiCall("updateRecord", {
+        type: "Callings Releasings",
+        timestamp: timestamp,
+        memberName: name,
+        updates: updates
+      })
+      .then(res => {
+        dismissToast(load);
+        if (res.success) {
+          showToast("Training marked complete!", "success");
+          fetchSundayData();
+        } else {
+          showToast(res.error || "Failed to update record", "error");
+        }
+      })
+      .catch(() => {
+        dismissToast(load);
+        showToast("API connection error", "error");
+      });
+    }
+
+    // 4. Create Entry Form rendering
+    function setFormType(type) {
+      state.formType = type;
+      const btns = ['calling', 'ordination', 'release'];
+      btns.forEach(b => {
+        const el = document.getElementById(`btn-form-${b}`);
+        el.classList.remove('bg-indigo-600', 'text-white');
+        el.classList.add('text-slate-400', 'hover:text-slate-200');
+      });
+      document.getElementById(`btn-form-${type}`).classList.remove('text-slate-400', 'hover:text-slate-200');
+      document.getElementById(`btn-form-${type}`).classList.add('bg-indigo-600', 'text-white');
+      
+      renderFormFields();
+    }
+
+    function renderFormFields() {
+      const container = document.getElementById('dynamic-form-fields');
+      const lblName = document.getElementById('lbl-member-name');
+      
+      const unitOptions = '<option value=""></option>' + STAKE_UNITS.map(u => `<option value="${u}">${u}</option>`).join('');
+      
+      if (state.formType === 'calling') {
+        lblName.innerText = "Member Name (Person being called)";
+        container.innerHTML = `
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">New Calling</label>
+            <input type="text" id="form-calling" required placeholder="e.g. Elders Quorum President" class="w-full glass rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Unit</label>
+            <select id="form-unit" required class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200 font-semibold">
+              ${unitOptions}
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Member to Release (If replacing someone)</label>
+            <input type="text" id="form-release-member" placeholder="Name of person to be released" class="w-full glass rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200">
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">Current Step</label>
+              <select id="form-current-step" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
+                <option value="Approval" selected>Approval</option>
+                <option value="HC Approval">HC Approval</option>
+                <option value="Call / Release">Call / Release</option>
+                <option value="Set Apart">Set Apart</option>
+                <option value="Training">Training</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">Recommended By</label>
+              <input type="text" id="form-recommended-by" placeholder="e.g. Bishop Smith" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">Pulpit Sustaining</label>
+              <select id="form-pulpit-sustaining" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
+                <option value="All Units" selected>All Units</option>
+                <option value="Home Unit Only">Home Unit Only</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">Assigned to Extend</label>
+              <input type="text" list="stake-presidency-hc-list" id="form-extend-assigned" placeholder="Select or type name" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Notes / Instructions</label>
+            <textarea id="form-notes" rows="3" placeholder="Additional context..." class="w-full glass rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200"></textarea>
+          </div>
+        `;
+      } else if (state.formType === 'ordination') {
+        lblName.innerText = "Member Name (Priesthood candidate)";
+        container.innerHTML = `
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Priesthood Office</label>
+            <select id="form-priesthood" required class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200">
+              <option value=""></option>
+              <option value="Elder">Elder</option>
+              <option value="High Priest">High Priest</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Unit</label>
+            <select id="form-unit" required class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200 font-semibold">
+              ${unitOptions}
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Current Step</label>
+            <select id="form-current-step" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
+              <option value="Stake Interview" selected>Stake Interview</option>
+              <option value="HC Approval">HC Approval</option>
+              <option value="Sustaining">Sustaining</option>
+              <option value="Ordination">Ordination</option>
+              <option value="Certificate">Certificate</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Assigned to Oversee</label>
+            <input type="text" list="stake-presidency-hc-list" id="form-oversee-assigned" placeholder="Select or type name" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Notes</label>
+            <textarea id="form-notes" rows="3" placeholder="Details..." class="w-full glass rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200"></textarea>
+          </div>
+        `;
+      } else if (state.formType === 'release') {
+        lblName.innerText = "Member Name (Person being released)";
+        container.innerHTML = `
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Calling to be Released From</label>
+            <input type="text" id="form-release-calling" required placeholder="e.g. Ward Clerk" class="w-full glass rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Unit</label>
+            <select id="form-unit" required class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200 font-semibold">
+              ${unitOptions}
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Current Step</label>
+            <select id="form-current-step" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
+              <option value="Pending Approval" selected>Pending Approval</option>
+              <option value="Assigned">Assigned</option>
+              <option value="Update System + LCR">Update System + LCR</option>
+            </select>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">Reason for Release</label>
+              <input type="text" id="form-release-reason" placeholder="e.g. Relocating, Health" class="w-full glass rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">Assigned to Release</label>
+              <input type="text" list="stake-presidency-hc-list" id="form-release-assigned" placeholder="Select or type name" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
+            </div>
+          </div>
+        `;
+      }
+      lucide.createIcons();
+    }
+
+    function submitEntryForm(event) {
+      event.preventDefault();
+      
+      const record = {
+        "Member Name": document.getElementById('form-name').value
+      };
+      
+      let type = '';
+      if (state.formType === 'calling') {
+        type = 'Callings Releasings';
+        record["Record Type"] = "Calling";
+        record["Calling"] = document.getElementById('form-calling').value;
+        record["Unit"] = document.getElementById('form-unit').value;
+        record["Member to Release"] = document.getElementById('form-release-member').value;
+        record["Notes"] = document.getElementById('form-notes').value;
+        record["Need to be Released"] = record["Member to Release"] ? 'Yes' : 'No';
+        record["Current Step"] = document.getElementById('form-current-step').value;
+        record["Recommended By"] = document.getElementById('form-recommended-by').value;
+        record["Over the Pulpit Sustaining"] = document.getElementById('form-pulpit-sustaining').value;
+        record["Assigned to Extend Calling / Release"] = document.getElementById('form-extend-assigned').value;
+        record["Stake Conference Sustaining"] = "";
+      } else if (state.formType === 'ordination') {
+        type = 'Ordinations';
+        record["Record Type"] = "Ordination";
+        record["Priesthood Office"] = document.getElementById('form-priesthood').value;
+        record["Unit"] = document.getElementById('form-unit').value;
+        record["Current Step"] = document.getElementById('form-current-step').value;
+        record["Notes"] = document.getElementById('form-notes').value;
+        record["Assigned to Oversee Sustaining / Ordination"] = document.getElementById('form-oversee-assigned').value;
+        record["Interview Status"] = "Pending";
+        record["Stake Conference Sustaining"] = "Pending";
+      } else {
+        type = 'Release Only';
+        record["Record Type"] = "Release";
+        record["Calling to be Released From"] = document.getElementById('form-release-calling').value;
+        record["Unit"] = document.getElementById('form-unit').value;
+        record["Current Step"] = document.getElementById('form-current-step').value;
+        record["Reason for Release"] = document.getElementById('form-release-reason').value;
+        record["Assigned to Extend Release"] = document.getElementById('form-release-assigned').value;
+        record["Stake Conference Sustaining"] = "";
+      }
+
+      const loadToast = showToast('Creating new record...', 'info', 0);
+
+      apiCall('addRecord', { type: type, record: record })
+        .then(res => {
+          dismissToast(loadToast);
+          if (res.success) {
+            showToast('New entry created successfully!', 'success');
+            document.getElementById('entry-form').reset();
+            renderFormFields();
+            switchTab('dashboard');
+          } else {
+            showToast(res.error || 'Failed to create record', 'error');
+          }
+        })
+        .catch(err => {
+          dismissToast(loadToast);
+          showToast('Connection error', 'error');
+        });
+    }
+
+    // 5. Admin History Timeline Search
+    function performHistorySearch(forceQuery) {
+      let q = document.getElementById('history-query').value.trim();
+      if (forceQuery !== undefined) {
+        q = forceQuery;
+        document.getElementById('history-query').value = q;
+      }
+      
+      const container = document.getElementById('history-results');
+      container.innerHTML = `
+        <div class="flex flex-col items-center py-8">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-2"></div>
+          <span class="text-xs text-slate-400">Searching archive...</span>
+        </div>
+      `;
+
+      apiCall('searchHistory', { query: q })
+        .then(res => {
+          if (res.success) {
+            state.historyResults = res.results || [];
+            renderHistoryResults();
+          } else {
+            container.innerHTML = `<p class="text-xs text-red-500 text-center py-6">Error loading history: ${res.error}</p>`;
+          }
+        })
+        .catch(err => {
+          container.innerHTML = `<p class="text-xs text-red-500 text-center py-6">Connection error searching history.</p>`;
+        });
+    }
+
+    function setHistoryStatusFilter(filter) {
+      state.historyStatusFilter = filter;
+      
+      // Update buttons
+      const btns = ['all', 'Active', 'Complete', 'Cancelled', 'Declined'];
+      btns.forEach(b => {
+        const el = document.getElementById(`hist-f-${b.replace(/\s+/g, '')}`);
+        if (el) {
+          el.classList.remove('bg-indigo-600', 'text-white');
+          el.classList.add('glass', 'text-slate-300');
+        }
+      });
+      
+      const activeEl = document.getElementById(`hist-f-${filter.replace(/\s+/g, '')}`);
+      if (activeEl) {
+        activeEl.classList.remove('glass', 'text-slate-300');
+        activeEl.classList.add('bg-indigo-600', 'text-white');
+      }
+      
+      renderHistoryResults();
+    }
+
+    function renderHistoryResults() {
+      const container = document.getElementById('history-results');
+      const filter = state.historyStatusFilter;
+      const isAdmin = state.role === 'admin';
+      
+      // Filter list
+      let filtered = state.historyResults;
+      if (filter === 'Active') {
+        const inactive = ['Complete', 'Cancelled', 'Declined', 'Release Complete'];
+        filtered = state.historyResults.filter(r => {
+          return !inactive.includes(r.step);
+        });
+      } else if (filter !== 'all') {
+        filtered = state.historyResults.filter(r => r.step.toLowerCase().includes(filter.toLowerCase()));
+      }
+      
+      // Apply unit filter
+      const unitFilter = document.getElementById('history-unit-filter') ? document.getElementById('history-unit-filter').value : 'all';
+      if (unitFilter !== 'all') {
+        filtered = filtered.filter(r => r.unit === unitFilter);
+      }
+      
+      if (filtered.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">No matching records found.</p>`;
+        return;
+      }
+      
+      container.innerHTML = `
+        <div class="border-l-2 border-slate-800 ml-4 pl-6 space-y-6 relative">
+          ${filtered.map(r => {
+            let badgeBg = 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+            if (r.type === 'Ordination') badgeBg = 'bg-purple-500/10 text-purple-400 border border-purple-500/20';
+            if (r.type === 'Release') badgeBg = 'bg-amber-500/10 text-amber-400 border border-amber-500/20';
+            
+            const itemClass = isAdmin 
+              ? `class="relative space-y-1 hover:bg-slate-900/40 p-2.5 -m-2.5 rounded-xl transition-all cursor-pointer active:scale-[0.99]"` 
+              : `class="relative space-y-1"`;
+            const onclickHtml = isAdmin 
+              ? `onclick="openHistoryRecordDetails('${r.type.replace(/'/g, "\\'")}', '${r.date.replace(/'/g, "\\'")}', '${r.name.replace(/'/g, "\\'")}')"` 
+              : ``;
+            
+            return `
+              <div ${itemClass} ${onclickHtml}>
+                <!-- Bullet -->
+                <div class="w-3.5 h-3.5 rounded-full bg-slate-900 border-2 border-indigo-500 absolute -left-[31px] top-3.5"></div>
+                
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-semibold text-slate-200">${r.name}</span>
+                  <span class="text-[9px] text-slate-500">${r.date.split(' ')[0]}</span>
+                </div>
+                <div class="text-xs text-slate-300">${r.details}</div>
+                ${r.releasing ? `<div class="text-[10px] text-slate-400 italic">${r.releasing}</div>` : ''}
+                <div class="pt-1.5 flex gap-1.5">
+                  <span class="text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${badgeBg}">${r.type}</span>
+                  <span class="text-[9px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700 font-semibold">${r.step}</span>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    function openHistoryRecordDetails(typeStr, timestamp, memberName) {
+      const sheetType = typeStr === 'Calling / Release' ? 'Callings Releasings' :
+                        typeStr === 'Ordination' ? 'Ordinations' : 'Release Only';
+      
+      const searchItem = state.historyResults.find(r => r.type === typeStr && r.date === timestamp && r.name === memberName);
+      if (!searchItem || !searchItem.record) return;
+      
+      const list = sheetType === 'Callings Releasings' ? state.records.callings : 
+                   sheetType === 'Ordinations' ? state.records.ordinations : state.records.releases;
+      
+      let record = list.find(r => r["Timestamp"] === timestamp && r["Member Name"] === memberName);
+      if (!record) {
+        list.push(searchItem.record);
+      }
+      
+      openRecordDetails(sheetType, timestamp, memberName);
+    }
+
+    // 6. Settings Screen
+    function renderSettings() {
+      // If admin, populate PIN fields, HC inputs, and Presidency inputs
+      if (state.role === 'admin') {
+        document.getElementById('settings-admin-pin').value = state.isDemo ? '567890' : state.pin;
+        document.getElementById('settings-hc-pin').value = state.isDemo ? '123456' : '123456';
+        
+        const rosterContainer = document.getElementById('roster-inputs');
+        const hcRoster = state.isDemo ? (state.records.highCouncilors || mockData.highCouncilors) : state.highCouncilors;
+        const hcUnits = state.isDemo ? (state.records.highCouncilorUnits || mockData.highCouncilorUnits) : state.highCouncilorUnits;
+        
+        rosterContainer.innerHTML = hcRoster.map((name, i) => {
+          const unit = hcUnits[i] || '';
+          const units = ["", "Charlotte", "Holt", "Jackson", "Lansing", "Portland", "Owosso", "St Johns", "Williamston", "YSA"];
+          const optionsHtml = units.map(u => `<option value="${u}" ${u === unit ? 'selected' : ''}>${u || 'No Unit Assigned'}</option>`).join('');
+          return `
+            <div class="flex items-center gap-2 p-2 bg-slate-900/40 rounded-xl border border-slate-800/60">
+              <div class="flex-1 min-w-0">
+                <label class="block text-[9px] text-slate-500 font-bold mb-0.5">High Councilor ${i+1}</label>
+                <input type="text" id="hc-input-${i}" value="${name}" class="w-full glass rounded-lg px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-indigo-500 text-slate-300">
+              </div>
+              <div class="w-36">
+                <label class="block text-[9px] text-slate-500 font-bold mb-0.5">Unit Assigned</label>
+                <select id="hc-unit-${i}" class="w-full glass rounded-lg px-2 py-1.5 text-xs focus:ring-1 focus:ring-indigo-500 text-slate-300">
+                  ${optionsHtml}
+                </select>
+              </div>
+            </div>
+          `;
+        }).join('');
+        
+        const spContainer = document.getElementById('presidency-inputs');
+        const spRoster = state.isDemo ? (state.records.stakePresidency || mockData.stakePresidency) : state.stakePresidency;
+        const spLabels = ["Stake President", "1st Counselor", "2nd Counselor"];
+        spContainer.innerHTML = spRoster.map((name, i) => `
+          <div>
+            <label class="block text-[9px] text-slate-500 font-bold mb-0.5">${spLabels[i] || `Presidency Member ${i+1}`}</label>
+            <input type="text" id="sp-input-${i}" value="${name}" class="w-full glass rounded-lg px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-indigo-500 text-slate-300">
+          </div>
+        `).join('');
+      }
+    }
+
+    function saveApiUrl() {
+      const url = document.getElementById('settings-api-url').value.trim();
+      state.apiUrl = url;
+      localStorage.setItem('tracker_api_url', url);
+      showToast('API Web App URL saved!', 'success');
+      
+      if (url) {
+        state.isDemo = false;
+        localStorage.setItem('tracker_is_demo', 'false');
+        document.getElementById('demo-indicator').classList.add('hidden');
+        logout(); // Force re-login with the new sheet endpoint
+      }
+    }
+
+    function savePINs() {
+      const adminPin = document.getElementById('settings-admin-pin').value;
+      const hcPin = document.getElementById('settings-hc-pin').value;
+      
+      if (!adminPin || !hcPin) {
+        showToast('PIN fields cannot be blank', 'error');
+        return;
+      }
+
+      if (adminPin.length < 6 || hcPin.length < 6) {
+        showToast('PIN codes must be at least 6 digits long', 'error');
+        return;
+      }
+
+      const load = showToast('Saving pins...', 'info', 0);
+      apiCall('updatePINs', { adminPin, hcPin })
+        .then(res => {
+          dismissToast(load);
+          if (res.success) {
+            showToast('PIN codes updated successfully!', 'success');
+            state.pin = adminPin;
+            localStorage.setItem('tracker_pin', adminPin);
+          } else {
+            showToast(res.error || 'Failed to update PINs', 'error');
+          }
+        })
+        .catch(err => {
+          dismissToast(load);
+          showToast('Connection error', 'error');
+        });
+    }
+
+    function saveRoster() {
+      const names = [];
+      const units = [];
+      for (let i = 0; i < 12; i++) {
+        const val = document.getElementById(`hc-input-${i}`).value.trim();
+        if (!val) {
+          showToast(`Seat ${i+1} cannot be blank`, 'error');
+          return;
+        }
+        names.push(val);
+        const unitVal = document.getElementById(`hc-unit-${i}`).value;
+        units.push(unitVal);
+      }
+
+      const btn = document.getElementById('btn-save-roster');
+      btn.disabled = true;
+      const load = showToast('Renaming column headers in sheet... this may take up to 20 seconds.', 'info', 0);
+      
+      if (state.isDemo) {
+        state.records.highCouncilors = names;
+        state.records.highCouncilorUnits = units;
+        saveDemoDatabase();
+        dismissToast(load);
+        showToast('Roster and unit relationships updated!', 'success');
+        state.highCouncilors = names;
+        state.highCouncilorUnits = units;
+        renderSettings();
+        fetchDashboardData();
+        btn.disabled = false;
+        return;
+      }
+
+      apiCall('updateHighCouncilors', { names: names, units: units })
+        .then(res => {
+          btn.disabled = false;
+          dismissToast(load);
+          if (res.success) {
+            showToast('Roster and unit relationships updated!', 'success');
+            state.highCouncilors = names;
+            state.highCouncilorUnits = units;
+            renderSettings();
+            fetchDashboardData();
+          } else {
+            showToast(res.error || 'Failed to update roster', 'error');
+          }
+        })
+        .catch(err => {
+          btn.disabled = false;
+          dismissToast(load);
+          showToast('Connection error updating roster', 'error');
+        });
+    }
+
+    function savePresidencyRoster() {
+      const names = [];
+      for (let i = 0; i < 3; i++) {
+        const val = document.getElementById(`sp-input-${i}`).value.trim();
+        if (!val) {
+          showToast(`Name ${i+1} cannot be blank`, 'error');
+          return;
+        }
+        names.push(val);
+      }
+
+      const btn = document.getElementById('btn-save-presidency');
+      btn.disabled = true;
+      const load = showToast('Saving presidency roster...', 'info', 0);
+      
+      apiCall('updateStakePresidency', { names: names })
+        .then(res => {
+          btn.disabled = false;
+          dismissToast(load);
+          if (res.success) {
+            showToast('Stake Presidency roster updated successfully!', 'success');
+            if (state.isDemo) {
+              state.records.stakePresidency = names;
+              saveDemoDatabase();
+            } else {
+              state.stakePresidency = names;
+            }
+            renderSettings();
+          } else {
+            showToast(res.error || 'Failed to update roster', 'error');
+          }
+        })
+        .catch(err => {
+          btn.disabled = false;
+          dismissToast(load);
+          showToast('Connection error updating presidency roster', 'error');
+        });
+    }
+
+    // UI Toasts notifications helper
+    function showToast(message, type = 'info', duration = 3000) {
+      const id = Date.now();
+      const container = document.getElementById('toast-container');
+      
+      let colors = 'bg-slate-800 text-slate-200 border-slate-700';
+      let icon = 'info';
+      if (type === 'success') {
+        colors = 'bg-emerald-950/80 text-emerald-300 border-emerald-500/30';
+        icon = 'check-circle';
+      } else if (type === 'error') {
+        colors = 'bg-red-950/80 text-red-300 border-red-500/30';
+        icon = 'alert-triangle';
+      } else if (type === 'warning') {
+        colors = 'bg-amber-950/80 text-amber-300 border-amber-500/30';
+        icon = 'alert-circle';
+      }
+
+      const toast = document.createElement('div');
+      toast.id = `toast-${id}`;
+      toast.className = `glass pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border shadow-2xl transition-all duration-300 transform translate-y-2 opacity-0 text-xs font-semibold ${colors}`;
+      toast.innerHTML = `
+        <i data-lucide="${icon}" class="w-4 h-4 flex-shrink-0"></i>
+        <span>${message}</span>
+      `;
+      
+      container.appendChild(toast);
+      lucide.createIcons();
+
+      // Trigger animation
+      setTimeout(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      }, 50);
+
+      // Auto dismiss
+      if (duration > 0) {
+        setTimeout(() => {
+          dismissToast(id);
+        }, duration);
+      }
+
+      return id;
+    }
+
+    function dismissToast(id) {
+      const el = document.getElementById(`toast-${id}`);
+      if (el) {
+        el.classList.add('translate-y-2', 'opacity-0');
+        setTimeout(() => {
+          el.remove();
+        }, 300);
+      }
+    }
+  </script>
+</body>
+</html>

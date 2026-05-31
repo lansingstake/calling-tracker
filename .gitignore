@@ -1,0 +1,6 @@
+# Only deploy index.html to GitHub Pages
+# Ignore backend files (these live in Google Apps Script)
+Code.js
+migration_script.gs
+*.ps1
+*.gs
