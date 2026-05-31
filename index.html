@@ -77,13 +77,20 @@
         <div class="text-center space-y-2">
           <i data-lucide="lock" class="w-12 h-12 text-indigo-500 mx-auto"></i>
           <h2 class="text-xl font-bold">Secure Access</h2>
-          <p class="text-xs text-slate-400">Enter a shared 6-digit PIN to access the church calling tracker</p>
+          <p class="text-xs text-slate-400">Enter the shared PIN to access the calling tracker</p>
         </div>
         
         <div class="space-y-4">
           <div>
             <label class="block text-xs font-medium text-slate-400 mb-1">Enter Shared PIN</label>
-            <input type="password" id="login-pin" oninput="document.getElementById('hc-name-selector').classList.add('hidden')" onkeydown="if(event.key === 'Enter') { event.preventDefault(); handleLogin(); }" placeholder="******" maxlength="8" class="w-full glass rounded-xl px-4 py-3 text-center text-lg font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder-slate-600">
+            <input type="password" id="login-pin" oninput="document.getElementById('hc-name-selector').classList.add('hidden')" onkeydown="if(event.key === 'Enter') { event.preventDefault(); handleLogin(); }" placeholder="********" maxlength="8" class="w-full glass rounded-xl px-4 py-3 text-center text-lg font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder-slate-600">
+          </div>
+
+          <!-- API URL (shown only if not yet configured) -->
+          <div id="login-api-section" class="hidden">
+            <label class="block text-xs font-medium text-slate-400 mb-1">API Connection URL</label>
+            <input type="text" id="login-api-url" placeholder="Paste your Apps Script URL here" class="w-full glass rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200 placeholder-slate-600">
+            <p class="text-[10px] text-slate-500 mt-1">First-time setup only — ask your admin for this URL</p>
           </div>
 
           <!-- Roster/Role Dropdown (Hidden initially, shown if correct pin entered) -->
@@ -99,11 +106,6 @@
             <i data-lucide="arrow-right" class="w-4 h-4"></i>
           </button>
         </div>
-
-        <div class="border-t border-slate-800 pt-4 text-center">
-          <button type="button" onclick="toggleDemoMode()" id="btn-demo-toggle" class="text-xs text-indigo-400 hover:text-indigo-300 underline font-medium">
-            Try Demo Mode without API URL
-          </button>
         </div>
       </form>
     </section>
@@ -564,6 +566,16 @@
       // Setup default configuration URL
       document.getElementById('settings-api-url').value = state.apiUrl;
       
+      // Show API URL field on login screen if not configured
+      const loginApiSection = document.getElementById('login-api-section');
+      if (loginApiSection) {
+        if (!state.apiUrl) {
+          loginApiSection.classList.remove('hidden');
+        } else {
+          loginApiSection.classList.add('hidden');
+        }
+      }
+      
       if (state.pin) {
         // Authenticate with saved PIN (works for both demo and live modes via apiCall)
         if (state.isDemo) {
@@ -752,6 +764,19 @@
       if (selectorVisible && !hcName) {
         const labelText = document.getElementById('login-selector-label').innerText;
         showToast(`Please ${labelText.toLowerCase()}`, 'error');
+        return;
+      }
+
+      // Save API URL from login screen if provided
+      const loginApiUrl = document.getElementById('login-api-url');
+      if (loginApiUrl && loginApiUrl.value.trim()) {
+        state.apiUrl = loginApiUrl.value.trim();
+        localStorage.setItem('tracker_api_url', state.apiUrl);
+        document.getElementById('settings-api-url').value = state.apiUrl;
+      }
+      
+      if (!state.apiUrl) {
+        showToast('Please enter the API Connection URL', 'error');
         return;
       }
 
