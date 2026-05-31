@@ -1,0 +1,29 @@
+
+--- Detailed Inspect of Lans sheet (first 40 rows) ---
+Row 1: [0]: Lansing, [1]: Swipe to Show Release / Sustain List →, [6]: Check Off Sheet, [10]: Check Off Sheet
+Row 2: [EMPTY]
+Row 3: [0]:  Unit To Do List 
+(Setting Apart, Ordaining, Training), [6]: Release & Thank, [10]: Sustain
+Row 4: [0]: Please complete all of the following when you attend your unit, [6]: The following have been released, and we propose that they be given a vote of thanks for their service ... , [10]: The following have been called (ordained), 
+and we propose that they be sustained ... 
+Row 5: [0]: Individual, [1]: Calling / Office, [2]: Step, [3]: Assigned, [4]: Trainer, [6]: Individual, [7]: Unit, [8]: Calling / Office, [10]: Individual, [11]: Unit, [12]: Calling / Office
+Row 6: [0]: Temple McCrary, [1]: Stake Auditor, [2]: Call / Release, [3]: Pierce
+Row 7: [0]: Taylor Smith, [1]: High Priest, [2]: Cancelled, [4]:  , [6]: Those who wish to express their appreciation, [10]: - Those in favor may manifest it by the uplifted hand ...
+Row 8: [0]: Gavin Johnson, [1]: High Priest, [2]: Ordination, [3]: Earl, [4]:  , [6]: may manifest it by the uplifted hand., [10]: - Those opposed, if any, may manifest it ...
+Row 9: [0]: Tristan Packard, [1]: High Priest, [2]: Ordination, [3]: Earl, [4]:  
+Row 10: [0]: Gavin Johnson, [1]: Bishopric 1st Counselor, [2]: Set Apart, [3]: Earl, [4]: Earl
+Row 11: [0]: Tristan Packard, [1]: Bishopric 2nd Counselor, [2]: Set Apart, [3]: Earl, [4]: Earl
+Row 12: [0]: Sawyer Barney, [1]: Executive Secretary, [2]: Training, [3]: Earl, [4]: Hilgendorf
+Row 13: [0]: Tanner Hickman, [1]: Bishop, [2]: Training, [3]: Rawson, [4]: Earl
+Row 14: [EMPTY]
+Row 15: [EMPTY]
+Row 16: [EMPTY]
+Row 17: [EMPTY]
+Row 18: [EMPTY]
+Row 19: [EMPTY]
+Row 20: [EMPTY]
+Row 21: [EMPTY]
+Row 22: [EMPTY]
+Row 23: [EMPTY]
+Row 24: [EMPTY]
+Row 25: [EMPTY]

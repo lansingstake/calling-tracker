@@ -1,0 +1,28 @@
+
+--- Detailed Inspect of Stake Conference sheet (first 40 rows) ---
+Row 1: [0]: Individual, [1]: Unit, [2]: Action, [3]: Calling / Office, [4]: Status
+Row 2: [0]: Clayton Hoekwater, [1]: YSA, [2]: Sustain, [3]: Elder, [4]: Stake Conf
+Row 3: [0]: Skyler Roper, [1]: Portland, [2]: Sustain, [3]: High Priest, [4]: Stake Conf
+Row 4: [0]: Tristan Packard, [1]: Lansing, [2]: Sustain, [3]: High Priest, [4]: Stake Conf
+Row 5: [0]: Gavin Johnson, [1]: Lansing, [2]: Sustain, [3]: High Priest, [4]: Stake Conf
+Row 6: [EMPTY]
+Row 7: [EMPTY]
+Row 8: [EMPTY]
+Row 9: [EMPTY]
+Row 10: [EMPTY]
+Row 11: [EMPTY]
+Row 12: [EMPTY]
+Row 13: [EMPTY]
+Row 14: [EMPTY]
+Row 15: [EMPTY]
+Row 16: [EMPTY]
+Row 17: [EMPTY]
+Row 18: [EMPTY]
+Row 19: [EMPTY]
+Row 20: [EMPTY]
+Row 21: [EMPTY]
+Row 22: [EMPTY]
+Row 23: [EMPTY]
+Row 24: [EMPTY]
+Row 25: [EMPTY]
+Row 26: [EMPTY]
