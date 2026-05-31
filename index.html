@@ -2393,7 +2393,17 @@
       // Add ones returned from backend that match criteria
       (state.records.sustainings || []).forEach(s => {
         const key = `${s["Individual"]}|${s["Action"]}|${s["Calling"]}`;
-        if (s["Status"] === 'Complete') return; // Fully complete, skip
+        const status = (s["Status"] || "Pending").trim();
+        if (status === 'Complete') return; // Fully complete, skip
+        
+        // Admin: show only Pending items, no unit-level filtering
+        if (state.role === 'admin') {
+          if (status === 'Pending') {
+            activeSustainings.push(s);
+            keysSeen.add(key);
+          }
+          return;
+        }
         
         // Helper to check if a unit column has sustaining data (any value set)
         const hasData = (val) => val === 'Complete' || val === 'True' || val === 'False' || val === true || val === false;
@@ -2418,7 +2428,7 @@
         if (hasSustainingData) {
           // If already checked off, only show if it's a session check-off (just done now)
           if (isAlreadyCheckedOff && !sessionKeys.has(key)) {
-            // Already completed before this session Ã¢â‚¬â€ hide it
+            // Already completed before this session — hide it
             keysSeen.add(key);
             return;
           }
@@ -2487,9 +2497,17 @@
 
     // Sunday View Section A: Pulpit Scripts & Up/Down Candidate Reorder
     function renderSundayPulpitAnnouncements(unit) {
+      const isAdmin = state.role === 'admin';
       const ordinations = state.sundayOrdinationsOrder || [];
       const releases = state.sundayReleasesOrder || [];
       const sustains = state.sundaySustainingsOrder || [];
+      
+      // Hide script text boxes for admin
+      const scriptBoxes = ['sunday-ordination-script-text', 'sunday-release-script-text', 'sunday-sustain-script-text'];
+      scriptBoxes.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.toggle('hidden', isAdmin);
+      });
       
       // 1. Render Priesthood Ordinations
       const ordContainer = document.getElementById('sunday-ordination-list');
@@ -2497,20 +2515,22 @@
       
       if (ordinations.length === 0) {
         ordContainer.innerHTML = `<p class="text-xs text-slate-500 italic text-center py-4">No active ordinations</p>`;
-        ordScriptBox.innerHTML = `No ordinations scheduled for this unit.`;
+        if (!isAdmin) ordScriptBox.innerHTML = `No ordinations scheduled for this unit.`;
       } else {
-        const ordString = ordinations.map(o => {
-          const officeWord = (o["Calling"] || "").toLowerCase().includes("high priest") ? "a High Priest" : "an Elder";
-          return `<span class="text-indigo-400 font-bold">${o["Individual"]}</span> of <span class="text-slate-200 font-semibold">${o["Unit"]}</span> to the office of <span class="text-slate-200 font-semibold">${officeWord}</span>.`;
-        }).join('<br>');
-        
-        ordScriptBox.innerHTML = `
-          "The following have been found worthy to advance in the priesthood and we propose they be sustained:<br><br>
-          ${ordString}<br><br>
-          Those in favor may manifest it by the uplifted hand.<br>
-          [Pause for Vote]<br>
-          Those opposed, if any, may manifest it."
-        `;
+        if (!isAdmin) {
+          const ordString = ordinations.map(o => {
+            const officeWord = (o["Calling"] || "").toLowerCase().includes("high priest") ? "a High Priest" : "an Elder";
+            return `<span class="text-indigo-400 font-bold">${o["Individual"]}</span> of <span class="text-slate-200 font-semibold">${o["Unit"]}</span> to the office of <span class="text-slate-200 font-semibold">${officeWord}</span>.`;
+          }).join('<br>');
+          
+          ordScriptBox.innerHTML = `
+            "The following have been found worthy to advance in the priesthood and we propose they be sustained:<br><br>
+            ${ordString}<br><br>
+            Those in favor may manifest it by the uplifted hand.<br>
+            [Pause for Vote]<br>
+            Those opposed, if any, may manifest it."
+          `;
+        }
         ordContainer.innerHTML = ordinations.map((o, i) => renderSundayCandidateRow(o, i, 'ordination')).join('');
       }
 
@@ -2520,14 +2540,16 @@
       
       if (releases.length === 0) {
         relContainer.innerHTML = `<p class="text-xs text-slate-500 italic text-center py-4">No active releases</p>`;
-        relScriptBox.innerHTML = `No releases scheduled for this unit.`;
+        if (!isAdmin) relScriptBox.innerHTML = `No releases scheduled for this unit.`;
       } else {
-        const namesString = releases.map(r => `<span class="text-indigo-400 font-bold">${r["Individual"]}</span> of <span class="text-slate-200 font-semibold">${r["Unit"]}</span> as <span class="text-slate-200 font-semibold">${r["Calling"]}</span>.`).join('<br>');
-        relScriptBox.innerHTML = `
-          "The following have been released, and we propose that they be given a vote of thanks for their service:<br><br>
-          ${namesString}<br><br>
-          Those who wish to express their appreciation may manifest it by the uplifted hand."
-        `;
+        if (!isAdmin) {
+          const namesString = releases.map(r => `<span class="text-indigo-400 font-bold">${r["Individual"]}</span> of <span class="text-slate-200 font-semibold">${r["Unit"]}</span> as <span class="text-slate-200 font-semibold">${r["Calling"]}</span>.`).join('<br>');
+          relScriptBox.innerHTML = `
+            "The following have been released, and we propose that they be given a vote of thanks for their service:<br><br>
+            ${namesString}<br><br>
+            Those who wish to express their appreciation may manifest it by the uplifted hand."
+          `;
+        }
         relContainer.innerHTML = releases.map((r, i) => renderSundayCandidateRow(r, i, 'release')).join('');
       }
 
@@ -2537,25 +2559,28 @@
       
       if (sustains.length === 0) {
         susContainer.innerHTML = `<p class="text-xs text-slate-500 italic text-center py-4">No active sustainings</p>`;
-        susScriptBox.innerHTML = `No sustainings scheduled for this unit.`;
+        if (!isAdmin) susScriptBox.innerHTML = `No sustainings scheduled for this unit.`;
       } else {
-        const susWording = sustains.map(s => {
-          return `<span class="text-indigo-400 font-bold">${s["Individual"]}</span> of <span class="text-slate-200 font-semibold">${s["Unit"]}</span> as <span class="text-slate-200 font-semibold">${s["Calling"]}</span>.`;
-        }).join('<br>');
-        
-        susScriptBox.innerHTML = `
-          "The following have been extended callings, and we propose that they be sustained:<br><br>
-          ${susWording}<br><br>
-          Those in favor may manifest it by the uplifted hand.<br>
-          [Pause for Vote]<br>
-          Those opposed, if any, may manifest it."
-        `;
+        if (!isAdmin) {
+          const susWording = sustains.map(s => {
+            return `<span class="text-indigo-400 font-bold">${s["Individual"]}</span> of <span class="text-slate-200 font-semibold">${s["Unit"]}</span> as <span class="text-slate-200 font-semibold">${s["Calling"]}</span>.`;
+          }).join('<br>');
+          
+          susScriptBox.innerHTML = `
+            "The following have been extended callings, and we propose that they be sustained:<br><br>
+            ${susWording}<br><br>
+            Those in favor may manifest it by the uplifted hand.<br>
+            [Pause for Vote]<br>
+            Those opposed, if any, may manifest it."
+          `;
+        }
         susContainer.innerHTML = sustains.map((s, i) => renderSundayCandidateRow(s, i, 'sustain')).join('');
       }
       lucide.createIcons();
     }
 
     function renderSundayCandidateRow(cand, idx, type) {
+      const isAdmin = state.role === 'admin';
       const selectedUnit = document.getElementById('sunday-unit-select').value;
       const targetUnit = selectedUnit === 'all' ? (cand.Unit || cand["Unit"] || '') : selectedUnit;
       const isChecked = cand[targetUnit] === 'Complete' || cand[targetUnit] === 'True' || cand[targetUnit] === true;
@@ -2569,6 +2594,42 @@
       const upDisabled = idx === 0 ? 'opacity-20 pointer-events-none' : '';
       const downDisabled = idx === listLen - 1 ? 'opacity-20 pointer-events-none' : '';
       
+      if (isAdmin) {
+        // Admin view: show incomplete units in gold, Mark Complete button
+        const status = (cand["Status"] || "Pending").trim();
+        const incompleteUnits = STAKE_UNITS.filter(u => {
+          const val = cand[u];
+          return val === 'False' || val === false || val === '' || val === undefined || val === null;
+        });
+        const incompleteHtml = incompleteUnits.length > 0
+          ? `<p class="text-[10px] text-amber-400 font-medium mt-0.5">Remaining: ${incompleteUnits.join(', ')}</p>`
+          : `<p class="text-[10px] text-emerald-400 font-medium mt-0.5">All units complete</p>`;
+        
+        const adminActionHtml = status === 'Complete'
+          ? `<span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold flex items-center gap-1"><i data-lucide="check-circle" class="w-3 h-3 text-emerald-400"></i> Complete</span>`
+          : `<button onclick="markSustainingComplete('${individualVal.replace(/'/g, "\\'")}', '${cand["Action"]}', '${callingVal.replace(/'/g, "\\'")}')" class="px-2.5 py-1 text-[10px] font-bold bg-emerald-600 hover:bg-emerald-500 active:scale-95 transition-all text-white rounded flex items-center gap-1 whitespace-nowrap">
+              <i data-lucide="check" class="w-3 h-3"></i> Mark Complete
+            </button>`;
+        
+        return `
+          <div class="glass p-3 rounded-xl flex items-center justify-between gap-3 border border-slate-800">
+            <div class="flex items-center gap-3 min-w-0 flex-1">
+              <input type="checkbox" ${status === 'Complete' ? 'checked' : ''} onchange="markSustainingComplete('${individualVal.replace(/'/g, "\\'")}', '${cand["Action"]}', '${callingVal.replace(/'/g, "\\'")}')" class="w-4.5 h-4.5 rounded text-indigo-600 bg-slate-800 border-slate-700 flex-shrink-0">
+              <div class="min-w-0">
+                <p class="text-xs font-bold text-slate-100 truncate">${individualVal} (${cand["Unit"] || ''})</p>
+                <p class="text-[10px] text-slate-400 font-medium break-words">${callingVal}</p>
+                ${incompleteHtml}
+              </div>
+            </div>
+            
+            <div class="flex items-center gap-1.5 font-sans flex-shrink-0">
+              ${adminActionHtml}
+            </div>
+          </div>
+        `;
+      }
+      
+      // HC / Presidency view (existing behavior)
       const actionButtonHtml = isChecked 
         ? `<span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold flex items-center gap-1"><i data-lucide="check-circle" class="w-3 h-3 text-emerald-400"></i> Done</span>`
         : `<button onclick="toggleSustaining('${individualVal.replace(/'/g, "\\'")}', '${cand["Action"]}', '${callingVal.replace(/'/g, "\\'")}', true)" class="px-2.5 py-1 text-[10px] font-bold bg-emerald-600 hover:bg-emerald-500 active:scale-95 transition-all text-white rounded flex items-center gap-1">
@@ -2769,6 +2830,38 @@
           showToast('Connection error updating sustaining', 'error');
           fetchSundayData();
         });
+    }
+
+    // Admin: Mark a sustaining as Complete — removes from all Over the Pulpit screens
+    function markSustainingComplete(individual, action, calling) {
+      const load = showToast('Marking as Complete...', 'info', 0);
+      apiCall('updateRecord', {
+        type: 'Sustainings',
+        memberName: individual,
+        updates: {
+          _action: action,
+          _calling: calling,
+          Status: 'Complete'
+        }
+      }).then(res => {
+        dismissToast(load);
+        if (res.success) {
+          showToast('Marked Complete — removed from all pulpit views', 'success');
+          // Update local cache
+          const item = (state.records.sustainings || []).find(s =>
+            s["Individual"] === individual && s["Action"] === action && (s["Calling"] === calling || s["Calling / Office"] === calling)
+          );
+          if (item) item["Status"] = "Complete";
+          // Re-initialize orders (filters out Complete) and re-render
+          initializeSundayOrders();
+          renderSundayView();
+        } else {
+          showToast(res.error || 'Failed to update', 'error');
+        }
+      }).catch(() => {
+        dismissToast(load);
+        showToast('Connection error', 'error');
+      });
     }
 
     // Update a single sustaining's Status in Pulpit Tracker (for Stake Conference tab)
