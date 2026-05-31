@@ -2558,11 +2558,18 @@
       const filteredSustainings = activeSustainings.filter(s => {
         const name = s["Individual"];
         const calling = s["Calling"];
-        // Check callings records
+        // Check callings records (sustain: Member Name matches)
         const matchingCalling = state.records.callings.find(c => 
           c["Member Name"] === name && c["Calling"] === calling
         );
         if (matchingCalling && earlySteps.includes(matchingCalling["Current Step"])) return false;
+        // Check if this is a release tied to a calling at an early step (Member to Release matches)
+        if (s["Action"] === "Release & Thank") {
+          const parentCalling = state.records.callings.find(c => 
+            c["Member to Release"] === name && c["Calling"] === calling
+          );
+          if (parentCalling && earlySteps.includes(parentCalling["Current Step"])) return false;
+        }
         // Check ordinations records
         const matchingOrd = state.records.ordinations.find(o => 
           o["Member Name"] === name && o["Priesthood Office"] === calling
