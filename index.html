@@ -2553,14 +2553,32 @@
         }
       });
       
+      // Exclude sustaining items whose parent record is still at an early step
+      const earlySteps = ['Approval', 'HC Approval', 'Stake Interview', 'Call / Release'];
+      const filteredSustainings = activeSustainings.filter(s => {
+        const name = s["Individual"];
+        const calling = s["Calling"];
+        // Check callings records
+        const matchingCalling = state.records.callings.find(c => 
+          c["Member Name"] === name && c["Calling"] === calling
+        );
+        if (matchingCalling && earlySteps.includes(matchingCalling["Current Step"])) return false;
+        // Check ordinations records
+        const matchingOrd = state.records.ordinations.find(o => 
+          o["Member Name"] === name && o["Priesthood Office"] === calling
+        );
+        if (matchingOrd && earlySteps.includes(matchingOrd["Current Step"])) return false;
+        return true;
+      });
+
       // Filter list of ordinations (Action === "Sustain" && (Calling === "Elder" || Calling === "High Priest"))
-      const ordinations = activeSustainings.filter(s => s["Action"] === "Sustain" && (s["Calling"] === "Elder" || s["Calling"] === "High Priest"));
+      const ordinations = filteredSustainings.filter(s => s["Action"] === "Sustain" && (s["Calling"] === "Elder" || s["Calling"] === "High Priest"));
       
       // Filter list of releases (Action === "Release & Thank")
-      const releases = activeSustainings.filter(s => s["Action"] === "Release & Thank");
+      const releases = filteredSustainings.filter(s => s["Action"] === "Release & Thank");
       
       // Filter list of callings sustainings (Action === "Sustain" && Calling !== "Elder" && Calling !== "High Priest")
-      const sustains = activeSustainings.filter(s => s["Action"] === "Sustain" && s["Calling"] !== "Elder" && s["Calling"] !== "High Priest");
+      const sustains = filteredSustainings.filter(s => s["Action"] === "Sustain" && s["Calling"] !== "Elder" && s["Calling"] !== "High Priest");
       
       // Compare and align order arrays, adding any new ones at the end
       state.sundayOrdinationsOrder = alignOrderArray(state.sundayOrdinationsOrder || [], ordinations);
