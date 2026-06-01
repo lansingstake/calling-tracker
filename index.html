@@ -205,7 +205,7 @@
 
           <!-- Bulk Date Update (Admin only) -->
           <div id="sc-bulk-update" class="hidden border-t border-slate-800 pt-3 mt-2 space-y-2">
-            <label class="block text-[11px] text-slate-400 font-medium">Stake Conf Sustain Date (will be applied to all Stake Conf items below)</label>
+            <label class="block text-[11px] text-slate-400 font-medium">Stake Conference Sustain Date (will be applied to all pending items below and mark them Complete)</label>
             <div class="flex gap-2">
               <input type="date" id="sc-bulk-date" class="flex-1 glass rounded-lg px-2.5 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
               <button onclick="bulkUpdateStakeConfDate()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-bold rounded-lg transition-all active:scale-95 whitespace-nowrap flex items-center gap-1.5">
@@ -664,16 +664,8 @@
         saveDemoDatabase();
       }
       
-      // Sanitize Stake Conference field for non-ordinations
+      // Sanitize Stake Conference field for Release Only records (not applicable)
       let needsSave = false;
-      if (state.records.callings) {
-        state.records.callings.forEach(c => {
-          if (c["Stake Conference Sustaining"] && c["Stake Conference Sustaining"] !== "") {
-            c["Stake Conference Sustaining"] = "";
-            needsSave = true;
-          }
-        });
-      }
       if (state.records.releases) {
         state.records.releases.forEach(r => {
           if (r["Stake Conference Sustaining"] && r["Stake Conference Sustaining"] !== "") {
@@ -1497,97 +1489,67 @@
         const bulkEl = document.getElementById('sc-bulk-update');
         if (bulkEl) bulkEl.classList.toggle('hidden', state.role !== 'admin');
         
-        // Only show Pulpit Tracker items with "Stake Conf" status
-        const scList = (state.records.sustainings || []).filter(s => {
-          const status = (s["Status"] || "").trim();
-          return status === 'Stake Conf';
-        });
+        // Get callings and ordinations with "Stake Conference Sustaining" = "Pending"
+        const scCallings = (state.records.callings || []).filter(r =>
+          (r["Stake Conference Sustaining"] || "").trim() === 'Pending'
+        ).map(r => ({ ...r, _scType: 'Callings Releasings' }));
         
-        // Auto-complete: if all unit columns are True/Complete, set status to Complete
-        scList.forEach(item => {
-          const allDone = STAKE_UNITS.every(u => {
-            const val = item[u];
-            return val === 'Complete' || val === 'True' || val === true;
-          });
-          if (allDone) {
-            item["Status"] = "Complete";
-            // Fire API call to persist (non-blocking)
-            apiCall('updateRecord', {
-              type: 'Sustainings',
-              memberName: item["Individual"],
-              updates: {
-                _action: item["Action"],
-                _calling: item["Calling"] || item["Calling / Office"],
-                Status: 'Complete'
-              }
-            }).catch(() => {});
-          }
-        });
+        const scOrdinations = (state.records.ordinations || []).filter(r =>
+          (r["Stake Conference Sustaining"] || "").trim() === 'Pending'
+        ).map(r => ({ ...r, _scType: 'Ordinations' }));
         
-        // Re-filter after auto-complete (completed items drop out)
-        const scFiltered = scList.filter(s => (s["Status"] || "").trim() === 'Stake Conf');
+        const scList = [...scCallings, ...scOrdinations];
         
-        document.getElementById('count-stakeconf').innerText = scFiltered.length;
+        document.getElementById('count-stakeconf').innerText = scList.length;
         
         const container = document.getElementById('list-stakeconf');
-        if (scFiltered.length === 0) {
+        if (scList.length === 0) {
           container.innerHTML = `<p class="text-sm text-slate-500 italic text-center py-8">No Stake Conference sustainings pending</p>`;
           return;
         }
         
-        container.innerHTML = scFiltered.map(item => {
-          const status = (item["Status"] || "Pending").trim();
-          const stakeConfDate = item["Stake Conf Sustain Date"] || "";
-          const individual = item["Individual"] || "";
+        container.innerHTML = scList.map(item => {
+          const memberName = item["Member Name"] || "";
           const unit = item["Unit"] || "";
-          const calling = item["Calling"] || item["Calling / Office"] || "";
-          const action = item["Action"] || "";
-          
-          // Status badge colors
-          let badgeColor, badgeText;
-          if (status === 'Complete') {
-            badgeColor = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-            badgeText = 'Complete';
-          } else if (status === 'Stake Conf') {
-            badgeColor = 'bg-purple-500/10 text-purple-400 border-purple-500/20';
-            badgeText = 'Stake Conf';
-          } else {
-            badgeColor = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
-            badgeText = 'Pending';
-          }
+          const timestamp = item["Timestamp"] || "";
+          const scType = item._scType;
+          const calling = scType === 'Ordinations' 
+            ? (item["Priesthood Office"] || "") 
+            : (item["Calling"] || "");
+          const scDate = item["Stake Conference Sustain Date"] || "";
+          const isOrd = scType === 'Ordinations';
           
           // Date display
-          const dateHtml = stakeConfDate ? `<span class="text-[11px] text-slate-400 font-medium ml-2">${stakeConfDate}</span>` : '';
+          const dateHtml = scDate ? `<span class="text-[11px] text-slate-400 font-medium ml-2">${scDate}</span>` : '';
           
-          // Admin status buttons
+          // Type indicator
+          const typeBadge = isOrd 
+            ? '<span class="text-[11px] font-semibold bg-purple-500/10 text-purple-400 px-1.5 py-0.5 rounded-md border border-purple-500/20">Ordination</span>'
+            : '<span class="text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded-md border border-emerald-500/20">Calling</span>';
+          
+          // Mark Complete button (admin only)
           const isAdmin = state.role === 'admin';
-          let statusBtnsHtml = '';
-          if (isAdmin) {
-            const scActive = status === 'Stake Conf' ? 'ring-2 ring-purple-400 bg-purple-500/20' : 'bg-slate-800 hover:bg-slate-700';
-            const completeActive = status === 'Complete' ? 'ring-2 ring-emerald-400 bg-emerald-500/20' : 'bg-slate-800 hover:bg-slate-700';
-            statusBtnsHtml = `
-              <div class="flex items-center gap-1.5 flex-shrink-0">
-                <button onclick="event.stopPropagation(); updateStakeConfStatus('${individual.replace(/'/g, "\\'")}', '${action}', '${calling.replace(/'/g, "\\'")}', 'Stake Conf')" class="px-2 py-1 text-[11px] font-bold rounded-md text-purple-300 transition-all active:scale-95 ${scActive}">Stake Conf</button>
-                <button onclick="event.stopPropagation(); updateStakeConfStatus('${individual.replace(/'/g, "\\'")}', '${action}', '${calling.replace(/'/g, "\\'")}', 'Complete')" class="px-2 py-1 text-[11px] font-bold rounded-md text-emerald-300 transition-all active:scale-95 ${completeActive}">Complete</button>
-              </div>
-            `;
-          }
+          const actionHtml = isAdmin ? `
+            <button onclick="event.stopPropagation(); markStakeConfComplete('${scType}', '${timestamp}', '${memberName.replace(/'/g, "\\\\'")}')" class="px-2.5 py-1 text-[11px] font-bold bg-emerald-600 hover:bg-emerald-500 active:scale-95 transition-all text-white rounded flex items-center gap-1 whitespace-nowrap flex-shrink-0">
+              <i data-lucide="check" class="w-3 h-3"></i> Mark Complete
+            </button>
+          ` : '';
           
           return `
-            <div class="glass p-4 rounded-xl border-l-4 ${status === 'Stake Conf' ? 'border-purple-500/50' : status === 'Complete' ? 'border-emerald-500/50' : 'border-amber-500/50'} transition-all shadow-lg">
+            <div onclick="openRecordDetails('${scType}', '${timestamp}', '${memberName.replace(/'/g, "\\\\'")}')" class="glass p-4 rounded-xl border-l-4 border-purple-500/50 transition-all shadow-lg cursor-pointer hover:bg-slate-800/50 active:scale-[0.99]">
               <div class="flex justify-between items-start gap-3">
                 <div class="space-y-1 min-w-0 flex-1">
                   <div class="flex items-center gap-2">
-                    <span class="text-sm font-bold text-slate-100">${individual}</span>
+                    <span class="text-sm font-bold text-slate-100">${memberName}</span>
                     <span class="text-[11px] font-semibold bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded-md border border-slate-700">${unit}</span>
                   </div>
                   <p class="text-sm text-slate-400 font-medium">${calling}</p>
                   <div class="flex items-center gap-2 pt-1">
-                    <span class="text-[11px] font-medium border px-2 py-0.5 rounded-full ${badgeColor}">${badgeText}</span>
+                    ${typeBadge}
                     ${dateHtml}
                   </div>
                 </div>
-                ${statusBtnsHtml}
+                ${actionHtml}
               </div>
             </div>
           `;
@@ -1890,6 +1852,13 @@
               ${renderSelectField('Over the Pulpit Sustaining', 'Pulpit Sustaining Type', ['All Units', 'Home Unit Only', 'None'], record)}
             </div>
             <div class="grid grid-cols-2 gap-3">
+              ${renderSelectField('Stake Conference Sustaining', 'Stake Conf Sustaining', ['Pending', 'Complete'], record)}
+              <div>
+                <label class="block text-xs text-slate-400 font-medium mb-1">Stake Conf Sustain Date</label>
+                <input type="date" value="${record['Stake Conference Sustain Date'] || ''}" onchange="updateRecordField('Stake Conference Sustain Date', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
               <div>
                 <label class="block text-xs text-slate-400 font-medium mb-1">Date Sustained</label>
                 <input type="date" value="${record['Date Sustained'] || ''}" onchange="updateRecordField('Date Sustained', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
@@ -2070,7 +2039,13 @@
             </div>
             
             <!-- Stake Conference Section (Ordination only) -->
-            ${renderSelectField('Stake Conference Sustaining', 'Stake Conference Sustaining', ['Pending', 'Complete'], record)}
+            <div class="grid grid-cols-2 gap-3">
+              ${renderSelectField('Stake Conference Sustaining', 'Stake Conf Sustaining', ['Pending', 'Complete'], record)}
+              <div>
+                <label class="block text-xs text-slate-400 font-medium mb-1">Stake Conf Sustain Date</label>
+                <input type="date" value="${record['Stake Conference Sustain Date'] || ''}" onchange="updateRecordField('Stake Conference Sustain Date', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+              </div>
+            </div>
           </div>
 
           <hr class="border-slate-800">
@@ -2269,7 +2244,8 @@
         "LCR Updated?",
         "Current Step",
         "Over the Pulpit Sustaining",
-        "Stake Conference Sustaining"
+        "Stake Conference Sustaining",
+        "Stake Conference Sustain Date"
       ];
       
       const canEdit = isAdmin || (isHC && hcWhitelist.includes(fieldKey)) || (isPres && presWhitelist.includes(fieldKey));
@@ -2510,7 +2486,7 @@
       (state.records.sustainings || []).forEach(s => {
         const key = `${s["Individual"]}|${s["Action"]}|${s["Calling"]}`;
         const status = (s["Status"] || "Pending").trim();
-        if (status === 'Complete' || status === 'Stake Conf') return; // Complete or Stake Conf items don't belong on Pulpit screen
+        if (status === 'Complete') return; // Complete items don't belong on Pulpit screen
         
         // Admin: show only Pending ordination items, not callings/releases
         if (state.role === 'admin') {
@@ -3027,29 +3003,28 @@
       });
     }
 
-    // Update a single sustaining's Status in Pulpit Tracker (for Stake Conference tab)
-    function updateStakeConfStatus(individual, action, calling, newStatus) {
-      const load = showToast(`Setting status to ${newStatus}...`, 'info', 0);
+    // Mark a single record's Stake Conference Sustaining as Complete
+    function markStakeConfComplete(recordType, timestamp, memberName) {
+      const load = showToast('Marking as Complete...', 'info', 0);
       apiCall('updateRecord', {
-        type: 'Sustainings',
-        memberName: individual,
+        type: recordType,
+        timestamp: timestamp,
+        memberName: memberName,
         updates: {
-          _action: action,
-          _calling: calling,
-          Status: newStatus
+          "Stake Conference Sustaining": "Complete"
         }
       }).then(res => {
         dismissToast(load);
         if (res.success) {
-          showToast(`Status updated to ${newStatus}`, 'success');
+          showToast('Marked as Complete', 'success');
           // Update local cache
-          const item = (state.records.sustainings || []).find(s =>
-            s["Individual"] === individual && s["Action"] === action && s["Calling"] === calling
-          );
-          if (item) item["Status"] = newStatus;
+          const list = recordType === 'Callings Releasings' ? state.records.callings :
+                       recordType === 'Ordinations' ? state.records.ordinations : state.records.releases;
+          const item = (list || []).find(r => r["Timestamp"] === timestamp && r["Member Name"] === memberName);
+          if (item) item["Stake Conference Sustaining"] = "Complete";
           renderDashboard();
         } else {
-          showToast(res.error || 'Failed to update status', 'error');
+          showToast(res.error || 'Failed to update', 'error');
         }
       }).catch(() => {
         dismissToast(load);
@@ -3057,7 +3032,7 @@
       });
     }
 
-    // Bulk update all "Stake Conf" items with a sustain date and set status to Complete
+    // Bulk update all "Pending" Stake Conference items with a sustain date and mark Complete
     function bulkUpdateStakeConfDate() {
       const dateInput = document.getElementById('sc-bulk-date');
       const dateVal = dateInput.value;
@@ -3066,28 +3041,31 @@
         return;
       }
 
-      const stakeConfItems = (state.records.sustainings || []).filter(s =>
-        (s["Status"] || "").trim() === 'Stake Conf'
-      );
+      // Gather all Records with Stake Conference Sustaining = Pending
+      const scCallings = (state.records.callings || []).filter(r =>
+        (r["Stake Conference Sustaining"] || "").trim() === 'Pending'
+      ).map(r => ({ record: r, type: 'Callings Releasings' }));
+      
+      const scOrdinations = (state.records.ordinations || []).filter(r =>
+        (r["Stake Conference Sustaining"] || "").trim() === 'Pending'
+      ).map(r => ({ record: r, type: 'Ordinations' }));
+      
+      const allItems = [...scCallings, ...scOrdinations];
 
-      if (stakeConfItems.length === 0) {
-        showToast('No items with "Stake Conf" status to update', 'error');
+      if (allItems.length === 0) {
+        showToast('No pending Stake Conference items to update', 'error');
         return;
       }
 
-      const load = showToast(`Updating ${stakeConfItems.length} records...`, 'info', 0);
-      const promises = stakeConfItems.map(item => {
-        const individual = item["Individual"] || "";
-        const action = item["Action"] || "";
-        const calling = item["Calling"] || item["Calling / Office"] || "";
+      const load = showToast(`Updating ${allItems.length} records...`, 'info', 0);
+      const promises = allItems.map(({ record, type }) => {
         return apiCall('updateRecord', {
-          type: 'Sustainings',
-          memberName: individual,
+          type: type,
+          timestamp: record["Timestamp"],
+          memberName: record["Member Name"],
           updates: {
-            _action: action,
-            _calling: calling,
-            "Stake Conf Sustain Date": dateVal,
-            Status: "Complete"
+            "Stake Conference Sustain Date": dateVal,
+            "Stake Conference Sustaining": "Complete"
           }
         });
       });
@@ -3099,12 +3077,12 @@
           if (failed.length > 0) {
             showToast(`${failed.length} records failed to update`, 'error');
           } else {
-            showToast(`All ${stakeConfItems.length} records updated with date ${dateVal}`, 'success');
+            showToast(`All ${allItems.length} records updated with date ${dateVal}`, 'success');
           }
           // Update local cache
-          stakeConfItems.forEach(item => {
-            item["Stake Conf Sustain Date"] = dateVal;
-            item["Status"] = "Complete";
+          allItems.forEach(({ record }) => {
+            record["Stake Conference Sustain Date"] = dateVal;
+            record["Stake Conference Sustaining"] = "Complete";
           });
           renderDashboard();
         })
