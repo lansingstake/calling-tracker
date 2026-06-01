@@ -590,6 +590,8 @@
               state.highCouncilors = res.highCouncilors;
               state.highCouncilorUnits = res.highCouncilorUnits || [];
               state.stakePresidency = res.stakePresidency || [];
+              if (res.adminPin) state.adminPin = res.adminPin;
+              if (res.hcPin) state.hcPin = res.hcPin;
               showMainUI();
             } else {
               localStorage.removeItem('tracker_pin');
@@ -833,6 +835,8 @@
               state.highCouncilors = res.highCouncilors;
               state.highCouncilorUnits = res.highCouncilorUnits || [];
               state.stakePresidency = res.stakePresidency || [];
+              if (res.adminPin) state.adminPin = res.adminPin;
+              if (res.hcPin) state.hcPin = res.hcPin;
               state.isDemo = isDemoSession;
               
               localStorage.setItem('tracker_pin', pin);
@@ -3605,8 +3609,8 @@
     function renderSettings() {
       // If admin, populate PIN fields, HC inputs, and Presidency inputs
       if (state.role === 'admin') {
-        document.getElementById('settings-admin-pin').value = state.isDemo ? '567890' : state.pin;
-        document.getElementById('settings-hc-pin').value = state.isDemo ? '123456' : '123456';
+        document.getElementById('settings-admin-pin').value = state.isDemo ? '567890' : (state.adminPin || state.pin);
+        document.getElementById('settings-hc-pin').value = state.isDemo ? '123456' : (state.hcPin || '');
         
         const rosterContainer = document.getElementById('roster-inputs');
         const hcRoster = state.isDemo ? (state.records.highCouncilors || mockData.highCouncilors) : state.highCouncilors;
@@ -3679,6 +3683,8 @@
           if (res.success) {
             showToast('PIN codes updated successfully!', 'success');
             state.pin = adminPin;
+            state.adminPin = adminPin;
+            state.hcPin = hcPin;
             localStorage.setItem('tracker_pin', adminPin);
           } else {
             showToast(res.error || 'Failed to update PINs', 'error');
