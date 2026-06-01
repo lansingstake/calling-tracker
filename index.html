@@ -955,11 +955,13 @@
         ...payload
       };
       
-      return fetch(state.apiUrl, {
+      const cacheBuster = state.apiUrl + (state.apiUrl.includes('?') ? '&' : '?') + '_t=' + Date.now();
+      return fetch(cacheBuster, {
         method: 'POST',
         mode: 'cors',
+        cache: 'no-store',
         headers: {
-          'Content-Type': 'text/plain;charset=utf-8' // Crucial to prevent CORS preflight problems with GAS
+          'Content-Type': 'text/plain;charset=utf-8'
         },
         body: JSON.stringify(body)
       }).then(res => res.json());
@@ -1759,7 +1761,7 @@
           </div>
         ` : '<div id="approval-banner"></div>';
 
-        const approvalsList = state.highCouncilors.map((name, idx) => {
+        const approvalsList = state.highCouncilors.map(name => {
           const colHeader = `Approval [${name}]`;
           const vote = record[colHeader] || '';
           
@@ -1770,10 +1772,10 @@
           const canToggle = isAdmin || (isHC && state.username === name);
           const nextVote = vote === 'Yes' ? 'No' : vote === 'No' ? '' : 'Yes';
           const toggleActionHtml = canToggle ? 
-            `onclick="toggleApprovalVote('Callings Releasings', '${colHeader}', '${nextVote}', ${idx})"` : '';
+            `onclick="toggleApprovalVote('Callings Releasings', '${colHeader}', '${nextVote}')"` : '';
           
           return `
-            <button id="vote-btn-${idx}" ${toggleActionHtml} class="px-2.5 py-1.5 rounded-lg border text-base font-semibold ${voteColor} transition-colors text-center">
+            <button ${toggleActionHtml} class="px-2.5 py-1.5 rounded-lg border text-base font-semibold ${voteColor} active:scale-95 transition-all text-center">
               ${name}: ${vote || 'Pending'}
             </button>
           `;
@@ -1786,9 +1788,9 @@
           <div class="space-y-2.5">
             <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
               <span>High Council Approvals</span>
-              <span id="approval-vote-counts" class="text-xs text-slate-500">${record["Approvals"] || 0} Yes / ${record["Votes Against"] || 0} No</span>
+              <span class="text-xs text-slate-500">${record["Approvals"] || 0} Yes / ${record["Votes Against"] || 0} No</span>
             </h4>
-            <div id="approval-vote-grid" class="grid grid-cols-3 gap-2" style="will-change: contents;">
+            <div class="grid grid-cols-3 gap-2">
               ${approvalsList}
             </div>
           </div>
@@ -1959,7 +1961,7 @@
           </div>
         `;
 
-        const approvalsList = state.highCouncilors.map((name, idx) => {
+        const approvalsList = state.highCouncilors.map(name => {
           const colHeader = `Approval [${name}]`;
           const vote = record[colHeader] || '';
           
@@ -1970,10 +1972,10 @@
           const canToggle = isAdmin || (isHC && state.username === name);
           const nextVote = vote === 'Yes' ? 'No' : vote === 'No' ? '' : 'Yes';
           const toggleActionHtml = canToggle ? 
-            `onclick="toggleApprovalVote('Ordinations', '${colHeader}', '${nextVote}', ${idx})"` : '';
+            `onclick="toggleApprovalVote('Ordinations', '${colHeader}', '${nextVote}')"` : '';
           
           return `
-            <button id="vote-btn-${idx}" ${toggleActionHtml} class="px-2.5 py-1.5 rounded-lg border text-base font-semibold ${voteColor} transition-colors text-center">
+            <button ${toggleActionHtml} class="px-2.5 py-1.5 rounded-lg border text-base font-semibold ${voteColor} active:scale-95 transition-all text-center">
               ${name}: ${vote || 'Pending'}
             </button>
           `;
@@ -1986,9 +1988,9 @@
           <div class="space-y-2.5">
             <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
               <span>High Council Approvals</span>
-              <span id="approval-vote-counts" class="text-xs text-slate-500">${record["Approvals"] || 0} Yes / ${record["Votes Against"] || 0} No</span>
+              <span class="text-xs text-slate-500">${record["Approvals"] || 0} Yes / ${record["Votes Against"] || 0} No</span>
             </h4>
-            <div id="approval-vote-grid" class="grid grid-cols-3 gap-2" style="will-change: contents;">
+            <div class="grid grid-cols-3 gap-2">
               ${approvalsList}
             </div>
           </div>
@@ -2323,56 +2325,11 @@
       datalist.innerHTML = allNames.map(name => `<option value="${name}"></option>`).join('');
     }
 
-    function toggleApprovalVote(type, voteHeader, voteValue, btnIdx) {
+    function toggleApprovalVote(type, voteHeader, voteValue) {
       if (!state.activeRecord) return;
       
       const updates = {};
       updates[voteHeader] = voteValue;
-      
-      // Immediately update state
-      state.activeRecord.record[voteHeader] = voteValue;
-      
-      // Only update the ONE clicked button by ID
-      const btn = document.getElementById('vote-btn-' + btnIdx);
-      if (btn) {
-        const name = voteHeader.replace('Approval [', '').replace(']', '');
-        if (voteValue === 'Yes') {
-          btn.className = 'px-2.5 py-1.5 rounded-lg border text-base font-semibold transition-colors text-center bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-        } else if (voteValue === 'No') {
-          btn.className = 'px-2.5 py-1.5 rounded-lg border text-base font-semibold transition-colors text-center bg-red-500/10 text-red-400 border-red-500/20';
-        } else {
-          btn.className = 'px-2.5 py-1.5 rounded-lg border text-base font-semibold transition-colors text-center bg-slate-800 text-slate-400 border-slate-700';
-        }
-        btn.textContent = name + ': ' + (voteValue || 'Pending');
-        const nextVote = voteValue === 'Yes' ? 'No' : voteValue === 'No' ? '' : 'Yes';
-        btn.setAttribute('onclick', "toggleApprovalVote('" + type + "', '" + voteHeader + "', '" + nextVote + "', " + btnIdx + ")");
-      }
-      
-      // Recount votes from state
-      let yesCount = 0, noCount = 0;
-      state.highCouncilors.forEach(function(n) {
-        const val = state.activeRecord.record['Approval [' + n + ']'] || '';
-        if (val === 'Yes') yesCount++;
-        if (val === 'No') noCount++;
-      });
-      state.activeRecord.record["Approvals"] = String(yesCount);
-      state.activeRecord.record["Votes Against"] = String(noCount);
-      
-      // Update counts text only
-      const countsEl = document.getElementById('approval-vote-counts');
-      if (countsEl) countsEl.textContent = yesCount + ' Yes / ' + noCount + ' No';
-      
-      // Update banner visibility
-      const bannerEl = document.getElementById('approval-banner');
-      if (bannerEl) {
-        if (yesCount >= 7) {
-          bannerEl.className = 'mb-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 flex items-center gap-3 text-emerald-400';
-          bannerEl.innerHTML = '<svg class="w-5 h-5 text-emerald-400 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><div><div class="text-sm font-bold uppercase tracking-wider">&#10004; High Council Approved</div><div class="text-xs opacity-80">Received ' + yesCount + ' approval votes.</div></div>';
-        } else {
-          bannerEl.className = '';
-          bannerEl.innerHTML = '';
-        }
-      }
       
       const loadingToast = showToast('Submitting vote...', 'info', 0);
       
@@ -2386,12 +2343,23 @@
         dismissToast(loadingToast);
         if (res.success) {
           showToast('Vote registered successfully!', 'success');
-        } else {
-          showToast(res.error || 'Failed to register vote', 'error');
-          // Revert on failure
-          state.activeRecord.record[voteHeader] = voteValue === 'Yes' ? '' : voteValue === 'No' ? 'Yes' : 'No';
+          
+          state.activeRecord.record[voteHeader] = voteValue;
+          
+          let yesCount = 0;
+          let noCount = 0;
+          state.highCouncilors.forEach(name => {
+            const val = state.activeRecord.record[`Approval [${name}]`] || '';
+            if (val === 'Yes') yesCount++;
+            if (val === 'No') noCount++;
+          });
+          state.activeRecord.record["Approvals"] = String(yesCount);
+          state.activeRecord.record["Votes Against"] = String(noCount);
+          
           renderModalContent(type, state.activeRecord.record);
           lucide.createIcons();
+        } else {
+          showToast(res.error || 'Failed to register vote', 'error');
         }
       })
       .catch(err => {
