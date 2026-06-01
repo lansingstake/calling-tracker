@@ -2756,7 +2756,7 @@
             <div class="flex items-center gap-3 min-w-0 flex-1">
               <input type="checkbox" ${status === 'Complete' ? 'checked' : ''} onchange="markSustainingComplete('${individualVal.replace(/'/g, "\\'")}', '${cand["Action"]}', '${callingVal.replace(/'/g, "\\'")}')" class="w-4.5 h-4.5 rounded text-indigo-600 bg-slate-800 border-slate-700 flex-shrink-0">
               <div class="min-w-0">
-                <p class="text-sm font-bold text-slate-100 truncate">${individualVal} (${cand["Unit"] || ''})</p>
+                <p class="text-sm font-bold text-slate-100">${individualVal} <span class="text-slate-400 font-medium">(${cand["Unit"] || ''})</span></p>
                 <p class="text-[11px] text-slate-400 font-medium break-words">${callingVal}</p>
                 ${incompleteHtml}
               </div>
@@ -2781,7 +2781,7 @@
           <div class="flex items-center gap-3 min-w-0 flex-1">
             <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleSustaining('${individualVal.replace(/'/g, "\\'")}', '${cand["Action"]}', '${callingVal.replace(/'/g, "\\'")}', this.checked)" class="w-4.5 h-4.5 rounded text-indigo-600 bg-slate-800 border-slate-700 flex-shrink-0">
             <div class="min-w-0">
-              <p class="text-sm font-bold text-slate-100 truncate">${individualVal} (${cand["Unit"] || ''})</p>
+              <p class="text-sm font-bold text-slate-100">${individualVal} <span class="text-slate-400 font-medium">(${cand["Unit"] || ''})</span></p>
               <p class="text-[11px] text-slate-400 font-medium break-words">${callingVal}</p>
             </div>
           </div>
