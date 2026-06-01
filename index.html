@@ -199,23 +199,8 @@
       <div id="db-stakeconf-panel" class="space-y-4 hidden">
         <div class="glass p-4 rounded-xl space-y-3">
           <div class="flex items-center justify-between">
-            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">Stake Conference Filter</h3>
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">Stake Conference Sustainings</h3>
             <span id="count-stakeconf" class="text-[11px] bg-indigo-600 px-2 py-0.5 rounded-full text-white font-semibold">0</span>
-          </div>
-          
-          <div class="flex gap-4 flex-wrap">
-            <label class="flex items-center gap-2 text-sm cursor-pointer select-none">
-              <input type="checkbox" id="sc-filter-pending" checked onchange="renderDashboard()" class="w-4 h-4 rounded text-indigo-600 bg-slate-800 border-slate-700">
-              <span class="text-slate-300">Pending</span>
-            </label>
-            <label class="flex items-center gap-2 text-sm cursor-pointer select-none">
-              <input type="checkbox" id="sc-filter-stakeconf" checked onchange="renderDashboard()" class="w-4 h-4 rounded text-indigo-600 bg-slate-800 border-slate-700">
-              <span class="text-slate-300">Stake Conference</span>
-            </label>
-            <label class="flex items-center gap-2 text-sm cursor-pointer select-none">
-              <input type="checkbox" id="sc-filter-complete" onchange="renderDashboard()" class="w-4 h-4 rounded text-indigo-600 bg-slate-800 border-slate-700">
-              <span class="text-slate-300">Complete</span>
-            </label>
           </div>
 
           <!-- Bulk Date Update (Admin only) -->
@@ -1505,32 +1490,50 @@
         renderCardList('list-releases', releases, 'Release Only', 'user-minus', 'border-amber-500/30');
       } else {
         // Stake Conference View rendering
-        const showPending = document.getElementById('sc-filter-pending').checked;
-        const showStakeConf = document.getElementById('sc-filter-stakeconf').checked;
-        const showComplete = document.getElementById('sc-filter-complete').checked;
         
         // Show bulk update section only for admin
         const bulkEl = document.getElementById('sc-bulk-update');
         if (bulkEl) bulkEl.classList.toggle('hidden', state.role !== 'admin');
         
-        // Use Pulpit Tracker sustainings data filtered by Status
+        // Only show Pulpit Tracker items with "Stake Conf" status
         const scList = (state.records.sustainings || []).filter(s => {
           const status = (s["Status"] || "").trim();
-          if (status === 'Pending' && showPending) return true;
-          if (status === 'Stake Conf' && showStakeConf) return true;
-          if (status === 'Complete' && showComplete) return true;
-          return false;
+          return status === 'Stake Conf';
         });
         
-        document.getElementById('count-stakeconf').innerText = scList.length;
+        // Auto-complete: if all unit columns are True/Complete, set status to Complete
+        scList.forEach(item => {
+          const allDone = STAKE_UNITS.every(u => {
+            const val = item[u];
+            return val === 'Complete' || val === 'True' || val === true;
+          });
+          if (allDone) {
+            item["Status"] = "Complete";
+            // Fire API call to persist (non-blocking)
+            apiCall('updateRecord', {
+              type: 'Sustainings',
+              memberName: item["Individual"],
+              updates: {
+                _action: item["Action"],
+                _calling: item["Calling"] || item["Calling / Office"],
+                Status: 'Complete'
+              }
+            }).catch(() => {});
+          }
+        });
+        
+        // Re-filter after auto-complete (completed items drop out)
+        const scFiltered = scList.filter(s => (s["Status"] || "").trim() === 'Stake Conf');
+        
+        document.getElementById('count-stakeconf').innerText = scFiltered.length;
         
         const container = document.getElementById('list-stakeconf');
-        if (scList.length === 0) {
-          container.innerHTML = `<p class="text-sm text-slate-500 italic text-center py-8">No records match filters</p>`;
+        if (scFiltered.length === 0) {
+          container.innerHTML = `<p class="text-sm text-slate-500 italic text-center py-8">No Stake Conference sustainings pending</p>`;
           return;
         }
         
-        container.innerHTML = scList.map(item => {
+        container.innerHTML = scFiltered.map(item => {
           const status = (item["Status"] || "Pending").trim();
           const stakeConfDate = item["Stake Conf Sustain Date"] || "";
           const individual = item["Individual"] || "";
