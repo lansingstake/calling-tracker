@@ -457,21 +457,23 @@
 
   <!-- Expanded Record Drawer / Modal -->
   <div id="record-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-end justify-center hidden opacity-0 transition-opacity duration-300">
-    <div class="w-full max-w-md bg-slate-900 border-t border-slate-800 rounded-t-3xl shadow-2xl p-6 space-y-6 max-h-[85vh] overflow-y-auto translate-y-full transition-transform duration-300 scrollbar-hide">
-      <!-- Modal Header -->
-      <div class="flex justify-between items-start">
-        <div>
-          <span id="modal-type-badge" class="text-[11px] font-bold uppercase px-2 py-0.5 rounded-full"></span>
-          <input id="modal-title" type="text" value="Member Name" onchange="updateRecordField('Member Name', this.value)" class="text-lg font-bold mt-1 text-slate-100 bg-transparent border-b border-transparent hover:border-slate-700 focus:border-indigo-500 focus:outline-none w-full transition-colors">
-          <p id="modal-subtitle" class="text-sm text-slate-400">Calling Details</p>
+    <div class="w-full max-w-md bg-slate-900 border-t border-slate-800 rounded-t-3xl shadow-2xl max-h-[85vh] translate-y-full transition-transform duration-300 flex flex-col">
+      <!-- Modal Header (sticky) -->
+      <div class="sticky top-0 z-10 bg-slate-900 rounded-t-3xl px-6 pt-6 pb-3 border-b border-slate-800/60 flex-shrink-0">
+        <div class="flex justify-between items-start">
+          <div class="min-w-0 flex-1">
+            <span id="modal-type-badge" class="text-[11px] font-bold uppercase px-2 py-0.5 rounded-full"></span>
+            <input id="modal-title" type="text" value="Member Name" onchange="updateRecordField('Member Name', this.value)" class="text-lg font-bold mt-1 text-slate-100 bg-transparent border-b border-transparent hover:border-slate-700 focus:border-indigo-500 focus:outline-none w-full transition-colors">
+            <p id="modal-subtitle" class="text-sm text-slate-400">Calling Details</p>
+          </div>
+          <button onclick="closeModal()" class="p-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-white transition-colors flex-shrink-0 ml-3">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
         </div>
-        <button onclick="closeModal()" class="p-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-white transition-colors">
-          <i data-lucide="x" class="w-4 h-4"></i>
-        </button>
       </div>
 
-      <!-- Actionable Details/Checklists -->
-      <div id="modal-content" class="space-y-6">
+      <!-- Scrollable Content -->
+      <div id="modal-content" class="space-y-6 px-6 pb-6 pt-4 overflow-y-auto scrollbar-hide flex-1">
         <!-- Content parsed dynamically by type -->
       </div>
     </div>
@@ -2411,14 +2413,14 @@
                            `${state.activeRecord.record["Calling to be Released From"]} (${state.activeRecord.record["Unit"]})`;
           document.getElementById('modal-subtitle').innerText = subtitle;
 
-          // Save scroll position before re-render to prevent Android scroll jump
-          const modalDrawer = document.querySelector('#record-modal > div');
-          const savedScroll = modalDrawer ? modalDrawer.scrollTop : 0;
+          // Save scroll position before re-render to prevent scroll jump
+          const modalContent = document.getElementById('modal-content');
+          const savedScroll = modalContent ? modalContent.scrollTop : 0;
 
           renderModalContent(state.activeRecord.type, state.activeRecord.record);
           lucide.createIcons();
           // Restore scroll position
-          if (modalDrawer) modalDrawer.scrollTop = savedScroll;
+          if (modalContent) modalContent.scrollTop = savedScroll;
           renderDashboard();
           
           if (state.activeTab === 'history') {
