@@ -39,9 +39,73 @@
       -ms-overflow-style: none;
       scrollbar-width: none;
     }
+
+    /* ========== LIGHT THEME OVERRIDES ========== */
+    body.light-theme {
+      background: #f1f5f9 !important;
+      color: #1e293b !important;
+    }
+    .light-theme .glass {
+      background: rgba(255, 255, 255, 0.75) !important;
+      border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    }
+    .light-theme .glass-focus {
+      background: rgba(255, 255, 255, 0.9) !important;
+      border: 1px solid rgba(99, 102, 241, 0.3) !important;
+    }
+    /* Backgrounds */
+    .light-theme .bg-slate-950 { background-color: #f1f5f9 !important; }
+    .light-theme .bg-slate-950\/80 { background-color: rgba(241,245,249,0.85) !important; }
+    .light-theme .bg-slate-900 { background-color: #ffffff !important; }
+    .light-theme .bg-slate-800 { background-color: #e2e8f0 !important; }
+    .light-theme .bg-slate-800\/50 { background-color: rgba(226,232,240,0.5) !important; }
+    .light-theme .bg-slate-800\/60 { background-color: rgba(226,232,240,0.6) !important; }
+    .light-theme .bg-slate-700 { background-color: #cbd5e1 !important; }
+    /* Text */
+    .light-theme .text-slate-100 { color: #1e293b !important; }
+    .light-theme .text-slate-200 { color: #334155 !important; }
+    .light-theme .text-slate-300 { color: #475569 !important; }
+    .light-theme .text-slate-400 { color: #64748b !important; }
+    .light-theme .text-slate-500 { color: #94a3b8 !important; }
+    .light-theme .text-white { color: #ffffff !important; }
+    /* Borders */
+    .light-theme .border-slate-700 { border-color: #cbd5e1 !important; }
+    .light-theme .border-slate-700\/50 { border-color: rgba(203,213,225,0.5) !important; }
+    .light-theme .border-slate-800 { border-color: #e2e8f0 !important; }
+    .light-theme .border-slate-800\/60 { border-color: rgba(226,232,240,0.6) !important; }
+    /* Inputs and selects */
+    .light-theme select,
+    .light-theme input[type="text"],
+    .light-theme input[type="date"],
+    .light-theme input[type="password"],
+    .light-theme textarea {
+      background: #f8fafc !important;
+      color: #1e293b !important;
+      border-color: #cbd5e1 !important;
+    }
+    .light-theme select option { background: #ffffff; color: #1e293b; }
+    /* Modal drawer */
+    .light-theme #record-modal > div { background: #ffffff !important; border-color: #e2e8f0 !important; }
+    .light-theme #record-modal > div > div:first-child { background: #ffffff !important; }
+    /* Bottom nav */
+    .light-theme #bottom-nav { background: rgba(255,255,255,0.85) !important; border-color: #e2e8f0 !important; }
+    /* Toasts */
+    .light-theme #toast-container > div { background: #ffffff !important; border-color: #e2e8f0 !important; color: #1e293b !important; }
+    /* Theme color for light */
+    .light-theme ~ head meta[name="theme-color"] { content: "#f1f5f9"; }
+    /* Step group headers */
+    .light-theme .step-group-header { background: rgba(226,232,240,0.7) !important; border-color: rgba(203,213,225,0.5) !important; }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col pb-24 overflow-x-hidden">
+<script>
+  // Apply theme immediately to prevent flash
+  (function() {
+    var saved = localStorage.getItem('ct-theme');
+    var theme = saved || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+    if (theme === 'light') document.body.classList.add('light-theme');
+  })();
+</script>
 
   <!-- Top Navigation / Status Header -->
   <header id="app-header" class="glass sticky top-0 z-40 px-4 py-3 flex items-center justify-between border-b border-slate-800">
@@ -54,6 +118,11 @@
         <span id="demo-indicator" class="hidden text-[11px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1.5 py-0.5 rounded-full font-medium">Demo Mode</span>
       </div>
     </div>
+    
+    <button id="theme-toggle" onclick="toggleTheme()" class="p-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-yellow-400 transition-colors" title="Toggle light/dark theme">
+      <i data-lucide="sun" class="w-4 h-4" id="theme-icon-sun" style="display:none"></i>
+      <i data-lucide="moon" class="w-4 h-4" id="theme-icon-moon"></i>
+    </button>
     
     <div id="user-profile" class="hidden flex items-center gap-2">
       <div class="text-right">
@@ -1610,7 +1679,7 @@
           
           return `
             <div class="mb-3">
-              <button onclick="toggleStepGroup('${groupId}')" class="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-slate-800/60 border border-slate-700/50 hover:bg-slate-800 transition-all group cursor-pointer">
+              <button onclick="toggleStepGroup('${groupId}')" class="step-group-header w-full flex items-center justify-between px-3 py-2 rounded-lg bg-slate-700/40 border border-slate-600/40 hover:bg-slate-700/60 transition-all group cursor-pointer">
                 <div class="flex items-center gap-2">
                   <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform group-open:-rotate-180" id="${groupId}-icon"></i>
                   <span class="text-xs font-bold uppercase tracking-wider text-slate-300">${step}</span>
@@ -1638,6 +1707,27 @@
         icon.style.transform = isHidden ? 'rotate(-90deg)' : '';
       }
     }
+
+    function toggleTheme() {
+      const isLight = document.body.classList.toggle('light-theme');
+      localStorage.setItem('ct-theme', isLight ? 'light' : 'dark');
+      updateThemeIcon();
+      // Update meta theme-color
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute('content', isLight ? '#f1f5f9' : '#020617');
+    }
+
+    function updateThemeIcon() {
+      const isLight = document.body.classList.contains('light-theme');
+      const sunIcon = document.getElementById('theme-icon-sun');
+      const moonIcon = document.getElementById('theme-icon-moon');
+      if (sunIcon && moonIcon) {
+        sunIcon.style.display = isLight ? 'none' : 'block';
+        moonIcon.style.display = isLight ? 'block' : 'none';
+      }
+    }
+    // Set correct icon on load
+    document.addEventListener('DOMContentLoaded', updateThemeIcon);
 
     function renderSingleCard(r, type, borderColorClass) {
       const step = r["Current Step"] || 'Pending';
