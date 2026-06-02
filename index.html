@@ -925,7 +925,7 @@
               }
               
               showMainUI();
-              if (state.spreadsheetUrl) {
+              if (state.spreadsheetUrl && state.role === 'admin') {
                 document.getElementById('btn-open-data').classList.remove('hidden');
               } else {
                 document.getElementById('btn-open-data').classList.add('hidden');
