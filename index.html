@@ -1599,8 +1599,8 @@
         
         let votedBadgeHtml = '';
         if (hasVoted) {
-          votedBadgeHtml = `<span class="text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full flex items-center gap-1 leading-none shadow-sm">
-            <i data-lucide="check" class="w-2.5 h-2.5 text-emerald-400"></i> You Voted
+          votedBadgeHtml = `<span class="text-sm font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-full flex items-center gap-1.5 leading-none shadow-sm">
+            <i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> You Voted
           </span>`;
         }
 
@@ -2352,6 +2352,7 @@
           
           renderModalContent(type, state.activeRecord.record);
           lucide.createIcons();
+          renderDashboard();
         } else {
           showToast(res.error || 'Failed to register vote', 'error');
         }
