@@ -95,6 +95,11 @@
     .light-theme ~ head meta[name="theme-color"] { content: "#f1f5f9"; }
     /* Step group headers */
     .light-theme .step-group-header { background: rgba(226,232,240,0.7) !important; border-color: rgba(203,213,225,0.5) !important; }
+    /* Tab toggle container */
+    .light-theme #db-tracker-toggle-card { background: rgba(241,245,249,0.6) !important; }
+    /* Inactive tab button - ensure good contrast in both themes */
+    body:not(.light-theme) .text-slate-600 { color: #94a3b8 !important; }
+    body:not(.light-theme) .hover\:text-slate-800:hover { color: #cbd5e1 !important; }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col pb-24 overflow-x-hidden">
@@ -185,7 +190,7 @@
       <!-- Admin Tracker Toggle (Only for Admin) -->
       <div id="db-tracker-toggle-card" class="hidden bg-slate-900/60 p-1 rounded-xl border border-slate-800 grid grid-cols-2 gap-2">
         <button onclick="setDashboardViewType('active')" id="btn-db-active" class="py-1.5 text-sm font-semibold rounded-lg bg-indigo-600 text-white transition-all">Active Tracker</button>
-        <button onclick="setDashboardViewType('stakeconf')" id="btn-db-stakeconf" class="py-1.5 text-sm font-semibold rounded-lg text-slate-400 hover:text-slate-200 transition-all">Stake Conference</button>
+        <button onclick="setDashboardViewType('stakeconf')" id="btn-db-stakeconf" class="py-1.5 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-800 transition-all">Stake Conference</button>
       </div>
 
       <!-- Dashboard View: Active Tracker -->
@@ -229,9 +234,9 @@
           <!-- Callings/Releasings Section -->
           <div class="space-y-3">
             <div class="flex items-center justify-between">
-              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+              <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                 <i data-lucide="user-plus" class="w-4 h-4 text-emerald-400"></i>
-                Active Callings & Releases
+                Callings & Releases
               </h3>
               <span id="count-callings" class="text-[11px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-400 font-semibold">0</span>
             </div>
@@ -241,9 +246,9 @@
           <!-- Ordinations Section -->
           <div class="space-y-3">
             <div class="flex items-center justify-between">
-              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+              <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                 <i data-lucide="award" class="w-4 h-4 text-purple-400"></i>
-                Active Ordinations
+                Ordinations
               </h3>
               <span id="count-ordinations" class="text-[11px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-400 font-semibold">0</span>
             </div>
@@ -253,9 +258,9 @@
           <!-- Releases Only Section -->
           <div id="dashboard-releases-container" class="space-y-3">
             <div class="flex items-center justify-between">
-              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+              <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                 <i data-lucide="user-minus" class="w-4 h-4 text-amber-400"></i>
-                Active Releases Only
+                Releases Only
               </h3>
               <span id="count-releases" class="text-[11px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-400 font-semibold">0</span>
             </div>
@@ -1374,17 +1379,17 @@
       
       if (viewType === 'active') {
         btnActive.classList.add('bg-indigo-600', 'text-white');
-        btnActive.classList.remove('text-slate-400');
+        btnActive.classList.remove('text-slate-600');
         btnStake.classList.remove('bg-indigo-600', 'text-white');
-        btnStake.classList.add('text-slate-400');
+        btnStake.classList.add('text-slate-600');
         
         document.getElementById('db-active-panel').classList.remove('hidden');
         document.getElementById('db-stakeconf-panel').classList.add('hidden');
       } else {
         btnStake.classList.add('bg-indigo-600', 'text-white');
-        btnStake.classList.remove('text-slate-400');
+        btnStake.classList.remove('text-slate-600');
         btnActive.classList.remove('bg-indigo-600', 'text-white');
-        btnActive.classList.add('text-slate-400');
+        btnActive.classList.add('text-slate-600');
         
         document.getElementById('db-stakeconf-panel').classList.remove('hidden');
         document.getElementById('db-active-panel').classList.add('hidden');
