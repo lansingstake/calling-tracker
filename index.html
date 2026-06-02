@@ -2612,6 +2612,10 @@
             }
           }
           
+          if (fieldKey === 'Member Name') {
+            state.activeRecord.memberName = value;
+          }
+          
           // Dynamically update header subtitle in case Calling was modified
           const subtitle = state.activeRecord.type === 'Callings Releasings' ? `${state.activeRecord.record["Calling"]} (${state.activeRecord.record["Unit"]})` : 
                            state.activeRecord.type === 'Ordinations' ? `${state.activeRecord.record["Priesthood Office"]} (${state.activeRecord.record["Unit"]})` : 
