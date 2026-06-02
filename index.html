@@ -66,7 +66,7 @@
     .light-theme .text-slate-200 { color: #334155 !important; }
     .light-theme .text-slate-300 { color: #475569 !important; }
     .light-theme .text-slate-400 { color: #64748b !important; }
-    .light-theme .text-slate-500 { color: #94a3b8 !important; }
+    .light-theme .text-slate-500 { color: #64748b !important; }
     .light-theme .text-white { color: #ffffff !important; }
     /* Borders */
     .light-theme .border-slate-700 { border-color: #cbd5e1 !important; }
@@ -100,6 +100,20 @@
     /* Inactive tab button - ensure good contrast in both themes */
     body:not(.light-theme) .text-slate-600 { color: #94a3b8 !important; }
     body:not(.light-theme) .hover\:text-slate-800:hover { color: #cbd5e1 !important; }
+    /* Pulpit script boxes and other bg-slate-900 variants */
+    .light-theme [class*="bg-slate-900"] { background-color: rgba(255,255,255,0.8) !important; }
+    .light-theme [class*="bg-slate-900/"] { background-color: rgba(255,255,255,0.8) !important; }
+    /* Pulpit script text areas by ID (immediate, no Tailwind dependency) */
+    .light-theme #sunday-ordination-script-text,
+    .light-theme #sunday-release-script-text,
+    .light-theme #sunday-sustain-script-text {
+      background: rgba(241,245,249,0.8) !important;
+      border-color: #e2e8f0 !important;
+      color: #64748b !important;
+    }
+    /* Placeholder text in inputs */
+    .light-theme input::placeholder,
+    .light-theme textarea::placeholder { color: #94a3b8 !important; }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col pb-24 overflow-x-hidden">
@@ -381,8 +395,8 @@
         <!-- Tab Selector for Form Type -->
         <div class="grid grid-cols-3 gap-2 bg-slate-900/60 p-1 rounded-xl border border-slate-800">
           <button onclick="setFormType('calling')" id="btn-form-calling" class="py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white transition-all">Calling</button>
-          <button onclick="setFormType('ordination')" id="btn-form-ordination" class="py-2 text-sm font-semibold rounded-lg text-slate-400 hover:text-slate-200 transition-all">Ordination</button>
-          <button onclick="setFormType('release')" id="btn-form-release" class="py-2 text-sm font-semibold rounded-lg text-slate-400 hover:text-slate-200 transition-all">Release</button>
+          <button onclick="setFormType('ordination')" id="btn-form-ordination" class="py-2 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-800 transition-all">Ordination</button>
+          <button onclick="setFormType('release')" id="btn-form-release" class="py-2 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-800 transition-all">Release</button>
         </div>
 
         <!-- Dynamic Forms -->
@@ -3416,9 +3430,9 @@
       btns.forEach(b => {
         const el = document.getElementById(`btn-form-${b}`);
         el.classList.remove('bg-indigo-600', 'text-white');
-        el.classList.add('text-slate-400', 'hover:text-slate-200');
+        el.classList.add('text-slate-600', 'hover:text-slate-800');
       });
-      document.getElementById(`btn-form-${type}`).classList.remove('text-slate-400', 'hover:text-slate-200');
+      document.getElementById(`btn-form-${type}`).classList.remove('text-slate-600', 'hover:text-slate-800');
       document.getElementById(`btn-form-${type}`).classList.add('bg-indigo-600', 'text-white');
       
       renderFormFields();
