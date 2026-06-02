@@ -1581,7 +1581,12 @@
         // Calculate approvals count
         let votePillHtml = '';
         if (type !== 'Release Only') {
-          const approves = r["Approvals"] || 0;
+          let approves = 0;
+          if (state.highCouncilors) {
+            state.highCouncilors.forEach(hcName => {
+              if (r[`Approval [${hcName}]`] === 'Yes') approves++;
+            });
+          }
           votePillHtml = `<span class="text-[11px] bg-slate-800 text-slate-400 border border-slate-700 px-2 py-0.5 rounded-full flex items-center gap-1 font-semibold">
             <i data-lucide="check" class="w-3 h-3 text-emerald-400"></i> ${approves} Vote${approves === 1 ? '' : 's'}
           </span>`;
@@ -1716,9 +1721,11 @@
       if (type === 'Callings Releasings') {
         // High Council Approvals calculation
         let yesVotes = 0;
+        let noVotes = 0;
         if (state.highCouncilors) {
           state.highCouncilors.forEach(name => {
             if (record[`Approval [${name}]`] === 'Yes') yesVotes++;
+            if (record[`Approval [${name}]`] === 'No') noVotes++;
           });
         }
         const isApproved = yesVotes >= 7;
@@ -1759,7 +1766,7 @@
           <div class="space-y-2.5">
             <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
               <span>High Council Approvals</span>
-              <span class="text-xs text-slate-500">${record["Approvals"] || 0} Yes / ${record["Votes Against"] || 0} No</span>
+              <span class="text-xs text-slate-500">${yesVotes} Yes / ${noVotes} No</span>
             </h4>
             <div class="grid grid-cols-3 gap-2">
               ${approvalsList}
@@ -1923,9 +1930,11 @@
       else if (type === 'Ordinations') {
         // High Council Approvals calculation
         let yesVotes = 0;
+        let noVotes = 0;
         if (state.highCouncilors) {
           state.highCouncilors.forEach(name => {
             if (record[`Approval [${name}]`] === 'Yes') yesVotes++;
+            if (record[`Approval [${name}]`] === 'No') noVotes++;
           });
         }
         const isApproved = yesVotes >= 7;
@@ -1966,7 +1975,7 @@
           <div class="space-y-2.5">
             <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
               <span>High Council Approvals</span>
-              <span class="text-xs text-slate-500">${record["Approvals"] || 0} Yes / ${record["Votes Against"] || 0} No</span>
+              <span class="text-xs text-slate-500">${yesVotes} Yes / ${noVotes} No</span>
             </h4>
             <div class="grid grid-cols-3 gap-2">
               ${approvalsList}
