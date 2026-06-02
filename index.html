@@ -1985,6 +1985,13 @@
               <input type="text" value="${record['Calling'] || ''}" onchange="updateRecordField('Calling', this.value)" ${isHC ? 'readonly disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
             </div>
             <div>
+              <label class="block text-xs text-slate-400 font-medium mb-1">Unit</label>
+              <select onchange="updateRecordField('Unit', this.value)" ${isHC ? 'disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                <option value=""></option>
+                ${['Charlotte', 'YSA', 'Holt', 'Jackson', 'Lansing', 'Owosso', 'Portland', 'St Johns', 'Williamston'].map(u => `<option value="${u}" ${record['Unit'] === u ? 'selected' : ''}>${u}</option>`).join('')}
+              </select>
+            </div>
+            <div>
               <label class="block text-base text-emerald-400 font-bold mb-1">Current Step</label>
               <select onchange="updateRecordField('Current Step', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none border-[3px] border-slate-900" style="border-color: #000;">
                 <option value=""></option>
@@ -2188,6 +2195,13 @@
           <div class="space-y-4">
             <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Workflow & Key Info</h4>
             <div>
+              <label class="block text-xs text-slate-400 font-medium mb-1">Unit</label>
+              <select onchange="updateRecordField('Unit', this.value)" ${isHC ? 'disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                <option value=""></option>
+                ${['Charlotte', 'YSA', 'Holt', 'Jackson', 'Lansing', 'Owosso', 'Portland', 'St Johns', 'Williamston'].map(u => `<option value="${u}" ${record['Unit'] === u ? 'selected' : ''}>${u}</option>`).join('')}
+              </select>
+            </div>
+            <div>
               <label class="block text-base text-emerald-400 font-bold mb-1">Current Step</label>
               <select onchange="updateRecordField('Current Step', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none border-[3px] border-slate-900" style="border-color: #000;">
                 <option value=""></option>
@@ -2290,6 +2304,13 @@
               <div>
                 <label class="block text-xs text-slate-400 font-medium mb-1">Calling to be Released From</label>
                 <input type="text" value="${record['Calling to be Released From'] || ''}" onchange="updateRecordField('Calling to be Released From', this.value)" ${isHC ? 'readonly disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+              </div>
+              <div>
+                <label class="block text-xs text-slate-400 font-medium mb-1">Unit</label>
+                <select onchange="updateRecordField('Unit', this.value)" ${isHC ? 'disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                  <option value=""></option>
+                  ${['Charlotte', 'YSA', 'Holt', 'Jackson', 'Lansing', 'Owosso', 'Portland', 'St Johns', 'Williamston'].map(u => `<option value="${u}" ${record['Unit'] === u ? 'selected' : ''}>${u}</option>`).join('')}
+                </select>
               </div>
             </div>
             <div>
