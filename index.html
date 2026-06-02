@@ -949,7 +949,7 @@
       document.getElementById('user-profile').classList.remove('hidden');
       document.getElementById('profile-name').innerText = state.username || 'Administrator';
       document.getElementById('profile-role').innerText = 
-        state.role === 'admin' ? 'Stake Admin' : 
+        state.role === 'admin' ? '' : 
         state.role === 'presidency' ? 'Presidency' : 'High Councilor';
       
       document.getElementById('bottom-nav').classList.remove('hidden');
