@@ -645,7 +645,8 @@ function updateRecord(sheetType, timestamp, memberName, updates, role, username)
   
   SpreadsheetApp.flush();
   
-  var actualTimestamp = String(oldRow[timestampColIdx] || "").trim();
+  var oldRowTime = oldRow[timestampColIdx];
+  var actualTimestamp = (oldRowTime instanceof Date) ? formatDate(oldRowTime) : String(oldRowTime || "").trim();
   
   // Create in Pulpit Tracker if changing to Sustain
   if (updates.hasOwnProperty("Current Step")) {
