@@ -925,7 +925,7 @@
               }
               
               showMainUI();
-              if (state.spreadsheetUrl && state.role === 'admin') {
+              if (state.role === 'admin') {
                 document.getElementById('btn-open-data').classList.remove('hidden');
               } else {
                 document.getElementById('btn-open-data').classList.add('hidden');
@@ -1035,9 +1035,8 @@
     }
 
     function openSpreadsheet() {
-      if (state.spreadsheetUrl) {
-        window.open(state.spreadsheetUrl, '_blank');
-      }
+      const url = state.spreadsheetUrl || 'https://docs.google.com/spreadsheets/d/1y9H8inSfbasTKYhHxLPVoHyWGQKG72240xbvohjKtVE/';
+      window.open(url, '_blank');
     }
 
     // Core API Client Fetch Function
