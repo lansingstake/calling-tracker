@@ -41,7 +41,8 @@ function doPost(e) {
         username: username || "Admin",
         highCouncilors: getHighCouncilors(),
         highCouncilorUnits: getHighCouncilorUnits(),
-        stakePresidency: getStakePresidency()
+        stakePresidency: getStakePresidency(),
+        spreadsheetUrl: SpreadsheetApp.getActiveSpreadsheet().getUrl()
       };
       // Only return PINs to admin users
       if (auth.role === "admin") {

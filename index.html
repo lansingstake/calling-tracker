@@ -144,6 +144,10 @@
     </button>
     
     <div id="user-profile" class="hidden flex items-center gap-2">
+      <button id="btn-open-data" onclick="openSpreadsheet()" class="mr-2 py-1.5 px-3 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 hover:text-emerald-400 hover:border-emerald-500/30 transition-colors text-xs font-bold whitespace-nowrap flex items-center gap-1.5 shadow-sm shadow-black/20">
+        <i data-lucide="table" class="w-3.5 h-3.5"></i>
+        <span class="hidden sm:inline">Open Calling Tracker Data</span>
+      </button>
       <div class="text-right">
         <p id="profile-name" class="text-sm font-semibold text-slate-200"></p>
         <p id="profile-role" class="text-[11px] uppercase tracking-wider text-indigo-400 font-bold"></p>
@@ -617,6 +621,7 @@
       // â˜… API URL â€” Update this when you create a new Apps Script deployment â˜…
       apiUrl: localStorage.getItem('tracker_api_url') || 'https://script.google.com/macros/s/AKfycbxg7Mok_dgwKmwi10r4_ALR4AGM63Tci-ga3ioBwt9f3I55uw9jz4ENrqCLMAwUB0g/exec',
       isDemo: localStorage.getItem('tracker_is_demo') === 'true',
+      spreadsheetUrl: '',
       activeRecord: null,
       
       // Sunday Pulpit Candidate Lists (Client-side custom order arrays)
@@ -906,6 +911,7 @@
               state.stakePresidency = res.stakePresidency || [];
               if (res.adminPin) state.adminPin = res.adminPin;
               if (res.hcPin) state.hcPin = res.hcPin;
+              if (res.spreadsheetUrl) state.spreadsheetUrl = res.spreadsheetUrl;
               state.isDemo = isDemoSession;
               
               localStorage.setItem('tracker_pin', pin);
@@ -919,6 +925,11 @@
               }
               
               showMainUI();
+              if (state.spreadsheetUrl) {
+                document.getElementById('btn-open-data').classList.remove('hidden');
+              } else {
+                document.getElementById('btn-open-data').classList.add('hidden');
+              }
               const welcomeName = state.role === 'admin' ? 'Admin' : state.role === 'presidency' ? `President ${res.username}` : `Brother ${res.username}`;
               showToast(`Welcome back, ${welcomeName}!`, 'success');
             }
@@ -960,7 +971,7 @@
 
       if (state.role === 'hc') {
         document.getElementById('nav-settings').classList.add('hidden');
-        // Hide dashboard filter bar and search for HC ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â they see all records
+        // Hide dashboard filter bar and search for HC ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â  they see all records
         document.getElementById('db-search-filter-container').classList.add('hidden');
         
         // Find their assigned unit for the Sunday pulpit dropdown default
@@ -1008,6 +1019,7 @@
       state.pin = '';
       state.role = null;
       state.username = '';
+      state.spreadsheetUrl = '';
       state.isDemo = false;
       localStorage.removeItem('tracker_pin');
       localStorage.removeItem('tracker_username');
@@ -1020,6 +1032,12 @@
       
       showView('login');
       showToast('Logged out successfully', 'info');
+    }
+
+    function openSpreadsheet() {
+      if (state.spreadsheetUrl) {
+        window.open(state.spreadsheetUrl, '_blank');
+      }
     }
 
     // Core API Client Fetch Function
