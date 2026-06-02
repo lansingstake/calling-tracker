@@ -699,7 +699,8 @@ function updateRecord(sheetType, timestamp, memberName, updates, role, username)
             }
             
             for (var pr = 1; pr < pValues.length; pr++) {
-              var rowTs = String(pValues[pr][timestampColIdxPt] || "").trim();
+              var rawTs = pValues[pr][timestampColIdxPt];
+              var rowTs = (rawTs instanceof Date) ? formatDate(rawTs) : String(rawTs || "").trim();
               if (!rowTs) continue;
               
               var isPrimaryMatch = (rowTs === expectedPrimaryTs);
@@ -945,7 +946,9 @@ function addSustainingEntry(individual, unit, action, calling, pulpitSustaining,
   if (timestampColIdx !== -1) {
     var data = sheet.getDataRange().getValues();
     for (var r = 1; r < data.length; r++) {
-      if (String(data[r][timestampColIdx]).trim() === String(recordTimestamp).trim()) {
+      var rawTs = data[r][timestampColIdx];
+      var rowTs = (rawTs instanceof Date) ? formatDate(rawTs) : String(rawTs || "").trim();
+      if (rowTs === String(recordTimestamp).trim()) {
         return; // Already exists!
       }
     }
