@@ -2322,44 +2322,55 @@
     function toggleApprovalVote(type, voteHeader, voteValue) {
       if (!state.activeRecord) return;
       
+      // Capture references before any async work (user may close modal)
+      const record = state.activeRecord.record;
+      const timestamp = state.activeRecord.timestamp;
+      const memberName = state.activeRecord.memberName;
+      const previousValue = record[voteHeader] || '';
+      
+      // Optimistic update: apply immediately
+      record[voteHeader] = voteValue;
+      
+      // Re-render UI instantly (modal + dashboard)
+      if (state.activeRecord) {
+        renderModalContent(type, record);
+        lucide.createIcons();
+      }
+      renderDashboard();
+      
+      // Fire API in background
       const updates = {};
       updates[voteHeader] = voteValue;
       
-      const loadingToast = showToast('Submitting vote...', 'info', 0);
-      
       apiCall('updateRecord', {
         type: type,
-        timestamp: state.activeRecord.timestamp,
-        memberName: state.activeRecord.memberName,
+        timestamp: timestamp,
+        memberName: memberName,
         updates: updates
       })
       .then(res => {
-        dismissToast(loadingToast);
         if (res.success) {
-          showToast('Vote registered successfully!', 'success');
-          
-          state.activeRecord.record[voteHeader] = voteValue;
-          
-          let yesCount = 0;
-          let noCount = 0;
-          state.highCouncilors.forEach(name => {
-            const val = state.activeRecord.record[`Approval [${name}]`] || '';
-            if (val === 'Yes') yesCount++;
-            if (val === 'No') noCount++;
-          });
-          state.activeRecord.record["Approvals"] = String(yesCount);
-          state.activeRecord.record["Votes Against"] = String(noCount);
-          
-          renderModalContent(type, state.activeRecord.record);
-          lucide.createIcons();
-          renderDashboard();
+          showToast('Vote registered!', 'success');
         } else {
-          showToast(res.error || 'Failed to register vote', 'error');
+          // Revert on failure
+          record[voteHeader] = previousValue;
+          showToast(res.error || 'Vote failed — reverted', 'error');
+          if (state.activeRecord && state.activeRecord.record === record) {
+            renderModalContent(type, record);
+            lucide.createIcons();
+          }
+          renderDashboard();
         }
       })
-      .catch(err => {
-        dismissToast(loadingToast);
-        showToast('API Connection error', 'error');
+      .catch(() => {
+        // Revert on network error
+        record[voteHeader] = previousValue;
+        showToast('Connection error — vote reverted', 'error');
+        if (state.activeRecord && state.activeRecord.record === record) {
+          renderModalContent(type, record);
+          lucide.createIcons();
+        }
+        renderDashboard();
       });
     }
 
