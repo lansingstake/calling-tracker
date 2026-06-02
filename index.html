@@ -925,11 +925,6 @@
               }
               
               showMainUI();
-              if (state.role === 'admin') {
-                document.getElementById('btn-open-data').classList.remove('hidden');
-              } else {
-                document.getElementById('btn-open-data').classList.add('hidden');
-              }
               const welcomeName = state.role === 'admin' ? 'Admin' : state.role === 'presidency' ? `President ${res.username}` : `Brother ${res.username}`;
               showToast(`Welcome back, ${welcomeName}!`, 'success');
             }
@@ -956,12 +951,16 @@
       document.getElementById('bottom-nav').style.display = 'flex';
       
       if (state.role === 'admin') {
+        document.getElementById('btn-open-data').classList.remove('hidden');
+        document.getElementById('btn-open-data').style.display = 'flex';
         document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
         document.getElementById('settings-pins-card').classList.remove('hidden');
         document.getElementById('settings-roster-card').classList.remove('hidden');
         document.getElementById('settings-presidency-card').classList.remove('hidden');
         document.getElementById('db-tracker-toggle-card').classList.remove('hidden');
       } else {
+        document.getElementById('btn-open-data').classList.add('hidden');
+        document.getElementById('btn-open-data').style.display = 'none';
         document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
         document.getElementById('settings-pins-card').classList.add('hidden');
         document.getElementById('settings-roster-card').classList.add('hidden');
