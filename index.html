@@ -1985,7 +1985,7 @@
               <input type="text" value="${record['Calling'] || ''}" onchange="updateRecordField('Calling', this.value)" ${isHC ? 'readonly disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
             </div>
             <div>
-              <label class="block text-sm text-slate-400 font-bold mb-1">Current Step</label>
+              <label class="block text-base text-emerald-400 font-bold mb-1">Current Step</label>
               <select onchange="updateRecordField('Current Step', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none border-[3px] border-slate-900" style="border-color: #000;">
                 <option value=""></option>
                 <option value="HC Approval" ${record['Current Step'] === 'HC Approval' ? 'selected' : ''}>HC Approval</option>
@@ -2188,7 +2188,7 @@
           <div class="space-y-4">
             <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Workflow & Key Info</h4>
             <div>
-              <label class="block text-sm text-slate-400 font-bold mb-1">Current Step</label>
+              <label class="block text-base text-emerald-400 font-bold mb-1">Current Step</label>
               <select onchange="updateRecordField('Current Step', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none border-[3px] border-slate-900" style="border-color: #000;">
                 <option value=""></option>
                 <option value="Stake Interview" ${record['Current Step'] === 'Stake Interview' ? 'selected' : ''}>Stake Interview</option>
@@ -2293,7 +2293,7 @@
               </div>
             </div>
             <div>
-              <label class="block text-sm text-slate-400 font-bold mb-1">Current Step</label>
+              <label class="block text-base text-emerald-400 font-bold mb-1">Current Step</label>
               <select onchange="updateRecordField('Current Step', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none border-[3px] border-slate-900" style="border-color: #000;">
                 <option value=""></option>
                 <option value="Pending Approval" ${record['Current Step'] === 'Pending Approval' ? 'selected' : ''}>Pending Approval</option>
@@ -2767,7 +2767,15 @@
         const matchingCalling = state.records.callings.find(c => 
           c["Member Name"] === name && c["Calling"] === calling
         );
-        if (matchingCalling && earlySteps.includes(matchingCalling["Current Step"])) return false;
+        if (matchingCalling) {
+          // Failsafe: calling must be "Accepted" to appear on pulpit
+          if ((matchingCalling["Calling Accepted?"] || "").trim() !== 'Accepted') return false;
+          if (earlySteps.includes(matchingCalling["Current Step"])) return false;
+        }
+        // For sustaining callings (not ordinations/releases), require a matching accepted calling record
+        if (s["Action"] === "Sustain" && s["Calling"] !== "Elder" && s["Calling"] !== "High Priest") {
+          if (!matchingCalling) return false; // No matching record found — don't show
+        }
         // Check if this is a release tied to a calling at an early step (Member to Release matches)
         if (s["Action"] === "Release & Thank") {
           const parentCalling = state.records.callings.find(c => 
