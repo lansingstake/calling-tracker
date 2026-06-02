@@ -555,8 +555,9 @@
             <input id="modal-title" type="text" value="Member Name" onchange="updateRecordField('Member Name', this.value)" class="text-lg font-bold mt-1 text-slate-100 bg-transparent border-b border-transparent hover:border-slate-700 focus:border-indigo-500 focus:outline-none w-full transition-colors">
             <p id="modal-subtitle" class="text-sm text-slate-400">Calling Details</p>
           </div>
-          <button onclick="closeModal()" class="p-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-white transition-colors flex-shrink-0 ml-3">
-            <i data-lucide="x" class="w-4 h-4"></i>
+          <button id="modal-close-btn" onclick="closeModal()" class="p-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-white transition-colors flex-shrink-0 ml-3 relative flex items-center justify-center w-8 h-8">
+            <i id="modal-close-icon" data-lucide="x" class="w-4 h-4 transition-opacity duration-200 opacity-100"></i>
+            <i id="modal-spinner-icon" data-lucide="loader-2" class="w-4 h-4 animate-spin text-indigo-400 absolute transition-opacity duration-200 opacity-0 pointer-events-none"></i>
           </button>
         </div>
       </div>
@@ -2006,7 +2007,7 @@
               </select>
             </div>
             <div class="grid grid-cols-2 gap-3">
-              ${renderNameInputField('Recommended By', 'Recommended By', record)}
+              ${renderSelectField('Recommended By', 'Recommended By', [''].concat([...(state.isDemo ? (state.records.stakePresidency || mockData.stakePresidency) : state.stakePresidency || []), ...(state.isDemo ? (state.records.highCouncilors || mockData.highCouncilors) : state.highCouncilors || [])].filter(Boolean)), record)}
               <div>
                 <label class="block text-xs text-slate-400 font-medium mb-1">Unit Leader Date Contacted</label>
                 <input type="date" value="${record['Unit Leader Date Contacted'] || ''}" onchange="updateRecordField('Unit Leader Date Contacted', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
@@ -2024,7 +2025,7 @@
               <input type="date" value="${record['Stake Presidency Date Approved'] || ''}" onchange="updateRecordField('Stake Presidency Date Approved', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
             </div>
             <div class="grid grid-cols-2 gap-3">
-              ${renderNameInputField('Assigned to Extend Calling / Release', 'Assigned to Call / Release', record)}
+              ${renderSelectField('Assigned to Extend Calling / Release', 'Assigned to Call / Release', [''].concat([...(state.isDemo ? (state.records.stakePresidency || mockData.stakePresidency) : state.stakePresidency || []), ...(state.isDemo ? (state.records.highCouncilors || mockData.highCouncilors) : state.highCouncilors || [])].filter(Boolean)), record)}
               ${renderSelectField('Calling Accepted?', 'Calling Accepted?', ['Accepted', 'Declined', 'Waiting for Answer'], record)}
             </div>
           </div>
@@ -2103,7 +2104,7 @@
             <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Training & Onboarding</h4>
             <div class="grid grid-cols-2 gap-3">
               ${renderSelectField('Ready for Training?', 'Ready for Training?', ['Yes', 'No'], record)}
-              ${renderNameInputField('Assigned Trainer', 'Assigned Trainer', record)}
+              ${renderSelectField('Assigned Trainer', 'Assigned Trainer', [''].concat([...(state.isDemo ? (state.records.stakePresidency || mockData.stakePresidency) : state.stakePresidency || []), ...(state.isDemo ? (state.records.highCouncilors || mockData.highCouncilors) : state.highCouncilors || [])].filter(Boolean)), record)}
             </div>
             <div class="grid grid-cols-2 gap-3">
               ${renderSelectField('Key Provided?', 'Key Provided?', ['Yes', 'No', 'N/A'], record)}
@@ -2226,7 +2227,7 @@
               <label class="block text-xs text-slate-400 font-medium mb-1">Stake Presidency Date Approved</label>
               <input type="date" value="${record['Stake Presidency Date Approved'] || ''}" onchange="updateRecordField('Stake Presidency Date Approved', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
             </div>
-            ${renderNameInputField('Assigned to Oversee Sustaining / Ordination', 'Assigned to Oversee Sustaining / Ordination', record)}
+            ${renderSelectField('Assigned to Oversee Sustaining / Ordination', 'Assigned to Oversee Sustaining / Ordination', [''].concat([...(state.isDemo ? (state.records.stakePresidency || mockData.stakePresidency) : state.stakePresidency || []), ...(state.isDemo ? (state.records.highCouncilors || mockData.highCouncilors) : state.highCouncilors || [])].filter(Boolean)), record)}
           </div>
 
           <hr class="border-slate-800">
@@ -2244,7 +2245,7 @@
                 <input type="date" value="${record['Ordained Date'] || ''}" onchange="updateRecordField('Ordained Date', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
             </div>
-            ${renderNameInputField('Ordained By', 'Ordained By', record)}
+            ${renderSelectField('Ordained By', 'Ordained By', [''].concat([...(state.isDemo ? (state.records.stakePresidency || mockData.stakePresidency) : state.stakePresidency || []), ...(state.isDemo ? (state.records.highCouncilors || mockData.highCouncilors) : state.highCouncilors || [])].filter(Boolean)), record)}
             <div>
               <label class="block text-xs text-slate-400 font-medium mb-1">Out of Unit Member Info</label>
               <textarea onchange="updateRecordField('Out of Unit Member Info', this.value)" rows="2" class="w-full glass rounded-lg p-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Out of Unit Member Info'] || ''}</textarea>
@@ -2335,7 +2336,7 @@
               </div>
             </div>
             <div class="grid grid-cols-2 gap-3">
-              ${renderNameInputField('Assigned to Extend Release', 'Assigned to Extend Release', record)}
+              ${renderSelectField('Assigned to Extend Release', 'Assigned to Extend Release', [''].concat([...(state.isDemo ? (state.records.stakePresidency || mockData.stakePresidency) : state.stakePresidency || []), ...(state.isDemo ? (state.records.highCouncilors || mockData.highCouncilors) : state.highCouncilors || [])].filter(Boolean)), record)}
             </div>
           </div>
 
@@ -2438,6 +2439,8 @@
         "Date Set Apart", "Ordained Date",
         "Set Apart By", "Ordained By",
         "Ready for Training?", "Ready for Training",
+        "Assigned to Extend Calling / Release", "Assigned to Oversee Sustaining / Ordination", "Assigned to Extend Release",
+        "Assigned Trainer", "Recommended By",
         "Key Provided?", "Key Provided",
         "Training Provided?", "Training Provided",
         "Ready for High Council Approval?",
@@ -2582,6 +2585,32 @@
       });
     }
 
+    let pendingSaves = 0;
+    function setModalSaving(isSaving) {
+      const btn = document.getElementById('modal-close-btn');
+      const iconX = document.getElementById('modal-close-icon');
+      const iconSpin = document.getElementById('modal-spinner-icon');
+      if (!btn || !iconX || !iconSpin) return;
+
+      if (isSaving) {
+        pendingSaves++;
+        if (pendingSaves === 1) {
+          btn.disabled = true;
+          btn.classList.add('opacity-50', 'cursor-not-allowed');
+          iconX.classList.replace('opacity-100', 'opacity-0');
+          iconSpin.classList.replace('opacity-0', 'opacity-100');
+        }
+      } else {
+        pendingSaves = Math.max(0, pendingSaves - 1);
+        if (pendingSaves === 0) {
+          btn.disabled = false;
+          btn.classList.remove('opacity-50', 'cursor-not-allowed');
+          iconX.classList.replace('opacity-0', 'opacity-100');
+          iconSpin.classList.replace('opacity-100', 'opacity-0');
+        }
+      }
+    }
+
     // Update single fields (checklist options, text, dates)
     function updateRecordField(fieldKey, value) {
       if (!state.activeRecord) return;
@@ -2590,6 +2619,7 @@
       updates[fieldKey] = value;
       
       const loadingToast = showToast('Saving changes...', 'info', 0);
+      setModalSaving(true);
       
       apiCall('updateRecord', {
         type: state.activeRecord.type,
@@ -2598,6 +2628,7 @@
         updates: updates
       })
       .then(res => {
+        setModalSaving(false);
         dismissToast(loadingToast);
         if (res.success) {
           showToast('Changes saved!', 'success');
@@ -2652,6 +2683,7 @@
         }
       })
       .catch(err => {
+        setModalSaving(false);
         dismissToast(loadingToast);
         showToast('Connection error, field not saved', 'error');
         renderModalContent(state.activeRecord.type, state.activeRecord.record);
@@ -3481,7 +3513,11 @@
       const lblName = document.getElementById('lbl-member-name');
       
       const unitOptions = '<option value=""></option>' + STAKE_UNITS.map(u => `<option value="${u}">${u}</option>`).join('');
-      
+      const spRoster = state.isDemo ? (state.records.stakePresidency || mockData.stakePresidency) : state.stakePresidency;
+      const hcRoster = state.isDemo ? (state.records.highCouncilors || mockData.highCouncilors) : state.highCouncilors;
+      const rosterOptionsStr = '<option value="" disabled selected>Select an assignment...</option>' + 
+        [...(spRoster || []), ...(hcRoster || [])].filter(Boolean).map(n => `<option value="${n}">${n}</option>`).join('');
+
       if (state.formType === 'calling') {
         lblName.innerText = "Member Name (Person being called)";
         container.innerHTML = `
