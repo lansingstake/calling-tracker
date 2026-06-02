@@ -1992,9 +1992,9 @@
                 ${['Charlotte', 'YSA', 'Holt', 'Jackson', 'Lansing', 'Owosso', 'Portland', 'St Johns', 'Williamston'].map(u => `<option value="${u}" ${record['Unit'] === u ? 'selected' : ''}>${u}</option>`).join('')}
               </select>
             </div>
-            <div>
-              <label class="block text-base text-emerald-400 font-bold mb-1">Current Step</label>
-              <select onchange="updateRecordField('Current Step', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none border-[3px] border-slate-900" style="border-color: #000;">
+            <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 w-full">
+              <label class="block text-base text-emerald-400 font-bold mb-2 text-center">Current Step</label>
+              <select onchange="updateRecordField('Current Step', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-emerald-400 font-medium focus:outline-none border-[2px] border-emerald-500/30">
                 <option value=""></option>
                 <option value="HC Approval" ${record['Current Step'] === 'HC Approval' ? 'selected' : ''}>HC Approval</option>
                 <option value="Call / Release" ${record['Current Step'] === 'Call / Release' ? 'selected' : ''}>Call / Release</option>
@@ -2202,9 +2202,9 @@
                 ${['Charlotte', 'YSA', 'Holt', 'Jackson', 'Lansing', 'Owosso', 'Portland', 'St Johns', 'Williamston'].map(u => `<option value="${u}" ${record['Unit'] === u ? 'selected' : ''}>${u}</option>`).join('')}
               </select>
             </div>
-            <div>
-              <label class="block text-base text-emerald-400 font-bold mb-1">Current Step</label>
-              <select onchange="updateRecordField('Current Step', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none border-[3px] border-slate-900" style="border-color: #000;">
+            <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 w-full">
+              <label class="block text-base text-emerald-400 font-bold mb-2 text-center">Current Step</label>
+              <select onchange="updateRecordField('Current Step', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-emerald-400 font-medium focus:outline-none border-[2px] border-emerald-500/30">
                 <option value=""></option>
                 <option value="Stake Interview" ${record['Current Step'] === 'Stake Interview' ? 'selected' : ''}>Stake Interview</option>
                 <option value="HC Approval" ${record['Current Step'] === 'HC Approval' ? 'selected' : ''}>HC Approval</option>
@@ -2314,9 +2314,9 @@
                 </select>
               </div>
             </div>
-            <div>
-              <label class="block text-base text-emerald-400 font-bold mb-1">Current Step</label>
-              <select onchange="updateRecordField('Current Step', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none border-[3px] border-slate-900" style="border-color: #000;">
+            <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 w-full">
+              <label class="block text-base text-emerald-400 font-bold mb-2 text-center">Current Step</label>
+              <select onchange="updateRecordField('Current Step', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-emerald-400 font-medium focus:outline-none border-[2px] border-emerald-500/30">
                 <option value=""></option>
                 <option value="Pending Approval" ${record['Current Step'] === 'Pending Approval' ? 'selected' : ''}>Pending Approval</option>
                 <option value="Assigned" ${record['Current Step'] === 'Assigned' ? 'selected' : ''}>Assigned</option>
