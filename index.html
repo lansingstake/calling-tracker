@@ -485,13 +485,13 @@
         </button>
       </div>
 
-      <!-- 6b. Stake Presidency Roster (Admin Only) -->
+      <!-- 6b. Presidency Roster (Admin Only) -->
       <div id="settings-presidency-card" class="glass rounded-2xl p-5 shadow-xl space-y-4 hidden">
         <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
           <i data-lucide="shield" class="w-4 h-4 text-indigo-400"></i>
-          Stake Presidency Roster
+          Presidency Roster
         </h2>
-        <p class="text-[11px] text-slate-400">Manage the names of the 3 Stake Presidency members.</p>
+        <p class="text-[11px] text-slate-400">Manage the names of the 3 Presidency members.</p>
         
         <div class="grid grid-cols-3 gap-2" id="presidency-inputs">
           <!-- 3 Presidency name inputs -->
@@ -917,7 +917,8 @@
               }
               
               showMainUI();
-              showToast(`Welcome back, ${res.username || 'Admin'}!`, 'success');
+              const welcomeName = state.role === 'admin' ? 'Admin' : state.role === 'presidency' ? `President ${res.username}` : `Brother ${res.username}`;
+              showToast(`Welcome back, ${welcomeName}!`, 'success');
             }
           } else {
             showToast(res.error || 'Authentication failed', 'error');
@@ -3824,7 +3825,7 @@
         
         const spContainer = document.getElementById('presidency-inputs');
         const spRoster = state.isDemo ? (state.records.stakePresidency || mockData.stakePresidency) : state.stakePresidency;
-        const spLabels = ["Stake President", "1st Counselor", "2nd Counselor"];
+        const spLabels = ["President", "1st Counselor", "2nd Counselor"];
         spContainer.innerHTML = spRoster.map((name, i) => `
           <div>
             <label class="block text-[11px] text-slate-500 font-bold mb-0.5">${spLabels[i] || `Presidency Member ${i+1}`}</label>
