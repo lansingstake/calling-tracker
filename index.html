@@ -2653,14 +2653,18 @@
                            `${state.activeRecord.record["Calling to be Released From"]} (${state.activeRecord.record["Unit"]})`;
           document.getElementById('modal-subtitle').innerText = subtitle;
 
-          // Save scroll position before re-render to prevent scroll jump
-          const modalContent = document.getElementById('modal-content');
-          const savedScroll = modalContent ? modalContent.scrollTop : 0;
-
-          renderModalContent(state.activeRecord.type, state.activeRecord.record);
-          lucide.createIcons();
-          // Restore scroll position
-          if (modalContent) modalContent.scrollTop = savedScroll;
+          // We intentionally do NOT re-render the entire modal here.
+          // Re-rendering destroys the DOM nodes and interrupts the user if they have another dropdown open.
+          // Since the user is the one who changed the input, the DOM already reflects the new value.
+          
+          // If a field was updated programmatically (e.g., auto-setting HC Approval Date), update its DOM input manually
+          const escapedFieldKey = fieldKey.replace(/'/g, "\\'");
+          const el = document.querySelector(`[onchange*="updateRecordField('${escapedFieldKey}'"]`);
+          if (el && el.value !== value && el.type !== 'checkbox') {
+            el.value = value;
+          } else if (el && el.type === 'checkbox') {
+            el.checked = value;
+          }
           renderDashboard();
           
           if (state.activeTab === 'history') {
