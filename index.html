@@ -2753,6 +2753,11 @@
         
         const hasApproval = (name) => String(record[`Approval [${name}]`] || "").toUpperCase() === "FALSE" || String(record[`Approval [${name}]`] || "").toUpperCase() === "TRUE";
         
+        const spAllChecked = spRoster.length > 0 && spRoster.every(name => hasApproval(name));
+        const hcAllChecked = hcRoster.length > 0 && hcRoster.every(name => hasApproval(name));
+        const allNames = [...adminRoster, ...spRoster, ...hcRoster];
+        const everyoneChecked = allNames.length > 0 && allNames.every(name => hasApproval(name));
+        
         let ownerHtml = `
           <div class="relative">
             <button type="button" onclick="document.getElementById('owner-dropdown-menu').classList.toggle('hidden')" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500 flex justify-between items-center text-left">
@@ -2764,13 +2769,13 @@
               <div class="mb-3">
                 <h5 class="text-[10px] uppercase font-bold text-slate-400 mb-1.5">Groups</h5>
                 <label class="flex items-center gap-2 text-sm text-slate-200 mb-1 cursor-pointer hover:bg-slate-800/50 p-1 rounded">
-                  <input type="checkbox" onchange="handleOwnerGroupSelect('Everyone', this.checked)" class="rounded bg-slate-800 border-slate-600 text-emerald-500 w-4 h-4"> <span class="select-none">Everyone</span>
+                  <input type="checkbox" id="cb-group-Everyone" onchange="handleOwnerGroupSelect('Everyone', this.checked)" ${everyoneChecked ? 'checked' : ''} class="rounded bg-slate-800 border-slate-600 text-emerald-500 w-4 h-4"> <span class="select-none">Everyone</span>
                 </label>
                 <label class="flex items-center gap-2 text-sm text-slate-200 mb-1 cursor-pointer hover:bg-slate-800/50 p-1 rounded">
-                  <input type="checkbox" onchange="handleOwnerGroupSelect('High Council', this.checked)" class="rounded bg-slate-800 border-slate-600 text-emerald-500 w-4 h-4"> <span class="select-none">High Council</span>
+                  <input type="checkbox" id="cb-group-High Council" onchange="handleOwnerGroupSelect('High Council', this.checked)" ${hcAllChecked ? 'checked' : ''} class="rounded bg-slate-800 border-slate-600 text-emerald-500 w-4 h-4"> <span class="select-none">High Council</span>
                 </label>
                 <label class="flex items-center gap-2 text-sm text-slate-200 mb-1 cursor-pointer hover:bg-slate-800/50 p-1 rounded">
-                  <input type="checkbox" onchange="handleOwnerGroupSelect('Presidency', this.checked)" class="rounded bg-slate-800 border-slate-600 text-emerald-500 w-4 h-4"> <span class="select-none">Presidency</span>
+                  <input type="checkbox" id="cb-group-Presidency" onchange="handleOwnerGroupSelect('Presidency', this.checked)" ${spAllChecked ? 'checked' : ''} class="rounded bg-slate-800 border-slate-600 text-emerald-500 w-4 h-4"> <span class="select-none">Presidency</span>
                 </label>
               </div>
         `;
@@ -2781,7 +2786,7 @@
               <h5 class="text-[10px] uppercase font-bold text-slate-400 mb-1.5">Admins</h5>
               ${adminRoster.map(name => `
                 <label class="flex items-center gap-2 text-sm text-slate-300 mb-1 cursor-pointer hover:bg-slate-800/50 p-1 rounded">
-                  <input type="checkbox" data-name="${name}" ${hasApproval(name) ? 'checked' : ''} class="owner-checkbox rounded bg-slate-800 border-slate-600 text-emerald-500 w-3.5 h-3.5"> <span class="select-none">${name}</span>
+                  <input type="checkbox" data-name="${name}" ${hasApproval(name) ? 'checked' : ''} onchange="updateGroupCheckboxStates()" class="owner-checkbox rounded bg-slate-800 border-slate-600 text-emerald-500 w-3.5 h-3.5"> <span class="select-none">${name}</span>
                 </label>
               `).join('')}
             </div>
@@ -2793,7 +2798,7 @@
               <h5 class="text-[10px] uppercase font-bold text-slate-400 mb-1.5">Presidency</h5>
               ${spRoster.map(name => `
                 <label class="flex items-center gap-2 text-sm text-slate-300 mb-1 cursor-pointer hover:bg-slate-800/50 p-1 rounded">
-                  <input type="checkbox" data-name="${name}" data-group="Presidency" ${hasApproval(name) ? 'checked' : ''} class="owner-checkbox rounded bg-slate-800 border-slate-600 text-emerald-500 w-3.5 h-3.5"> <span class="select-none">${name}</span>
+                  <input type="checkbox" data-name="${name}" data-group="Presidency" ${hasApproval(name) ? 'checked' : ''} onchange="updateGroupCheckboxStates()" class="owner-checkbox rounded bg-slate-800 border-slate-600 text-emerald-500 w-3.5 h-3.5"> <span class="select-none">${name}</span>
                 </label>
               `).join('')}
             </div>
@@ -2805,7 +2810,7 @@
               <h5 class="text-[10px] uppercase font-bold text-slate-400 mb-1.5">High Council</h5>
               ${hcRoster.map(name => `
                 <label class="flex items-center gap-2 text-sm text-slate-300 mb-1 cursor-pointer hover:bg-slate-800/50 p-1 rounded">
-                  <input type="checkbox" data-name="${name}" data-group="High Council" ${hasApproval(name) ? 'checked' : ''} class="owner-checkbox rounded bg-slate-800 border-slate-600 text-emerald-500 w-3.5 h-3.5"> <span class="select-none">${name}</span>
+                  <input type="checkbox" data-name="${name}" data-group="High Council" ${hasApproval(name) ? 'checked' : ''} onchange="updateGroupCheckboxStates()" class="owner-checkbox rounded bg-slate-800 border-slate-600 text-emerald-500 w-3.5 h-3.5"> <span class="select-none">${name}</span>
                 </label>
               `).join('')}
             </div>
@@ -3052,12 +3057,41 @@
       datalist.innerHTML = allNames.map(name => `<option value="${name}"></option>`).join('');
     }
 
+    function updateGroupCheckboxStates() {
+      const cbEveryone = document.getElementById('cb-group-Everyone');
+      const cbHC = document.getElementById('cb-group-High Council');
+      const cbPres = document.getElementById('cb-group-Presidency');
+
+      let allChecked = true;
+      let hcAllChecked = true;
+      let presAllChecked = true;
+      let hcCount = 0;
+      let presCount = 0;
+
+      const checkboxes = document.querySelectorAll('.owner-checkbox');
+      
+      checkboxes.forEach(cb => {
+        if (!cb.checked) {
+          allChecked = false;
+          if (cb.dataset.group === 'High Council') hcAllChecked = false;
+          if (cb.dataset.group === 'Presidency') presAllChecked = false;
+        }
+        if (cb.dataset.group === 'High Council') hcCount++;
+        if (cb.dataset.group === 'Presidency') presCount++;
+      });
+
+      if (cbEveryone) cbEveryone.checked = (checkboxes.length > 0 && allChecked);
+      if (cbHC) cbHC.checked = (hcCount > 0 && hcAllChecked);
+      if (cbPres) cbPres.checked = (presCount > 0 && presAllChecked);
+    }
+
     function handleOwnerGroupSelect(group, isChecked) {
       const checkboxes = document.querySelectorAll('.owner-checkbox');
       checkboxes.forEach(cb => {
         if (group === 'Everyone') cb.checked = isChecked;
         else if (cb.dataset.group === group) cb.checked = isChecked;
       });
+      updateGroupCheckboxStates();
     }
 
     function applyOwnerSelection() {
