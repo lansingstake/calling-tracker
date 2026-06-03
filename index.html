@@ -575,10 +575,14 @@
             <label class="block text-sm font-medium text-slate-400 mb-1">Google Apps Script Web App URL</label>
             <input type="text" id="settings-api-url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full glass rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-300">
           </div>
-          <button onclick="saveApiUrl()" class="w-full bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-200 font-semibold py-2 rounded-xl text-sm transition-all active:scale-95">
-            Save Web App URL
-          </button>
-        </div>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="saveApiUrl()" class="w-full bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-200 font-semibold py-2 rounded-xl text-sm transition-all active:scale-95">
+              Save Web App URL
+            </button>
+            <button onclick="copyShareLink()" class="w-full bg-indigo-500/10 border border-indigo-500/30 hover:bg-indigo-500/20 text-indigo-400 font-semibold py-2 rounded-xl text-sm transition-all active:scale-95 flex items-center justify-center gap-2">
+              <i data-lucide="link" class="w-4 h-4"></i> Copy Share Link
+            </button>
+          </div>
       </div>
 
       <!-- 6d. PIN Management (Admin Only) -->
@@ -746,6 +750,16 @@
     };
     // Load state from local storage or set defaults
     document.addEventListener('DOMContentLoaded', () => {
+      // Parse API URL from query parameters (for easy onboarding)
+      const params = new URLSearchParams(window.location.search);
+      const apiParam = params.get('api');
+      if (apiParam) {
+        state.apiUrl = apiParam;
+        localStorage.setItem('tracker_api_url', apiParam);
+        // Clean up URL visually
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+      
       lucide.createIcons();
       initUI();
     });
