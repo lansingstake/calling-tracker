@@ -206,9 +206,16 @@
     <!-- 2. DASHBOARD VIEW -->
     <section id="view-dashboard" class="hidden space-y-4">
       <!-- Admin Tracker Toggle (Only for Admin) -->
-      <div id="db-tracker-toggle-card" class="hidden bg-slate-900/60 p-1 rounded-xl border border-slate-800 grid grid-cols-2 gap-2">
-        <button onclick="setDashboardViewType('active')" id="btn-db-active" class="py-1.5 text-sm font-semibold rounded-lg bg-indigo-600 text-white transition-all">Active Tracker</button>
-        <button onclick="setDashboardViewType('stakeconf')" id="btn-db-stakeconf" class="py-1.5 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-800 transition-all">Stake Conference</button>
+      <div id="db-tracker-toggle-card" class="hidden">
+        <div class="flex flex-col gap-2">
+          <div class="bg-slate-900/60 p-1 rounded-xl border border-slate-800 grid grid-cols-2 gap-2">
+            <button onclick="setDashboardViewType('active')" id="btn-db-active" class="py-1.5 text-sm font-semibold rounded-lg bg-indigo-600 text-white transition-all">Active Tracker</button>
+            <button onclick="setDashboardViewType('stakeconf')" id="btn-db-stakeconf" class="py-1.5 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-800 transition-all">Stake Conference</button>
+          </div>
+          <div class="bg-slate-900/60 p-1 rounded-xl border border-slate-800">
+            <button onclick="setDashboardViewType('actions')" id="btn-db-actions" class="w-full py-1.5 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-800 transition-all">Actions</button>
+          </div>
+        </div>
       </div>
 
       <!-- Dashboard View: Active Tracker -->
@@ -309,6 +316,20 @@
         </div>
         
         <div id="list-stakeconf" class="space-y-3"></div>
+      </div>
+
+      <!-- Dashboard View: Actions -->
+      <div id="db-actions-panel" class="space-y-4 hidden">
+        <div class="glass p-4 rounded-xl space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">My Tasks</h3>
+            <button onclick="openCreateActionModal()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold rounded-lg transition-all active:scale-95 whitespace-nowrap flex items-center gap-1.5 shadow-lg shadow-emerald-500/20">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i> Create New Action
+            </button>
+          </div>
+        </div>
+        
+        <div id="list-actions" class="space-y-3"></div>
       </div>
     </section>
 
@@ -507,6 +528,23 @@
         </button>
       </div>
 
+      <!-- 6c. Admins Roster (Admin Only) -->
+      <div id="settings-admins-card" class="glass rounded-2xl p-5 shadow-xl space-y-4 hidden admin-only">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+          <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i>
+          Admins Roster
+        </h2>
+        <p class="text-[11px] text-slate-400">Manage the names of the 2 Admins.</p>
+        
+        <div class="grid grid-cols-2 gap-2" id="admins-inputs">
+          <!-- 2 Admins name inputs -->
+        </div>
+        
+        <button onclick="saveAdminsRoster()" id="btn-save-admins" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl text-sm transition-all active:scale-95 flex items-center justify-center gap-2 mt-4 shadow-lg shadow-emerald-500/10">
+          <i data-lucide="save" class="w-4 h-4"></i> Save Changes
+        </button>
+      </div>
+
       <!-- 6c. API Connection -->
       <div class="glass rounded-2xl p-5 shadow-xl space-y-4">
         <h2 class="text-lg font-bold flex items-center gap-2">
@@ -573,6 +611,50 @@
     </div>
   </div>
 
+  <div id="create-action-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-end justify-center hidden opacity-0 transition-opacity duration-300">
+    <div class="w-full max-w-md bg-slate-900 border-t border-slate-800 rounded-t-3xl shadow-2xl max-h-[85vh] translate-y-full transition-transform duration-300 flex flex-col">
+      <!-- Modal Header (sticky) -->
+      <div class="sticky top-0 z-10 bg-slate-900 rounded-t-3xl px-6 pt-6 pb-3 border-b border-slate-800/60 flex-shrink-0">
+        <div class="flex justify-between items-start">
+          <div class="min-w-0 flex-1">
+            <span class="text-[11px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">New Action Item</span>
+            <h2 class="text-lg font-bold mt-1 text-slate-100">Create Action</h2>
+          </div>
+          <button id="create-action-modal-close-btn" onclick="closeCreateActionModal()" class="p-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-white transition-colors flex-shrink-0 ml-3 relative flex items-center justify-center w-8 h-8">
+            <i id="create-action-modal-close-icon" data-lucide="x" class="w-4 h-4 transition-opacity duration-200 opacity-100"></i>
+            <i id="create-action-modal-spinner-icon" data-lucide="loader-2" class="w-4 h-4 animate-spin text-emerald-400 absolute transition-opacity duration-200 opacity-0 pointer-events-none"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Scrollable Content -->
+      <div class="space-y-6 px-6 pb-6 pt-4 overflow-y-auto scrollbar-hide flex-1">
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs text-slate-400 font-medium mb-1">Topic</label>
+            <input type="text" id="new-action-topic" placeholder="Action Topic" class="w-full glass rounded-lg px-3 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 font-medium mb-1">Action</label>
+            <textarea id="new-action-desc" rows="3" placeholder="Action description..." class="w-full glass rounded-lg px-3 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500 resize-y"></textarea>
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 font-medium mb-1">Owner</label>
+            <input type="text" id="new-action-owner" placeholder="Owner" class="w-full glass rounded-lg px-3 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 font-medium mb-1">Notes</label>
+            <textarea id="new-action-notes" rows="2" placeholder="Optional notes..." class="w-full glass rounded-lg px-3 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500 resize-y"></textarea>
+          </div>
+        </div>
+        
+        <button onclick="submitNewAction()" id="btn-submit-action" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-emerald-500/20 active:scale-95 flex items-center justify-center gap-2 mt-4">
+          <i data-lucide="plus" class="w-4 h-4"></i> Create Action
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Bottom Navigation Tab Bar (Mobile) -->
   <nav id="bottom-nav" class="glass fixed bottom-0 left-0 right-0 z-40 border-t border-slate-800 flex justify-around py-3 px-4 max-w-md mx-auto rounded-t-2xl shadow-xl hidden">
     <button onclick="switchTab('dashboard')" id="nav-dashboard" class="flex flex-col items-center gap-1 text-indigo-500 transition-colors">
@@ -610,7 +692,8 @@
       highCouncilors: [],
       highCouncilorUnits: [],
       stakePresidency: [],
-      records: { callings: [], ordinations: [], releases: [], sustainings: [] },
+      admins: [],
+      records: { callings: [], ordinations: [], releases: [], sustainings: [], actions: [] },
       activeTab: 'dashboard',
       activeFilter: 'all',
       dashboardViewType: 'active', // 'active' or 'stakeconf'
@@ -637,6 +720,7 @@
       highCouncilors: [],
       highCouncilorUnits: [],
       stakePresidency: [],
+      admins: [],
       records: [],
       sustainings: []
     };
@@ -672,6 +756,7 @@
               state.highCouncilors = res.highCouncilors;
               state.highCouncilorUnits = res.highCouncilorUnits || [];
               state.stakePresidency = res.stakePresidency || [];
+              state.admins = res.admins || [];
               if (res.adminPin) state.adminPin = res.adminPin;
               if (res.hcPin) state.hcPin = res.hcPin;
               showMainUI();
@@ -870,13 +955,22 @@
               state.highCouncilors = res.highCouncilors;
               state.highCouncilorUnits = res.highCouncilorUnits || [];
               state.stakePresidency = res.stakePresidency || [];
+              state.admins = res.admins || [];
               
               const selector = document.getElementById('login-hc-name');
               let selectHtml = '<option value="">-- Select Your Role --</option>';
-              selectHtml += '<option value="Admin">Admin</option>';
-              
               const spRoster = state.isDemo ? (state.records.stakePresidency || mockData.stakePresidency) : state.stakePresidency;
+              const adminRoster = state.isDemo ? (state.records.admins || mockData.admins) : state.admins;
+              selectHtml += '<optgroup label="Stake Presidency">';
               selectHtml += spRoster.map(name => `<option value="${name}">${name}</option>`).join('');
+              selectHtml += '</optgroup>';
+              if (adminRoster && adminRoster.length > 0) {
+                selectHtml += '<optgroup label="Admins">';
+                selectHtml += adminRoster.map(name => `<option value="${name}">${name}</option>`).join('');
+                selectHtml += '</optgroup>';
+              } else {
+                selectHtml += '<option value="Admin">Admin</option>';
+              }
               
               selector.innerHTML = selectHtml;
               document.getElementById('login-selector-label').innerText = 'Select Your Role';
@@ -909,6 +1003,7 @@
               state.highCouncilors = res.highCouncilors;
               state.highCouncilorUnits = res.highCouncilorUnits || [];
               state.stakePresidency = res.stakePresidency || [];
+              state.admins = res.admins || [];
               if (res.adminPin) state.adminPin = res.adminPin;
               if (res.hcPin) state.hcPin = res.hcPin;
               if (res.spreadsheetUrl) state.spreadsheetUrl = res.spreadsheetUrl;
@@ -942,10 +1037,13 @@
     function showMainUI() {
       // Configure elements based on role
       document.getElementById('user-profile').classList.remove('hidden');
-      document.getElementById('profile-name').innerText = state.username || 'Administrator';
-      document.getElementById('profile-role').innerText = 
-        state.role === 'admin' ? '' : 
-        state.role === 'presidency' ? 'Presidency' : 'High Councilor';
+      if (state.role === 'admin') {
+        document.getElementById('profile-name').innerText = state.username !== 'Admin' ? state.username : 'Admin';
+        document.getElementById('profile-role').innerText = state.username !== 'Admin' ? 'Admin' : '';
+      } else {
+        document.getElementById('profile-name').innerText = state.username || 'Administrator';
+        document.getElementById('profile-role').innerText = state.role === 'presidency' ? 'Presidency' : 'High Councilor';
+      }
       
       document.getElementById('bottom-nav').classList.remove('hidden');
       document.getElementById('bottom-nav').style.display = 'flex';
@@ -957,6 +1055,7 @@
         document.getElementById('settings-pins-card').classList.remove('hidden');
         document.getElementById('settings-roster-card').classList.remove('hidden');
         document.getElementById('settings-presidency-card').classList.remove('hidden');
+        document.getElementById('settings-admins-card').classList.remove('hidden');
         document.getElementById('db-tracker-toggle-card').classList.remove('hidden');
       } else {
         document.getElementById('btn-open-data').classList.add('hidden');
@@ -965,6 +1064,7 @@
         document.getElementById('settings-pins-card').classList.add('hidden');
         document.getElementById('settings-roster-card').classList.add('hidden');
         document.getElementById('settings-presidency-card').classList.add('hidden');
+        document.getElementById('settings-admins-card').classList.add('hidden');
         document.getElementById('db-tracker-toggle-card').classList.add('hidden');
       }
 
@@ -1418,24 +1518,27 @@
       
       const btnActive = document.getElementById('btn-db-active');
       const btnStake = document.getElementById('btn-db-stakeconf');
+      const btnActions = document.getElementById('btn-db-actions');
       
-      if (viewType === 'active') {
-        btnActive.classList.add('bg-indigo-600', 'text-white');
-        btnActive.classList.remove('text-slate-600');
-        btnStake.classList.remove('bg-indigo-600', 'text-white');
-        btnStake.classList.add('text-slate-600');
-        
-        document.getElementById('db-active-panel').classList.remove('hidden');
-        document.getElementById('db-stakeconf-panel').classList.add('hidden');
-      } else {
-        btnStake.classList.add('bg-indigo-600', 'text-white');
-        btnStake.classList.remove('text-slate-600');
-        btnActive.classList.remove('bg-indigo-600', 'text-white');
-        btnActive.classList.add('text-slate-600');
-        
-        document.getElementById('db-stakeconf-panel').classList.remove('hidden');
-        document.getElementById('db-active-panel').classList.add('hidden');
-      }
+      const buttons = [
+        { btn: btnActive, id: 'active', panel: 'db-active-panel' },
+        { btn: btnStake, id: 'stakeconf', panel: 'db-stakeconf-panel' },
+        { btn: btnActions, id: 'actions', panel: 'db-actions-panel' }
+      ];
+
+      buttons.forEach(b => {
+        if (!b.btn) return;
+        if (b.id === viewType) {
+          b.btn.classList.add('bg-indigo-600', 'text-white');
+          b.btn.classList.remove('text-slate-600');
+          document.getElementById(b.panel).classList.remove('hidden');
+        } else {
+          b.btn.classList.remove('bg-indigo-600', 'text-white');
+          b.btn.classList.add('text-slate-600');
+          document.getElementById(b.panel).classList.add('hidden');
+        }
+      });
+
       renderDashboard();
     }
 
@@ -1584,6 +1687,45 @@
               </div>
             `).join('');
           }
+        } else if (state.role === 'admin') {
+          if (releasesContainer) releasesContainer.classList.add('hidden');
+          if (hcTasksContainer) hcTasksContainer.classList.remove('hidden');
+
+          const dbTasksHeader = document.querySelector('#hc-dashboard-tasks-container h3');
+          if (dbTasksHeader) {
+            dbTasksHeader.innerHTML = `
+              <i data-lucide="check-square" class="w-4 h-4 text-emerald-400"></i>
+              My Assigned Tasks (${state.username || 'Admin'})
+            `;
+          }
+
+          const personalTasks = [];
+          
+          state.records.actions.forEach(a => {
+            const approval = String(a["Approval [" + state.username + "]"] || "").toUpperCase();
+            if (approval !== "TRUE") {
+              personalTasks.push({ record: a, name: a["Topic"] || "No Topic", task: "Action Item", details: a["Action"] || "", type: 'Actions' });
+            }
+          });
+
+          document.getElementById('count-hc-tasks').innerText = personalTasks.length;
+          
+          const personalContainer = document.getElementById('hc-dashboard-tasks');
+          if (personalTasks.length === 0) {
+            personalContainer.innerHTML = `<p class="text-sm text-slate-500 italic text-center py-4">You have no pending assigned tasks</p>`;
+          } else {
+            personalContainer.innerHTML = personalTasks.map(t => `
+              <div class="glass p-3.5 rounded-xl border border-slate-800 flex justify-between items-center shadow-md">
+                <div>
+                  <p class="text-sm font-bold text-slate-100">${t.task}: ${t.name}</p>
+                  <p class="text-[11px] text-slate-400 font-medium">${t.details}</p>
+                </div>
+                <button onclick="openRecordDetails('Actions', '${t.record["Timestamp"]}', '')" class="px-2.5 py-1 text-[11px] font-bold bg-emerald-600 text-white rounded hover:bg-emerald-500 active:scale-95 transition-all">
+                  Update
+                </button>
+              </div>
+            `).join('');
+          }
         } else {
           if (releasesContainer) releasesContainer.classList.remove('hidden');
           if (hcTasksContainer) hcTasksContainer.classList.add('hidden');
@@ -1601,6 +1743,22 @@
         renderCardList('list-callings', callings, 'Callings Releasings', 'user-plus', 'border-emerald-500/30');
         renderCardList('list-ordinations', ordinations, 'Ordinations', 'award', 'border-purple-500/30');
         renderCardList('list-releases', releases, 'Release Only', 'user-minus', 'border-amber-500/30');
+      } else if (state.dashboardViewType === 'actions') {
+        const container = document.getElementById('list-actions');
+        if (state.records.actions.length === 0) {
+          container.innerHTML = `<div class="glass p-6 rounded-xl text-center"><p class="text-sm text-slate-400">No actions found.</p></div>`;
+        } else {
+          container.innerHTML = state.records.actions.map(a => `
+            <div class="glass p-4 rounded-xl border border-slate-800 space-y-2 relative" onclick="openRecordDetails('Actions', '${a["Timestamp"]}', '')">
+              <div class="flex justify-between items-start">
+                <h4 class="font-bold text-slate-100 text-sm">${a["Topic"] || "No Topic"}</h4>
+                <span class="text-[10px] text-slate-500">${a["Timestamp"] ? new Date(a["Timestamp"]).toLocaleDateString() : ''}</span>
+              </div>
+              <p class="text-xs text-slate-400">${a["Action"] || ""}</p>
+              ${a["Owner"] ? `<p class="text-[10px] font-bold text-emerald-400">Owner: ${a["Owner"]}</p>` : ''}
+            </div>
+          `).join('');
+        }
       } else {
         // Stake Conference View rendering
         
@@ -1867,9 +2025,13 @@
     // Modal Details Screen & Workflows
     function openRecordDetails(type, timestamp, memberName) {
       const list = type === 'Callings Releasings' ? state.records.callings : 
-                   type === 'Ordinations' ? state.records.ordinations : state.records.releases;
+                   type === 'Ordinations' ? state.records.ordinations : 
+                   type === 'Actions' ? state.records.actions : state.records.releases;
       
-      const record = list.find(r => r["Timestamp"] === timestamp && r["Member Name"] === memberName);
+      const record = type === 'Actions' 
+        ? list.find(r => r["Timestamp"] === timestamp)
+        : list.find(r => r["Timestamp"] === timestamp && r["Member Name"] === memberName);
+        
       if (!record) return;
 
       state.activeRecord = { type, timestamp, memberName, record };
@@ -1877,19 +2039,30 @@
       // Set Header Details
       const badge = document.getElementById('modal-type-badge');
       badge.innerText = type === 'Callings Releasings' ? 'Calling & Release' : 
-                        type === 'Ordinations' ? 'Priesthood Ordination' : 'Release Only';
+                        type === 'Ordinations' ? 'Priesthood Ordination' : 
+                        type === 'Actions' ? 'Action Item' : 'Release Only';
       
       let badgeBg = 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
       if (type === 'Ordinations') badgeBg = 'bg-purple-500/10 text-purple-400 border border-purple-500/20';
       if (type === 'Release Only') badgeBg = 'bg-amber-500/10 text-amber-400 border border-amber-500/20';
+      if (type === 'Actions') badgeBg = 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20';
       badge.className = `text-[11px] font-bold uppercase px-2.5 py-0.5 rounded-full ${badgeBg}`;
 
-      document.getElementById('modal-title').value = record["Member Name"];
-      
-      const desc = type === 'Callings Releasings' ? `${record["Calling"]} (${record["Unit"]})` : 
-                   type === 'Ordinations' ? `${record["Priesthood Office"]} (${record["Unit"]})` : 
-                   `${record["Calling to be Released From"]} (${record["Unit"]})`;
-      document.getElementById('modal-subtitle').innerText = desc;
+      if (type === 'Actions') {
+        document.getElementById('modal-title').value = record["Topic"] || "No Topic";
+        const canEditAction = state.role === 'admin' || state.role === 'presidency';
+        document.getElementById('modal-title').disabled = !canEditAction;
+        document.getElementById('modal-title').setAttribute('onchange', "updateRecordField('Topic', this.value)");
+        document.getElementById('modal-subtitle').innerText = "Action item details and tracking";
+      } else {
+        document.getElementById('modal-title').value = record["Member Name"];
+        document.getElementById('modal-title').disabled = false;
+        document.getElementById('modal-title').setAttribute('onchange', "updateRecordField('Member Name', this.value)");
+        const desc = type === 'Callings Releasings' ? `${record["Calling"]} (${record["Unit"]})` : 
+                     type === 'Ordinations' ? `${record["Priesthood Office"]} (${record["Unit"]})` : 
+                     `${record["Calling to be Released From"]} (${record["Unit"]})`;
+        document.getElementById('modal-subtitle').innerText = desc;
+      }
 
       // Render Modal Content Form Fields
       renderModalContent(type, record);
@@ -1918,6 +2091,100 @@
         modal.classList.add('hidden');
         state.activeRecord = null;
       }, 300);
+    }
+
+    function openCreateActionModal() {
+      // Clear inputs
+      document.getElementById('new-action-topic').value = '';
+      document.getElementById('new-action-desc').value = '';
+      document.getElementById('new-action-owner').value = '';
+      document.getElementById('new-action-notes').value = '';
+      
+      const modal = document.getElementById('create-action-modal');
+      const drawer = modal.querySelector('div');
+      
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        drawer.classList.remove('translate-y-full');
+      }, 50);
+      
+      lucide.createIcons();
+    }
+
+    function closeCreateActionModal() {
+      const modal = document.getElementById('create-action-modal');
+      const drawer = modal.querySelector('div');
+      
+      modal.classList.add('opacity-0');
+      drawer.classList.add('translate-y-full');
+      
+      setTimeout(() => {
+        modal.classList.add('hidden');
+      }, 300);
+    }
+
+    function submitNewAction() {
+      const topic = document.getElementById('new-action-topic').value.trim();
+      const action = document.getElementById('new-action-desc').value.trim();
+      const owner = document.getElementById('new-action-owner').value.trim();
+      const notes = document.getElementById('new-action-notes').value.trim();
+      
+      if (!topic || !action) {
+        showToast('Topic and Action are required.', 'error');
+        return;
+      }
+      
+      const btn = document.getElementById('btn-submit-action');
+      btn.disabled = true;
+      btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Creating...`;
+      lucide.createIcons();
+      
+      const loadToast = showToast('Creating new action...', 'info', 0);
+      
+      const record = {
+        Topic: topic,
+        Action: action,
+        Owner: owner,
+        Notes: notes
+      };
+      
+      apiCall('addRecord', {
+        type: 'Actions',
+        record: record
+      })
+      .then(res => {
+        btn.disabled = false;
+        btn.innerHTML = `<i data-lucide="plus" class="w-4 h-4"></i> Create Action`;
+        lucide.createIcons();
+        dismissToast(loadToast);
+        
+        if (res.success) {
+          showToast('Action created successfully!', 'success');
+          
+          if (state.isDemo) {
+            record["Timestamp"] = res.timestamp || new Date().toISOString();
+            if (!state.records.actions) state.records.actions = [];
+            state.records.actions.push(record);
+            saveDemoDatabase();
+          } else {
+            // Need to fetch fresh data
+            fetchDashboardData();
+          }
+          
+          closeCreateActionModal();
+          renderDashboard();
+        } else {
+          showToast(res.error || 'Failed to create action', 'error');
+        }
+      })
+      .catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = `<i data-lucide="plus" class="w-4 h-4"></i> Create Action`;
+        lucide.createIcons();
+        dismissToast(loadToast);
+        showToast('Connection error creating action.', 'error');
+      });
     }
 
     function renderModalContent(type, record) {
@@ -2384,6 +2651,46 @@
           <div>
             <label class="block text-xs text-slate-400 font-medium mb-1">Notes</label>
             <textarea onchange="updateRecordField('Notes', this.value)" rows="2" class="w-full glass rounded-lg p-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Notes'] || ''}</textarea>
+          </div>
+        `;
+      }
+      
+      else if (type === 'Actions') {
+        const approvalCol = `Approval [${state.username}]`;
+        const isCompleted = String(record[approvalCol] || "").toUpperCase() === "TRUE";
+        const canEditAction = state.role === 'admin' || state.role === 'presidency';
+        
+        html += `
+          <!-- Section 1: Action Description -->
+          <div class="space-y-4">
+            <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Action Description</h4>
+            <div class="w-full">
+              <textarea onchange="updateRecordField('Action', this.value)" rows="3" ${!canEditAction ? 'readonly disabled' : ''} class="w-full glass rounded-lg p-3 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500 resize-y">${record['Action'] || ''}</textarea>
+            </div>
+          </div>
+          
+          <hr class="border-slate-800">
+          
+          <!-- Section 2: Task Status -->
+          <div class="space-y-4">
+            <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Task Status</h4>
+            <div class="glass p-4 rounded-xl border border-slate-800 flex items-center justify-between">
+              <div>
+                <p class="text-sm font-bold text-slate-200">Mark as Complete</p>
+                <p class="text-xs text-slate-400">Click to toggle the completion status of this task.</p>
+              </div>
+              <button onclick="toggleApprovalVote('Actions', '${approvalCol}', '${isCompleted ? 'FALSE' : 'TRUE'}')" class="w-10 h-10 rounded-full flex items-center justify-center transition-all ${isCompleted ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-slate-800 text-slate-500 border border-slate-700 hover:bg-slate-700'}">
+                <i data-lucide="check" class="w-5 h-5"></i>
+              </button>
+            </div>
+          </div>
+
+          <hr class="border-slate-800">
+
+          <!-- Notes -->
+          <div>
+            <label class="block text-xs text-slate-400 font-medium mb-1">Notes</label>
+            <textarea onchange="updateRecordField('Notes', this.value)" rows="4" class="w-full glass rounded-lg p-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500 resize-y">${record['Notes'] || ''}</textarea>
           </div>
         `;
       }
@@ -3925,6 +4232,18 @@
             <input type="text" id="sp-input-${i}" value="${name}" class="w-full glass rounded-lg px-2.5 py-1.5 text-sm focus:ring-1 focus:ring-indigo-500 text-slate-300">
           </div>
         `).join('');
+
+        const adminsContainer = document.getElementById('admins-inputs');
+        const adminsRoster = state.isDemo ? (state.records.admins || mockData.admins) : state.admins;
+        const adminsLabels = ["Admin 1", "Admin 2"];
+        adminsContainer.innerHTML = [0, 1].map(i => {
+          const name = adminsRoster[i] || "";
+          return `
+          <div>
+            <label class="block text-[11px] text-slate-500 font-bold mb-0.5">${adminsLabels[i]}</label>
+            <input type="text" id="admin-input-${i}" value="${name}" class="w-full glass rounded-lg px-2.5 py-1.5 text-sm focus:ring-1 focus:ring-emerald-500 text-slate-300">
+          </div>
+        `}).join('');
       }
     }
 
@@ -4065,6 +4384,42 @@
           btn.disabled = false;
           dismissToast(load);
           showToast('Connection error updating presidency roster', 'error');
+        });
+    }
+
+    function saveAdminsRoster() {
+      const names = [];
+      for (let i = 0; i < 2; i++) {
+        const val = document.getElementById(`admin-input-${i}`).value.trim();
+        // Admins can be blank if there's only 1 admin, so we just push whatever it is
+        names.push(val);
+      }
+
+      const btn = document.getElementById('btn-save-admins');
+      btn.disabled = true;
+      const load = showToast('Saving admins roster...', 'info', 0);
+      
+      apiCall('updateAdmins', { names: names })
+        .then(res => {
+          btn.disabled = false;
+          dismissToast(load);
+          if (res.success) {
+            showToast('Admins roster updated successfully!', 'success');
+            if (state.isDemo) {
+              state.records.admins = names;
+              saveDemoDatabase();
+            } else {
+              state.admins = names;
+            }
+            renderSettings();
+          } else {
+            showToast(res.error || 'Failed to update admins', 'error');
+          }
+        })
+        .catch(err => {
+          btn.disabled = false;
+          dismissToast(load);
+          showToast('Connection error updating admins roster', 'error');
         });
     }
 

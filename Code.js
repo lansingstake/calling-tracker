@@ -42,6 +42,7 @@ function doPost(e) {
         highCouncilors: getHighCouncilors(),
         highCouncilorUnits: getHighCouncilorUnits(),
         stakePresidency: getStakePresidency(),
+        admins: getAdmins(),
         spreadsheetUrl: SpreadsheetApp.getActiveSpreadsheet().getUrl()
       };
       // Only return PINs to admin users
@@ -63,6 +64,9 @@ function doPost(e) {
     } else if (action === "updateStakePresidency") {
       if (auth.role !== "admin") return JSON_RESPONSE({ success: false, error: "Forbidden" });
       result = updateStakePresidency(postData.names);
+    } else if (action === "updateAdmins") {
+      if (auth.role !== "admin") return JSON_RESPONSE({ success: false, error: "Forbidden" });
+      result = updateAdmins(postData.names);
     } else if (action === "updatePINs") {
       if (auth.role !== "admin") return JSON_RESPONSE({ success: false, error: "Forbidden" });
       result = updatePINs(postData.adminPin, postData.hcPin);
@@ -158,6 +162,7 @@ function readSettingsTab(sheet) {
     if (label === "High Councilors") config.hc_list = allValues.join(",");
     if (label === "HC Unit Assignments") config.hc_units = allValues.join(",");
     if (label === "Stake Presidency") config.sp_list = allValues.join(",");
+    if (label === "Admins") config.admin_list = allValues.join(",");
     if (label === "Stake Units") config.stake_units = nonEmpty.join(",");
   }
   
@@ -175,6 +180,7 @@ function readLegacyConfig(sheet) {
   if (!config.hc_list) config.hc_list = "";
   if (!config.hc_units) config.hc_units = "";
   if (!config.sp_list) config.sp_list = "";
+  if (!config.admin_list) config.admin_list = "";
   return config;
 }
 
@@ -196,7 +202,13 @@ function getHighCouncilorUnits() {
 function getStakePresidency() {
   var config = getConfig();
   if (!config.sp_list) return [];
-  return config.sp_list.split(",").map(function(name) { return name.trim(); });
+  return config.sp_list.split(",").map(function(name) { return name.trim(); }).filter(Boolean);
+}
+
+function getAdmins() {
+  var config = getConfig();
+  if (!config.admin_list) return [];
+  return config.admin_list.split(",").map(function(name) { return name.trim(); }).filter(Boolean);
 }
 
 // ============================================================
@@ -222,6 +234,15 @@ function verifyPin(pin, username) {
           return { authorized: true, role: "presidency", username: spListOrig[i] };
         }
       }
+
+      var adminList = (config.admin_list || "").split(",").map(function(name) { return name.trim().toLowerCase(); });
+      var adminListOrig = (config.admin_list || "").split(",").map(function(name) { return name.trim(); });
+      for (var k = 0; k < adminList.length; k++) {
+        if (adminList[k] === userLower && adminList[k] !== "") {
+          return { authorized: true, role: "admin", username: adminListOrig[k] };
+        }
+      }
+
       return { authorized: false, error: "Unauthorized role for this PIN" };
     }
     return { authorized: true, role: "admin_sp_pending" };
@@ -368,6 +389,54 @@ function getPulpitTrackerRecords() {
   return { sheet: sheet, headers: headers, records: records };
 }
 
+/**
+ * Read records from the Actions tab.
+ */
+function getActionsRecords() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName("Actions");
+  if (!sheet) return { sheet: null, headers: [], records: [] };
+  
+  var range = sheet.getDataRange();
+  var values = range.getValues();
+  if (values.length < 2) return { sheet: sheet, headers: [], records: [] };
+  
+  var headers = values[0]; // Row 1 headers
+  var records = [];
+  
+  for (var r = 1; r < values.length; r++) {
+    var row = values[r];
+    var hasData = false;
+    for (var c = 0; c < row.length; c++) {
+      if (row[c] !== "" && row[c] !== null) {
+        hasData = true;
+        break;
+      }
+    }
+    if (!hasData) continue;
+    
+    var record = { _rowNum: r + 1, _sheet: "Actions" };
+    for (var c = 0; c < headers.length; c++) {
+      var header = headers[c];
+      if (header) {
+        var val = row[c];
+        if (val instanceof Date) {
+          record[header] = formatDate(val);
+        } else if (val === true) {
+          record[header] = "True";
+        } else if (val === false) {
+          record[header] = "False";
+        } else {
+          record[header] = val === null ? "" : String(val);
+        }
+      }
+    }
+    records.push(record);
+  }
+  
+  return { sheet: sheet, headers: headers, records: records };
+}
+
 // ============================================================
 // GET ACTIVE DATA
 // ============================================================
@@ -375,6 +444,7 @@ function getPulpitTrackerRecords() {
 function getActiveData(role, username) {
   var data = getRecordsSheet();
   var pulpitData = getPulpitTrackerRecords();
+  var actionsData = getActionsRecords();
   
   var finishedSteps = ["Complete", "Declined", "Cancelled", "Release Complete", "Release Completed"];
   
@@ -402,7 +472,8 @@ function getActiveData(role, username) {
     callings: callings,
     ordinations: ordinations,
     releases: releases,
-    sustainings: sustainings
+    sustainings: sustainings,
+    actions: actionsData.records
   };
 }
 
@@ -416,8 +487,9 @@ function addRecord(sheetType, record, role) {
   }
   
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName("Records");
-  if (!sheet) return { success: false, error: "Records sheet not found" };
+  var sheetName = sheetType === "Actions" ? "Actions" : "Records";
+  var sheet = ss.getSheetByName(sheetName);
+  if (!sheet) return { success: false, error: sheetName + " sheet not found" };
   
   var range = sheet.getDataRange();
   var values = range.getValues();
@@ -443,9 +515,9 @@ function addRecord(sheetType, record, role) {
     if (header === "Timestamp") {
       actualTimestamp = formatDate(new Date());
       newRow.push(actualTimestamp);
-    } else if (header === "Record Type") {
+    } else if (sheetType !== "Actions" && header === "Record Type") {
       newRow.push(recordType);
-    } else if (header === "Current Step") {
+    } else if (sheetType !== "Actions" && header === "Current Step") {
       newRow.push(record["Current Step"] || defaultStep);
     } else if (record.hasOwnProperty(header)) {
       newRow.push(record[header]);
@@ -476,6 +548,17 @@ function updateRecord(sheetType, timestamp, memberName, updates, role, username)
   if (sheetType === "Sustainings") {
     return updatePulpitTrackerRecord(memberName, updates);
   }
+  
+  if (sheetType === "Actions") {
+    if (role !== "admin") {
+      for (var key in updates) {
+        if (key !== "Notes" && key !== "Approval [" + username + "]") {
+          return { success: false, error: "Permission Denied: You can only edit Notes and your own Approval." };
+        }
+      }
+    }
+    // Proceed to update Actions
+  } else {
   
   // Validate permissions for High Council
   if (role === "hc") {
@@ -576,12 +659,14 @@ function updateRecord(sheetType, timestamp, memberName, updates, role, username)
         return { success: false, error: "Permission Denied: Stake Presidency members cannot edit '" + key + "'" };
       }
     }
+    }
   }
   
   // Update record in the unified "Records" sheet
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName("Records");
-  if (!sheet) return { success: false, error: "Records sheet not found" };
+  var sheetName = sheetType === "Actions" ? "Actions" : "Records";
+  var sheet = ss.getSheetByName(sheetName);
+  if (!sheet) return { success: false, error: sheetName + " sheet not found" };
   
   var range = sheet.getDataRange();
   var values = range.getValues();
@@ -591,8 +676,11 @@ function updateRecord(sheetType, timestamp, memberName, updates, role, username)
   var timestampColIdx = headers.indexOf("Timestamp");
   var memberNameColIdx = headers.indexOf("Member Name");
   
-  if (timestampColIdx === -1 || memberNameColIdx === -1) {
-    return { success: false, error: "Required columns 'Timestamp' and 'Member Name' not found" };
+  if (timestampColIdx === -1) {
+    return { success: false, error: "Required column 'Timestamp' not found" };
+  }
+  if (sheetType !== "Actions" && memberNameColIdx === -1) {
+    return { success: false, error: "Required column 'Member Name' not found" };
   }
   
   var targetTimeStr = timestamp.trim();
@@ -602,12 +690,20 @@ function updateRecord(sheetType, timestamp, memberName, updates, role, username)
     var row = values[r];
     var rowTime = row[timestampColIdx];
     var rowTimeStr = (rowTime instanceof Date) ? formatDate(rowTime) : String(rowTime || "").trim();
-    var rowName = String(row[memberNameColIdx] || "").trim();
     
-    if (rowName.toLowerCase() === memberName.trim().toLowerCase() && 
-        (rowTimeStr === targetTimeStr || rowTimeStr.startsWith(targetTimeStr) || targetTimeStr.startsWith(rowTimeStr))) {
-      foundRowIdx = r + 1; // 1-indexed
-      break;
+    var timeMatch = (rowTimeStr === targetTimeStr || rowTimeStr.startsWith(targetTimeStr) || targetTimeStr.startsWith(rowTimeStr));
+    
+    if (sheetType === "Actions") {
+      if (timeMatch) {
+        foundRowIdx = r + 1; // 1-indexed
+        break;
+      }
+    } else {
+      var rowName = String(row[memberNameColIdx] || "").trim();
+      if (rowName.toLowerCase() === (memberName || "").trim().toLowerCase() && timeMatch) {
+        foundRowIdx = r + 1; // 1-indexed
+        break;
+      }
     }
   }
   
@@ -1108,6 +1204,13 @@ function updateStakePresidency(newNames) {
   updateSettingsRow(ss, "Stake Presidency", newNames);
   SpreadsheetApp.flush();
   return { success: true, message: "Stake Presidency roster updated." };
+}
+
+function updateAdmins(newNames) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  updateSettingsRow(ss, "Admins", newNames);
+  SpreadsheetApp.flush();
+  return { success: true, message: "Admins roster updated." };
 }
 
 function updatePINs(adminPin, hcPin) {
