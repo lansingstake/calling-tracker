@@ -2680,6 +2680,17 @@
         const isCompleted = String(record[approvalCol] || "").toUpperCase() === "TRUE";
         const canEditAction = state.role === 'admin' || state.role === 'presidency';
         
+        let completedCount = 0;
+        let pendingCount = 0;
+        Object.keys(record).forEach(key => {
+          if (key.startsWith("Approval [")) {
+            const val = String(record[key]).toUpperCase();
+            if (val === "TRUE") completedCount++;
+            else if (val === "FALSE") pendingCount++;
+          }
+        });
+        const totalAssigned = completedCount + pendingCount;
+        
         const spRoster = state.isDemo ? (state.stakePresidency || mockData.stakePresidency) : state.stakePresidency || [];
         const adminRoster = state.isDemo ? (state.admins || mockData.admins) : state.admins || [];
         const hcRoster = state.isDemo ? (state.highCouncilors || mockData.highCouncilors) : state.highCouncilors || [];
@@ -2744,10 +2755,20 @@
             </div>
             
             ${state.role === 'admin' ? `
-            <div class="mt-4 flex justify-end">
-              <button onclick="closeAction()" class="px-4 py-2 bg-slate-800 text-emerald-400 font-bold rounded-lg hover:bg-slate-700 transition-all border border-slate-700 active:scale-95 flex items-center gap-2 text-sm">
-                <i data-lucide="archive" class="w-4 h-4"></i> Close Action for All
-              </button>
+            <div class="mt-4 glass p-4 rounded-xl border border-slate-800 space-y-3">
+              <div class="flex justify-between items-center">
+                <p class="text-sm font-bold text-slate-200">Completion Status</p>
+                <p class="text-xs text-emerald-400 font-bold">${completedCount} / ${totalAssigned} Completed</p>
+              </div>
+              <div class="w-full bg-slate-800 rounded-full h-1.5 mb-2">
+                <div class="bg-emerald-500 h-1.5 rounded-full" style="width: ${totalAssigned === 0 ? 0 : (completedCount / totalAssigned) * 100}%"></div>
+              </div>
+              
+              <div class="flex justify-end pt-2">
+                <button onclick="closeAction()" ${pendingCount === 0 ? 'disabled' : ''} class="px-4 py-2 ${pendingCount === 0 ? 'bg-slate-800/50 text-slate-500 border-slate-800/50 cursor-not-allowed' : 'bg-slate-800 text-emerald-400 hover:bg-slate-700 active:scale-95 border-slate-700'} font-bold rounded-lg transition-all border flex items-center gap-2 text-sm">
+                  <i data-lucide="archive" class="w-4 h-4"></i> ${pendingCount === 0 ? 'All Completed' : 'Close Action for All'}
+                </button>
+              </div>
             </div>
             ` : ''}
           </div>
