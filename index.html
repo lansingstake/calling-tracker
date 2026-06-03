@@ -593,11 +593,11 @@
         </h2>
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-sm font-medium text-slate-400 mb-1">Admin / Presidency PIN (6-8 digits)</label>
+            <label class="block text-sm font-medium text-slate-400 mb-1 leading-tight">Admin / Presidency PIN<br><span class="text-xs font-normal opacity-70">(6-8 digits)</span></label>
             <input type="text" id="settings-admin-pin" placeholder="******" maxlength="8" class="w-full glass rounded-xl px-3 py-2 text-center text-sm font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
           </div>
           <div>
-            <label class="block text-sm font-medium text-slate-400 mb-1">HC PIN (6-8 digits)</label>
+            <label class="block text-sm font-medium text-slate-400 mb-1 leading-tight">HC PIN<br><span class="text-xs font-normal opacity-70">(6-8 digits)</span></label>
             <input type="text" id="settings-hc-pin" placeholder="******" maxlength="8" class="w-full glass rounded-xl px-3 py-2 text-center text-sm font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
           </div>
         </div>
@@ -4679,11 +4679,11 @@
           return `
             <div class="flex items-center gap-2 p-2 bg-slate-900/40 rounded-xl border border-slate-800/60">
               <div class="flex-1 min-w-0">
-                <label class="block text-[11px] text-slate-500 font-bold mb-0.5 flex items-center">High Councilor ${i+1}${alertHtml}</label>
+                <label class="block text-sm font-medium text-slate-400 mb-1 flex items-center">High Councilor ${i+1}${alertHtml}</label>
                 <input type="text" id="hc-input-${i}" value="${name}" class="w-full glass rounded-lg px-2.5 py-1.5 text-sm focus:ring-1 focus:ring-indigo-500 text-slate-300">
               </div>
               <div class="w-36">
-                <label class="block text-[11px] text-slate-500 font-bold mb-0.5">Unit Assigned</label>
+                <label class="block text-sm font-medium text-slate-400 mb-1">Unit Assigned</label>
                 <select id="hc-unit-${i}" class="w-full glass rounded-lg px-2 py-1.5 text-sm focus:ring-1 focus:ring-indigo-500 text-slate-300">
                   ${optionsHtml}
                 </select>
@@ -4700,7 +4700,7 @@
           const alertHtml = isFailing ? `<i data-lucide="alert-circle" class="w-4 h-4 text-red-500 inline-block ml-1" title="Missing 'Approval [${name}]' column in Google Sheet!"></i>` : '';
           return `
           <div>
-            <label class="block text-[11px] text-slate-500 font-bold mb-0.5 flex items-center">${spLabels[i] || `Presidency Member ${i+1}`}${alertHtml}</label>
+            <label class="block text-sm font-medium text-slate-400 mb-1 flex items-center">${spLabels[i] || `Presidency Member ${i+1}`}${alertHtml}</label>
             <input type="text" id="sp-input-${i}" value="${name}" class="w-full glass rounded-lg px-2.5 py-1.5 text-sm focus:ring-1 focus:ring-indigo-500 text-slate-300">
           </div>
         `}).join('');
@@ -4714,7 +4714,7 @@
           const alertHtml = isFailing && name ? `<i data-lucide="alert-circle" class="w-4 h-4 text-red-500 inline-block ml-1" title="Missing 'Approval [${name}]' column in Google Sheet!"></i>` : '';
           return `
           <div>
-            <label class="block text-[11px] text-slate-500 font-bold mb-0.5 flex items-center">${adminsLabels[i]}${alertHtml}</label>
+            <label class="block text-sm font-medium text-slate-400 mb-1 flex items-center">${adminsLabels[i]}${alertHtml}</label>
             <input type="text" id="admin-input-${i}" value="${name}" class="w-full glass rounded-lg px-2.5 py-1.5 text-sm focus:ring-1 focus:ring-emerald-500 text-slate-300">
           </div>
         `}).join('');
