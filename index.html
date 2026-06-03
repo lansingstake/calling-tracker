@@ -1711,17 +1711,32 @@
           if (personalTasks.length === 0) {
             personalContainer.innerHTML = `<p class="text-sm text-slate-500 italic text-center py-4">You have no pending assigned tasks</p>`;
           } else {
-            personalContainer.innerHTML = personalTasks.map(t => `
-              <div class="glass p-3.5 rounded-xl border border-slate-800 flex justify-between items-center shadow-md">
-                <div>
-                  <p class="text-sm font-bold text-slate-100">${t.task}: ${t.name}</p>
-                  <p class="text-[11px] text-slate-400 font-medium">${t.details}</p>
+            personalContainer.innerHTML = personalTasks.map(t => {
+              const createdDate = t.record["Timestamp"] ? new Date(t.record["Timestamp"]).toLocaleDateString('en-US', {month: 'numeric', day: 'numeric', year: '2-digit'}) : '';
+              const modifiedDate = t.record["Modified Date"] ? new Date(t.record["Modified Date"]).toLocaleDateString('en-US', {month: 'numeric', day: 'numeric', year: '2-digit'}) : '';
+              
+              return `
+              <div class="glass p-3.5 rounded-xl border border-slate-800 flex flex-col gap-2 shadow-md">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <p class="text-sm font-bold text-slate-100">${t.task}: ${t.name}</p>
+                    <p class="text-[11px] text-slate-400 font-medium">${t.details}</p>
+                  </div>
+                  <div class="text-right shrink-0 ml-2">
+                    <span class="text-[10px] text-slate-500 block">Created: ${createdDate}</span>
+                    <button onclick="openRecordDetails('${t.type === 'calling' ? 'Callings Releasings' : t.type === 'ordination' ? 'Ordinations' : t.type === 'Actions' ? 'Actions' : 'Release Only'}', '${t.record["Timestamp"]}', '${t.name.replace(/'/g, "\\'")}')" class="mt-1.5 px-2.5 py-1 text-[11px] font-bold bg-indigo-600 text-white rounded hover:bg-indigo-500 active:scale-95 transition-all w-full text-center">
+                      Update
+                    </button>
+                  </div>
                 </div>
-                <button onclick="openRecordDetails('${t.type === 'calling' ? 'Callings Releasings' : t.type === 'ordination' ? 'Ordinations' : t.type === 'Actions' ? 'Actions' : 'Release Only'}', '${t.record["Timestamp"]}', '${t.name.replace(/'/g, "\\'")}')" class="px-2.5 py-1 text-[11px] font-bold bg-indigo-600 text-white rounded hover:bg-indigo-500 active:scale-95 transition-all">
-                  Update
-                </button>
+                ${modifiedDate ? `
+                <div class="flex justify-end mt-1">
+                  <span class="text-[10px] text-slate-500">Modified: ${modifiedDate}</span>
+                </div>
+                ` : ''}
               </div>
-            `).join('');
+              `
+            }).join('');
           }
         } else {
           if (releasesContainer) releasesContainer.classList.remove('hidden');
@@ -1777,16 +1792,25 @@
         if (filteredActions.length === 0) {
           container.innerHTML = `<div class="glass p-6 rounded-xl text-center"><p class="text-sm text-slate-400">No actions found matching filters.</p></div>`;
         } else {
-          container.innerHTML = filteredActions.map(a => `
+          container.innerHTML = filteredActions.map(a => {
+            const createdDate = a["Timestamp"] ? new Date(a["Timestamp"]).toLocaleDateString('en-US', {month: 'numeric', day: 'numeric', year: '2-digit'}) : '';
+            const modifiedDate = a["Modified Date"] ? new Date(a["Modified Date"]).toLocaleDateString('en-US', {month: 'numeric', day: 'numeric', year: '2-digit'}) : '';
+            
+            return `
             <div class="glass p-4 rounded-xl border border-slate-800 space-y-2 relative" onclick="openRecordDetails('Actions', '${a["Timestamp"]}', '')">
               <div class="flex justify-between items-start">
                 <h4 class="font-bold text-slate-100 text-sm">${a["Topic"] || "No Topic"}</h4>
-                <span class="text-[10px] text-slate-500">${a["Timestamp"] ? new Date(a["Timestamp"]).toLocaleDateString() : ''}</span>
+                <span class="text-[10px] text-slate-500 whitespace-nowrap">Created: ${createdDate}</span>
               </div>
               <p class="text-xs text-slate-400">${a["Action"] || ""}</p>
-              ${a["Owner"] ? `<p class="text-[10px] font-bold text-emerald-400">Owner: ${a["Owner"]}</p>` : ''}
+              
+              <div class="flex justify-between items-end mt-2">
+                ${a["Owner"] ? `<p class="text-[10px] font-bold text-emerald-400 max-w-[70%]">Owner: ${a["Owner"]}</p>` : '<div></div>'}
+                ${modifiedDate ? `<span class="text-[10px] text-slate-500 whitespace-nowrap">Modified: ${modifiedDate}</span>` : ''}
+              </div>
             </div>
-          `).join('');
+            `;
+          }).join('');
         }
       } else {
         // Stake Conference View rendering
@@ -3107,11 +3131,17 @@
       let allCount = checkboxes.length;
       
       checkboxes.forEach(cb => { if(cb.checked) assignedCount++; });
-      let newOwnerStr = "Custom";
+      let assignedNames = [];
+      checkboxes.forEach(cb => { if(cb.checked) assignedNames.push(cb.dataset.name); });
+      let newOwnerStr = assignedNames.join(", ");
       if (assignedCount === allCount && allCount > 0) newOwnerStr = "Everyone";
       else if (assignedCount === 0) newOwnerStr = "None";
       
       updates["Owner"] = newOwnerStr;
+      
+      const d = new Date();
+      updates["Modified Date"] = d.toLocaleDateString('en-US', {month: 'numeric', day: 'numeric', year: '2-digit'});
+      updates["Modified By"] = state.username;
       
       const isReopening = window.isReopeningAction === true;
       
@@ -3293,6 +3323,12 @@
       
       const updates = {};
       updates[fieldKey] = value;
+      
+      if (state.activeRecord.type === 'Actions') {
+        const d = new Date();
+        updates['Modified Date'] = d.toLocaleDateString('en-US', {month: 'numeric', day: 'numeric', year: '2-digit'});
+        updates['Modified By'] = state.username;
+      }
       
       const loadingToast = showToast('Saving changes...', 'info', 0);
       setModalSaving(true);
