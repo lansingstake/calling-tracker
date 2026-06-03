@@ -1001,7 +1001,7 @@
               let selectHtml = '<option value="">-- Select Your Role --</option>';
               const spRoster = state.isDemo ? (state.records.stakePresidency || mockData.stakePresidency) : state.stakePresidency;
               const adminRoster = state.isDemo ? (state.records.admins || mockData.admins) : state.admins;
-              selectHtml += '<optgroup label="Stake Presidency">';
+              selectHtml += '<optgroup label="Presidency">';
               selectHtml += spRoster.map(name => `<option value="${name}">${name}</option>`).join('');
               selectHtml += '</optgroup>';
               if (adminRoster && adminRoster.length > 0) {
@@ -2191,7 +2191,7 @@
       const hcRoster = state.isDemo ? (state.highCouncilors || mockData.highCouncilors) : state.highCouncilors || [];
       
       let ownerHtml = '<option value="">-- Select Owner --</option>';
-      ownerHtml += '<optgroup label="Groups"><option value="Everyone">Everyone</option><option value="High Council">High Council</option><option value="Stake Presidency">Stake Presidency</option></optgroup>';
+      ownerHtml += '<optgroup label="Groups"><option value="Everyone">Everyone</option><option value="High Council">High Council</option><option value="Presidency">Presidency</option></optgroup>';
       
       if (adminRoster.length > 0) {
         ownerHtml += '<optgroup label="Admins">';
@@ -2199,7 +2199,7 @@
         ownerHtml += '</optgroup>';
       }
       if (spRoster.length > 0) {
-        ownerHtml += '<optgroup label="Stake Presidency">';
+        ownerHtml += '<optgroup label="Presidency">';
         ownerHtml += spRoster.map(name => `<option value="${name}">${name}</option>`).join('');
         ownerHtml += '</optgroup>';
       }
@@ -2269,7 +2269,7 @@
         allNames.forEach(name => { if(name) record[`Approval [${name}]`] = "FALSE"; });
       } else if (owner === "High Council") {
         hcRoster.forEach(name => { if(name) record[`Approval [${name}]`] = "FALSE"; });
-      } else if (owner === "Stake Presidency") {
+      } else if (owner === "Presidency") {
         spRoster.forEach(name => { if(name) record[`Approval [${name}]`] = "FALSE"; });
       } else if (owner === "Admins") {
         adminRoster.forEach(name => { if(name) record[`Approval [${name}]`] = "FALSE"; });
