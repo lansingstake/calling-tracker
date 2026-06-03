@@ -3113,17 +3113,26 @@
       
       updates["Owner"] = newOwnerStr;
       
+      const isReopening = window.isReopeningAction === true;
+      
       checkboxes.forEach(cb => {
          const name = cb.dataset.name;
          const currentVal = String(record[`Approval [${name}]`] || "").toUpperCase();
          
          if (cb.checked) {
-            if (currentVal !== "TRUE") updates[`Approval [${name}]`] = "FALSE";
-            else updates[`Approval [${name}]`] = "TRUE"; // preserve true
+            if (isReopening) {
+               updates[`Approval [${name}]`] = "FALSE";
+            } else {
+               if (currentVal === "TRUE") updates[`Approval [${name}]`] = "TRUE";
+               else updates[`Approval [${name}]`] = "FALSE";
+            }
          } else {
-            updates[`Approval [${name}]`] = "";
+            if (currentVal === "TRUE") updates[`Approval [${name}]`] = "TRUE";
+            else updates[`Approval [${name}]`] = "";
          }
       });
+      
+      window.isReopeningAction = false;
       
       Object.assign(record, updates);
       
@@ -3152,6 +3161,7 @@
       if (menu) {
         menu.classList.remove('hidden');
         menu.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        window.isReopeningAction = true;
       }
     }
 
