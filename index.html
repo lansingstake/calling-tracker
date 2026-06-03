@@ -2881,8 +2881,8 @@
               ` : ''}
               
               <div class="flex justify-end pt-2">
-                <button onclick="closeAction()" ${pendingCount === 0 ? 'disabled' : ''} class="px-4 py-2 ${pendingCount === 0 ? 'bg-slate-800/50 text-slate-500 border-slate-800/50 cursor-not-allowed' : 'bg-slate-800 text-emerald-400 hover:bg-slate-700 active:scale-95 border-slate-700'} font-bold rounded-lg transition-all border flex items-center gap-2 text-sm">
-                  <i data-lucide="archive" class="w-4 h-4"></i> ${pendingCount === 0 ? 'All Completed' : 'Close Action for All'}
+                <button onclick="${pendingCount === 0 ? 'reopenAction()' : 'closeAction()'}" class="px-4 py-2 bg-slate-800 text-emerald-400 hover:bg-slate-700 active:scale-95 border-slate-700 font-bold rounded-lg transition-all border flex items-center gap-2 text-sm">
+                  <i data-lucide="${pendingCount === 0 ? 'folder-open' : 'archive'}" class="w-4 h-4"></i> ${pendingCount === 0 ? 'Reopen Action item' : 'Close Action for All'}
                 </button>
               </div>
             </div>
@@ -3145,6 +3145,14 @@
          dismissToast(loadToast);
          showToast('Connection error updating owner.', 'error');
       });
+    }
+
+    function reopenAction() {
+      const menu = document.getElementById('owner-dropdown-menu');
+      if (menu) {
+        menu.classList.remove('hidden');
+        menu.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
     }
 
     function closeAction() {
