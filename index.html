@@ -223,7 +223,7 @@
         <div class="flex items-center justify-between">
           <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
             <i data-lucide="check-square" class="w-4 h-4 text-indigo-400"></i>
-            My Assigned Tasks
+            My Tasks
           </h3>
           <span id="count-hc-tasks" class="text-[11px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-400 font-semibold">0</span>
         </div>
@@ -1709,7 +1709,7 @@
           if (dbTasksHeader) {
             dbTasksHeader.innerHTML = `
               <i data-lucide="check-square" class="w-4 h-4 text-indigo-400"></i>
-              My Assigned Tasks (${state.username || 'Admin'})
+              My Tasks (${state.username || 'Admin'})
             `;
           }
 
@@ -1804,7 +1804,7 @@
                 ` : ''}
               </div>
               `
-            }).join('');
+            }).join('<hr class="border-slate-600/50 my-1">');
           }
         } else {
           if (releasesContainer) releasesContainer.classList.remove('hidden');
