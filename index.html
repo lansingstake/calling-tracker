@@ -213,7 +213,7 @@
             <button onclick="setDashboardViewType('stakeconf')" id="btn-db-stakeconf" class="py-1.5 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-800 transition-all">Conference</button>
           </div>
           <div class="bg-slate-900/60 p-1 rounded-xl border border-slate-800">
-            <button onclick="setDashboardViewType('actions')" id="btn-db-actions" class="w-full py-1.5 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-800 transition-all">Actions</button>
+            <button onclick="setDashboardViewType('actions')" id="btn-db-actions" class="w-full py-1.5 text-sm font-semibold rounded-lg text-emerald-500 hover:text-emerald-400 border border-emerald-500/30 transition-all">Actions</button>
           </div>
         </div>
       </div>
@@ -1555,12 +1555,22 @@
       buttons.forEach(b => {
         if (!b.btn) return;
         if (b.id === viewType) {
-          b.btn.classList.add('bg-indigo-600', 'text-white');
-          b.btn.classList.remove('text-slate-600');
+          if (b.id === 'actions') {
+            b.btn.classList.add('bg-emerald-600', 'text-white', 'border-emerald-600');
+            b.btn.classList.remove('text-emerald-500', 'border-emerald-500/30', 'hover:text-emerald-400');
+          } else {
+            b.btn.classList.add('bg-indigo-600', 'text-white');
+            b.btn.classList.remove('text-slate-600');
+          }
           document.getElementById(b.panel).classList.remove('hidden');
         } else {
-          b.btn.classList.remove('bg-indigo-600', 'text-white');
-          b.btn.classList.add('text-slate-600');
+          if (b.id === 'actions') {
+            b.btn.classList.remove('bg-emerald-600', 'text-white', 'border-emerald-600');
+            b.btn.classList.add('text-emerald-500', 'border-emerald-500/30', 'hover:text-emerald-400');
+          } else {
+            b.btn.classList.remove('bg-indigo-600', 'text-white');
+            b.btn.classList.add('text-slate-600');
+          }
           document.getElementById(b.panel).classList.add('hidden');
         }
       });
@@ -2148,6 +2158,7 @@
       
       setTimeout(() => {
         modal.classList.add('hidden');
+        if (state.activeRecord && state.activeRecord.type === 'Actions') renderDashboard();
         state.activeRecord = null;
       }, 300);
     }
@@ -3357,6 +3368,10 @@
         if (res.success) {
           showToast('Changes saved!', 'success');
           state.activeRecord.record[fieldKey] = value;
+          if (updates['Modified Date']) {
+            state.activeRecord.record['Modified Date'] = updates['Modified Date'];
+            state.activeRecord.record['Modified By'] = updates['Modified By'];
+          }
           
           // Auto-set High Council Approval Date when stepping away from HC Approval
           if (fieldKey === 'Current Step' && value !== 'HC Approval') {
