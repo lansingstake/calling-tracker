@@ -701,8 +701,9 @@
       <span class="text-[11px] font-medium">History</span>
     </button>
     
-    <button onclick="switchTab('settings')" id="nav-settings" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
+    <button onclick="switchTab('settings')" id="nav-settings" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors relative">
       <i data-lucide="settings" class="w-5 h-5"></i>
+      <span id="settings-alert-badge" class="absolute top-0 right-1 w-2.5 h-2.5 bg-red-500 border-2 border-slate-900 rounded-full hidden"></span>
       <span class="text-[11px] font-medium">Settings</span>
     </button>
   </nav>
@@ -1538,6 +1539,36 @@
       }
     }
 
+    function runHeaderAudit() {
+      if (!state.records.actions || state.records.actions.length === 0) return;
+      const headers = Object.keys(state.records.actions[0]);
+      state.auditFails = [];
+      
+      const allNames = [
+        ...(state.stakePresidency || []),
+        ...(state.highCouncilors || []),
+        ...(state.admins || [])
+      ];
+      
+      allNames.forEach(name => {
+        if (!name) return;
+        const expected = "Approval [" + name + "]";
+        if (!headers.includes(expected)) {
+          state.auditFails.push(name);
+        }
+      });
+      
+      const gearAlert = document.getElementById('settings-alert-badge');
+      if (gearAlert) {
+        if (state.auditFails.length > 0) gearAlert.classList.remove('hidden');
+        else gearAlert.classList.add('hidden');
+      }
+      
+      if (!document.getElementById('view-settings').classList.contains('hidden')) {
+        renderSettings();
+      }
+    }
+
     function fetchDashboardData() {
       apiCall('getData')
         .then(res => {
@@ -1548,6 +1579,7 @@
             state.records.sustainings = normalizeSustainings(res.sustainings || []);
             state.records.actions = res.actions || [];
             updateRosterDatalist();
+            runHeaderAudit();
             renderDashboard();
           } else {
             showToast(res.error || 'Failed to fetch dashboard data', 'error');
@@ -4639,13 +4671,15 @@
         const hcUnits = state.isDemo ? (state.records.highCouncilorUnits || mockData.highCouncilorUnits) : state.highCouncilorUnits;
         
         rosterContainer.innerHTML = hcRoster.map((name, i) => {
+          const isFailing = state.auditFails && state.auditFails.includes(name);
+          const alertHtml = isFailing ? `<i data-lucide="alert-circle" class="w-4 h-4 text-red-500 inline-block ml-1" title="Missing 'Approval [${name}]' column in Google Sheet!"></i>` : '';
           const unit = hcUnits[i] || '';
           const units = ["", "Charlotte", "Holt", "Jackson", "Lansing", "Portland", "Owosso", "St Johns", "Williamston", "YSA"];
           const optionsHtml = units.map(u => `<option value="${u}" ${u === unit ? 'selected' : ''}>${u || 'No Unit Assigned'}</option>`).join('');
           return `
             <div class="flex items-center gap-2 p-2 bg-slate-900/40 rounded-xl border border-slate-800/60">
               <div class="flex-1 min-w-0">
-                <label class="block text-[11px] text-slate-500 font-bold mb-0.5">High Councilor ${i+1}</label>
+                <label class="block text-[11px] text-slate-500 font-bold mb-0.5 flex items-center">High Councilor ${i+1}${alertHtml}</label>
                 <input type="text" id="hc-input-${i}" value="${name}" class="w-full glass rounded-lg px-2.5 py-1.5 text-sm focus:ring-1 focus:ring-indigo-500 text-slate-300">
               </div>
               <div class="w-36">
@@ -4661,24 +4695,31 @@
         const spContainer = document.getElementById('presidency-inputs');
         const spRoster = state.isDemo ? (state.records.stakePresidency || mockData.stakePresidency) : state.stakePresidency;
         const spLabels = ["President", "1st Counselor", "2nd Counselor"];
-        spContainer.innerHTML = spRoster.map((name, i) => `
+        spContainer.innerHTML = spRoster.map((name, i) => {
+          const isFailing = state.auditFails && state.auditFails.includes(name);
+          const alertHtml = isFailing ? `<i data-lucide="alert-circle" class="w-4 h-4 text-red-500 inline-block ml-1" title="Missing 'Approval [${name}]' column in Google Sheet!"></i>` : '';
+          return `
           <div>
-            <label class="block text-[11px] text-slate-500 font-bold mb-0.5">${spLabels[i] || `Presidency Member ${i+1}`}</label>
+            <label class="block text-[11px] text-slate-500 font-bold mb-0.5 flex items-center">${spLabels[i] || `Presidency Member ${i+1}`}${alertHtml}</label>
             <input type="text" id="sp-input-${i}" value="${name}" class="w-full glass rounded-lg px-2.5 py-1.5 text-sm focus:ring-1 focus:ring-indigo-500 text-slate-300">
           </div>
-        `).join('');
+        `}).join('');
 
         const adminsContainer = document.getElementById('admins-inputs');
         const adminsRoster = state.isDemo ? (state.records.admins || mockData.admins) : state.admins;
         const adminsLabels = ["Admin 1", "Admin 2"];
         adminsContainer.innerHTML = [0, 1].map(i => {
           const name = adminsRoster[i] || "";
+          const isFailing = state.auditFails && state.auditFails.includes(name);
+          const alertHtml = isFailing && name ? `<i data-lucide="alert-circle" class="w-4 h-4 text-red-500 inline-block ml-1" title="Missing 'Approval [${name}]' column in Google Sheet!"></i>` : '';
           return `
           <div>
-            <label class="block text-[11px] text-slate-500 font-bold mb-0.5">${adminsLabels[i]}</label>
+            <label class="block text-[11px] text-slate-500 font-bold mb-0.5 flex items-center">${adminsLabels[i]}${alertHtml}</label>
             <input type="text" id="admin-input-${i}" value="${name}" class="w-full glass rounded-lg px-2.5 py-1.5 text-sm focus:ring-1 focus:ring-emerald-500 text-slate-300">
           </div>
         `}).join('');
+        
+        setTimeout(() => lucide.createIcons(), 0);
       }
     }
 
