@@ -128,15 +128,15 @@
 
   <!-- Top Navigation / Status Header -->
   <header id="app-header" class="glass sticky top-0 z-40 px-4 py-3 flex items-center justify-between border-b border-slate-800">
-    <div class="flex items-center gap-2">
-      <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-        <i data-lucide="shield-check" class="w-5 h-5 text-white"></i>
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+          <i data-lucide="shield-check" class="w-5 h-5 text-white"></i>
+        </div>
+        <div>
+          <h1 id="app-title" class="text-base sm:text-lg font-bold tracking-tight leading-tight">Calling Tracker</h1>
+          <span id="demo-indicator" class="hidden text-[11px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1.5 py-0.5 rounded-full font-medium">Demo Mode</span>
+        </div>
       </div>
-      <div>
-        <h1 class="text-sm font-bold tracking-tight">Calling Tracker</h1>
-        <span id="demo-indicator" class="hidden text-[11px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1.5 py-0.5 rounded-full font-medium">Demo Mode</span>
-      </div>
-    </div>
     
     <button id="theme-toggle" onclick="toggleTheme()" class="p-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-yellow-400 transition-colors" title="Toggle light/dark theme">
       <i data-lucide="sun" class="w-4 h-4" id="theme-icon-sun" style="display:none"></i>
@@ -1574,6 +1574,12 @@
       apiCall('getData')
         .then(res => {
           if (res.success) {
+            if (res.stakeName) {
+              state.stakeName = res.stakeName;
+              const titleEl = document.getElementById('app-title');
+              if (titleEl) titleEl.textContent = state.stakeName;
+              document.title = state.stakeName + " Tracker";
+            }
             state.records.callings = sortRecordsByStoredOrder('Callings Releasings', res.callings || []);
             state.records.ordinations = sortRecordsByStoredOrder('Ordinations', res.ordinations || []);
             state.records.releases = sortRecordsByStoredOrder('Release Only', res.releases || []);
