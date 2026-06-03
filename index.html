@@ -640,7 +640,8 @@
           </div>
           <div>
             <label class="block text-xs text-slate-400 font-medium mb-1">Owner</label>
-            <input type="text" id="new-action-owner" placeholder="Owner" class="w-full glass rounded-lg px-3 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+            <select id="new-action-owner" class="w-full glass rounded-lg px-3 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+            </select>
           </div>
           <div>
             <label class="block text-xs text-slate-400 font-medium mb-1">Notes</label>
@@ -2097,8 +2098,32 @@
       // Clear inputs
       document.getElementById('new-action-topic').value = '';
       document.getElementById('new-action-desc').value = '';
-      document.getElementById('new-action-owner').value = '';
       document.getElementById('new-action-notes').value = '';
+      
+      const ownerSelect = document.getElementById('new-action-owner');
+      const spRoster = state.isDemo ? (state.stakePresidency || mockData.stakePresidency) : state.stakePresidency || [];
+      const adminRoster = state.isDemo ? (state.admins || mockData.admins) : state.admins || [];
+      const hcRoster = state.isDemo ? (state.highCouncilors || mockData.highCouncilors) : state.highCouncilors || [];
+      
+      let ownerHtml = '<option value="">-- Select Owner --</option>';
+      ownerHtml += '<optgroup label="Groups"><option value="Everyone">Everyone</option><option value="High Council">High Council</option><option value="Stake Presidency">Stake Presidency</option></optgroup>';
+      
+      if (adminRoster.length > 0) {
+        ownerHtml += '<optgroup label="Admins">';
+        ownerHtml += adminRoster.map(name => `<option value="${name}">${name}</option>`).join('');
+        ownerHtml += '</optgroup>';
+      }
+      if (spRoster.length > 0) {
+        ownerHtml += '<optgroup label="Stake Presidency">';
+        ownerHtml += spRoster.map(name => `<option value="${name}">${name}</option>`).join('');
+        ownerHtml += '</optgroup>';
+      }
+      if (hcRoster.length > 0) {
+        ownerHtml += '<optgroup label="High Council">';
+        ownerHtml += hcRoster.map(name => `<option value="${name}">${name}</option>`).join('');
+        ownerHtml += '</optgroup>';
+      }
+      ownerSelect.innerHTML = ownerHtml;
       
       const modal = document.getElementById('create-action-modal');
       const drawer = modal.querySelector('div');
@@ -2148,6 +2173,24 @@
         Owner: owner,
         Notes: notes
       };
+      
+      // Setup assignments based on owner
+      const spRoster = state.isDemo ? (state.stakePresidency || mockData.stakePresidency) : state.stakePresidency || [];
+      const adminRoster = state.isDemo ? (state.admins || mockData.admins) : state.admins || [];
+      const hcRoster = state.isDemo ? (state.highCouncilors || mockData.highCouncilors) : state.highCouncilors || [];
+      const allNames = [...adminRoster, ...spRoster, ...hcRoster];
+      
+      if (owner === "Everyone") {
+        allNames.forEach(name => { if(name) record[`Approval [${name}]`] = "FALSE"; });
+      } else if (owner === "High Council") {
+        hcRoster.forEach(name => { if(name) record[`Approval [${name}]`] = "FALSE"; });
+      } else if (owner === "Stake Presidency") {
+        spRoster.forEach(name => { if(name) record[`Approval [${name}]`] = "FALSE"; });
+      } else if (owner === "Admins") {
+        adminRoster.forEach(name => { if(name) record[`Approval [${name}]`] = "FALSE"; });
+      } else if (owner) {
+        record[`Approval [${owner}]`] = "FALSE";
+      }
       
       apiCall('addRecord', {
         type: 'Actions',
