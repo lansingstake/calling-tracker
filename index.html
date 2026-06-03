@@ -1729,7 +1729,7 @@
           // Add Actions to personal tasks
           state.records.actions.forEach(a => {
             const approval = String(a["Approval [" + state.username + "]"] || "").toUpperCase();
-            if (approval !== "TRUE") {
+            if (approval === "FALSE") {
               personalTasks.push({ record: a, name: a["Topic"] || "No Topic", task: "Action Item", details: a["Action"] || "", type: 'Actions' });
             }
           });
