@@ -1796,6 +1796,12 @@
             const createdDate = a["Timestamp"] ? new Date(a["Timestamp"]).toLocaleDateString('en-US', {month: 'numeric', day: 'numeric', year: '2-digit'}) : '';
             const modifiedDate = a["Modified Date"] ? new Date(a["Modified Date"]).toLocaleDateString('en-US', {month: 'numeric', day: 'numeric', year: '2-digit'}) : '';
             
+            let displayOwner = a["Owner"] || '';
+            if (displayOwner === 'Custom') {
+               const parsedNames = Object.keys(a).filter(k => k.startsWith('Approval [') && ['TRUE', 'FALSE'].includes(String(a[k]).toUpperCase())).map(k => k.replace('Approval [', '').replace(']', ''));
+               if (parsedNames.length > 0) displayOwner = parsedNames.join(', ');
+            }
+            
             return `
             <div class="glass p-4 rounded-xl border border-slate-800 space-y-2 relative" onclick="openRecordDetails('Actions', '${a["Timestamp"]}', '')">
               <div class="flex justify-between items-start">
@@ -1805,7 +1811,7 @@
               <p class="text-xs text-slate-400">${a["Action"] || ""}</p>
               
               <div class="flex justify-between items-end mt-2">
-                ${a["Owner"] ? `<p class="text-[10px] font-bold text-emerald-400 max-w-[70%]">Owner: ${a["Owner"]}</p>` : '<div></div>'}
+                ${displayOwner ? `<p class="text-[10px] font-bold text-emerald-400 max-w-[70%]">Owner: ${displayOwner}</p>` : '<div></div>'}
                 ${modifiedDate ? `<span class="text-[10px] text-slate-500 whitespace-nowrap">Modified: ${modifiedDate}</span>` : ''}
               </div>
             </div>
@@ -2782,10 +2788,16 @@
         const allNames = [...adminRoster, ...spRoster, ...hcRoster];
         const everyoneChecked = allNames.length > 0 && allNames.every(name => hasApproval(name));
         
+        let displayOwner = record['Owner'] || 'None';
+        if (displayOwner === 'Custom') {
+           const parsedNames = Object.keys(record).filter(k => k.startsWith('Approval [') && ['TRUE', 'FALSE'].includes(String(record[k]).toUpperCase())).map(k => k.replace('Approval [', '').replace(']', ''));
+           if (parsedNames.length > 0) displayOwner = parsedNames.join(', ');
+        }
+        
         let ownerHtml = `
           <div class="relative">
             <button type="button" onclick="document.getElementById('owner-dropdown-menu').classList.toggle('hidden')" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500 flex justify-between items-center text-left">
-              <span class="truncate">${record['Owner'] || 'Custom / None'}</span>
+              <span class="truncate">${displayOwner}</span>
               <i data-lucide="chevron-down" class="w-4 h-4 ml-2 flex-shrink-0"></i>
             </button>
             <div id="owner-dropdown-menu" class="hidden absolute z-[100] mt-1 w-full bg-slate-950 border border-slate-700 rounded-xl shadow-2xl p-3 max-h-64 overflow-y-auto custom-scrollbar" style="opacity: 1; backdrop-filter: none; -webkit-backdrop-filter: none;">
@@ -2862,7 +2874,7 @@
             ` : `
             <div>
               <label class="block text-xs text-slate-400 font-medium mb-1">Owner</label>
-              <input type="text" value="${record['Owner'] || ''}" readonly disabled class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-400 focus:outline-none">
+              <input type="text" value="${displayOwner}" readonly disabled class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-400 focus:outline-none">
             </div>
             `}
 
