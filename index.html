@@ -2680,11 +2680,50 @@
         const isCompleted = String(record[approvalCol] || "").toUpperCase() === "TRUE";
         const canEditAction = state.role === 'admin' || state.role === 'presidency';
         
+        const spRoster = state.isDemo ? (state.stakePresidency || mockData.stakePresidency) : state.stakePresidency || [];
+        const adminRoster = state.isDemo ? (state.admins || mockData.admins) : state.admins || [];
+        const hcRoster = state.isDemo ? (state.highCouncilors || mockData.highCouncilors) : state.highCouncilors || [];
+        
+        let ownerHtml = '<option value="">-- Select Owner --</option>';
+        ownerHtml += '<optgroup label="Groups"><option value="Everyone" ' + (record['Owner'] === 'Everyone' ? 'selected' : '') + '>Everyone</option><option value="High Council" ' + (record['Owner'] === 'High Council' ? 'selected' : '') + '>High Council</option><option value="Stake Presidency" ' + (record['Owner'] === 'Stake Presidency' ? 'selected' : '') + '>Stake Presidency</option></optgroup>';
+        
+        if (adminRoster.length > 0) {
+          ownerHtml += '<optgroup label="Admins">';
+          ownerHtml += adminRoster.map(name => `<option value="${name}" ${record['Owner'] === name ? 'selected' : ''}>${name}</option>`).join('');
+          ownerHtml += '</optgroup>';
+        }
+        if (spRoster.length > 0) {
+          ownerHtml += '<optgroup label="Stake Presidency">';
+          ownerHtml += spRoster.map(name => `<option value="${name}" ${record['Owner'] === name ? 'selected' : ''}>${name}</option>`).join('');
+          ownerHtml += '</optgroup>';
+        }
+        if (hcRoster.length > 0) {
+          ownerHtml += '<optgroup label="High Council">';
+          ownerHtml += hcRoster.map(name => `<option value="${name}" ${record['Owner'] === name ? 'selected' : ''}>${name}</option>`).join('');
+          ownerHtml += '</optgroup>';
+        }
+
         html += `
-          <!-- Section 1: Action Description -->
+          <!-- Section 1: Action Description & Owner -->
           <div class="space-y-4">
-            <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Action Description</h4>
+            <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Action Description & Owner</h4>
+            
+            ${state.role === 'admin' ? `
+            <div>
+              <label class="block text-xs text-slate-400 font-medium mb-1">Owner</label>
+              <select onchange="updateActionOwner(this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                ${ownerHtml}
+              </select>
+            </div>
+            ` : `
+            <div>
+              <label class="block text-xs text-slate-400 font-medium mb-1">Owner</label>
+              <input type="text" value="${record['Owner'] || ''}" readonly disabled class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-400 focus:outline-none">
+            </div>
+            `}
+
             <div class="w-full">
+              <label class="block text-xs text-slate-400 font-medium mb-1">Action</label>
               <textarea onchange="updateRecordField('Action', this.value)" rows="3" ${!canEditAction ? 'readonly disabled' : ''} class="w-full glass rounded-lg p-3 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500 resize-y">${record['Action'] || ''}</textarea>
             </div>
           </div>
@@ -2703,6 +2742,14 @@
                 <i data-lucide="check" class="w-5 h-5"></i>
               </button>
             </div>
+            
+            ${state.role === 'admin' ? `
+            <div class="mt-4 flex justify-end">
+              <button onclick="closeAction()" class="px-4 py-2 bg-slate-800 text-emerald-400 font-bold rounded-lg hover:bg-slate-700 transition-all border border-slate-700 active:scale-95 flex items-center gap-2 text-sm">
+                <i data-lucide="archive" class="w-4 h-4"></i> Close Action for All
+              </button>
+            </div>
+            ` : ''}
           </div>
 
           <hr class="border-slate-800">
@@ -2871,6 +2918,93 @@
         document.body.appendChild(datalist);
       }
       datalist.innerHTML = allNames.map(name => `<option value="${name}"></option>`).join('');
+    }
+
+    function updateActionOwner(newOwner) {
+      if (state.role !== 'admin') return;
+      const record = state.activeRecord.record;
+      if (!record || state.activeRecord.type !== 'Actions') return;
+      
+      const loadToast = showToast('Updating owner...', 'info', 0);
+      
+      const spRoster = state.isDemo ? (state.stakePresidency || mockData.stakePresidency) : state.stakePresidency || [];
+      const adminRoster = state.isDemo ? (state.admins || mockData.admins) : state.admins || [];
+      const hcRoster = state.isDemo ? (state.highCouncilors || mockData.highCouncilors) : state.highCouncilors || [];
+      const allNames = [...adminRoster, ...spRoster, ...hcRoster];
+      
+      const updates = { Owner: newOwner };
+      allNames.forEach(name => {
+         if (!name) return;
+         let inGroup = false;
+         if (newOwner === "Everyone") inGroup = true;
+         else if (newOwner === "High Council" && hcRoster.includes(name)) inGroup = true;
+         else if (newOwner === "Stake Presidency" && spRoster.includes(name)) inGroup = true;
+         else if (newOwner === name) inGroup = true;
+         
+         updates[`Approval [${name}]`] = inGroup ? "FALSE" : "";
+      });
+      
+      Object.assign(record, updates);
+      
+      apiCall('updateRecord', {
+        type: 'Actions',
+        timestamp: state.activeRecord.timestamp,
+        memberName: '',
+        updates: updates
+      }).then(res => {
+         dismissToast(loadToast);
+         if(res.success) {
+            showToast('Owner updated and approvals reset', 'success');
+            renderModalContent('Actions', record);
+            renderDashboard(); 
+         } else {
+            showToast('Failed to update owner', 'error');
+         }
+      }).catch(err => {
+         dismissToast(loadToast);
+         showToast('Connection error updating owner.', 'error');
+      });
+    }
+
+    function closeAction() {
+      if (state.role !== 'admin') return;
+      const record = state.activeRecord.record;
+      if (!record || state.activeRecord.type !== 'Actions') return;
+      
+      const updates = {};
+      
+      Object.keys(record).forEach(key => {
+        if (key.startsWith("Approval [") && String(record[key]).toUpperCase() === "FALSE") {
+          updates[key] = "TRUE";
+          record[key] = "TRUE";
+        }
+      });
+      
+      if (Object.keys(updates).length === 0) {
+        showToast('No pending approvals to close.', 'info');
+        return;
+      }
+      
+      const loadToast = showToast('Closing action...', 'info', 0);
+      
+      apiCall('updateRecord', {
+        type: 'Actions',
+        timestamp: state.activeRecord.timestamp,
+        memberName: '',
+        updates: updates
+      }).then(res => {
+         dismissToast(loadToast);
+         if(res.success) {
+            showToast('Action closed for all pending users.', 'success');
+            renderModalContent('Actions', record);
+            renderDashboard();
+         } else {
+            showToast('Failed to close action', 'error');
+         }
+      }).catch(err => {
+         dismissToast(loadToast);
+         showToast('Connection error closing action.', 'error');
+      });
     }
 
     function toggleApprovalVote(type, voteHeader, voteValue) {
