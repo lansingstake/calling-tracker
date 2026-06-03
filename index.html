@@ -831,6 +831,10 @@
           state.records.highCouncilorUnits = [...mockData.highCouncilorUnits];
           saveDemoDatabase();
         }
+        if (!state.records.actions) {
+          state.records.actions = [];
+          saveDemoDatabase();
+        }
       } else {
         state.records = {
           all: [...mockData.records],
@@ -840,7 +844,8 @@
           sustainings: [...mockData.pulpitTracker],
           highCouncilors: [...mockData.highCouncilors],
           highCouncilorUnits: [...mockData.highCouncilorUnits],
-          stakePresidency: [...mockData.stakePresidency]
+          stakePresidency: [...mockData.stakePresidency],
+          actions: []
         };
         saveDemoDatabase();
       }
@@ -1503,6 +1508,7 @@
             state.records.ordinations = sortRecordsByStoredOrder('Ordinations', res.ordinations || []);
             state.records.releases = sortRecordsByStoredOrder('Release Only', res.releases || []);
             state.records.sustainings = normalizeSustainings(res.sustainings || []);
+            state.records.actions = res.actions || [];
             updateRosterDatalist();
             renderDashboard();
           } else {
@@ -1605,7 +1611,9 @@
         const releasesContainer = document.getElementById('dashboard-releases-container');
         const hcTasksContainer = document.getElementById('hc-dashboard-tasks-container');
         
-        if (isHC || isPresidency) {
+        const isAdmin = (state.role === 'admin');
+        
+        if (isHC || isPresidency || isAdmin) {
           if (releasesContainer) releasesContainer.classList.add('hidden');
           if (hcTasksContainer) hcTasksContainer.classList.remove('hidden');
 
