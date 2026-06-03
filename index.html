@@ -210,7 +210,7 @@
         <div class="flex flex-col gap-2">
           <div class="bg-slate-900/60 p-1 rounded-xl border border-slate-800 grid grid-cols-2 gap-2">
             <button onclick="setDashboardViewType('active')" id="btn-db-active" class="py-1.5 text-sm font-semibold rounded-lg bg-indigo-600 text-white transition-all">Active Tracker</button>
-            <button onclick="setDashboardViewType('stakeconf')" id="btn-db-stakeconf" class="py-1.5 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-800 transition-all">Stake Conference</button>
+            <button onclick="setDashboardViewType('stakeconf')" id="btn-db-stakeconf" class="py-1.5 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-800 transition-all">Conference</button>
           </div>
           <div class="bg-slate-900/60 p-1 rounded-xl border border-slate-800">
             <button onclick="setDashboardViewType('actions')" id="btn-db-actions" class="w-full py-1.5 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-800 transition-all">Actions</button>
@@ -299,13 +299,13 @@
       <div id="db-stakeconf-panel" class="space-y-4 hidden">
         <div class="glass p-4 rounded-xl space-y-3">
           <div class="flex items-center justify-between">
-            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">Stake Conference Sustainings</h3>
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">Conference Sustainings</h3>
             <span id="count-stakeconf" class="text-[11px] bg-indigo-600 px-2 py-0.5 rounded-full text-white font-semibold">0</span>
           </div>
 
           <!-- Bulk Date Update (Admin only) -->
           <div id="sc-bulk-update" class="hidden border-t border-slate-800 pt-3 mt-2 space-y-2">
-            <label class="block text-[11px] text-slate-400 font-medium">Stake Conference Sustain Date (will be applied to all pending items below and mark them Complete)</label>
+            <label class="block text-[11px] text-slate-400 font-medium">Conference Sustain Date (will be applied to all pending items below and mark them Complete)</label>
             <div class="flex gap-2">
               <input type="date" id="sc-bulk-date" class="flex-1 glass rounded-lg px-2.5 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
               <button onclick="bulkUpdateStakeConfDate()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-bold rounded-lg transition-all active:scale-95 whitespace-nowrap flex items-center gap-1.5">
@@ -2375,7 +2375,7 @@
               ${renderSelectField('Need to be Released?', 'Need to be Released?', ['Yes', 'No'], record)}
             </div>
             <div>
-              <label class="block text-xs text-slate-400 font-medium mb-1">Stake Presidency Date Approved</label>
+              <label class="block text-xs text-slate-400 font-medium mb-1">Presidency Date Approved</label>
               <input type="date" value="${record['Stake Presidency Date Approved'] || ''}" onchange="updateRecordField('Stake Presidency Date Approved', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
             </div>
             <div class="grid grid-cols-2 gap-3">
@@ -2412,9 +2412,9 @@
               ${renderSelectField('Over the Pulpit Sustaining', 'Pulpit Sustaining Type', ['All Units', 'Home Unit Only', 'None'], record)}
             </div>
             <div class="grid grid-cols-2 gap-3">
-              ${renderSelectField('Stake Conference Sustaining', 'Stake Conf Sustaining', ['Pending', 'Complete'], record)}
+              ${renderSelectField('Stake Conference Sustaining', 'Conference Sustaining', ['Pending', 'Complete'], record)}
               <div>
-                <label class="block text-xs text-slate-400 font-medium mb-1">Stake Conf Sustain Date</label>
+                <label class="block text-xs text-slate-400 font-medium mb-1">Conference Sustain Date</label>
                 <input type="date" value="${record['Stake Conference Sustain Date'] || ''}" onchange="updateRecordField('Stake Conference Sustain Date', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
             </div>
@@ -2560,7 +2560,7 @@
               <label class="block text-base text-emerald-400 font-bold mb-2 text-center">Current Step</label>
               <select onchange="updateRecordField('Current Step', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-emerald-400 font-medium focus:outline-none border-[2px] border-emerald-500/30">
                 <option value=""></option>
-                <option value="Stake Interview" ${record['Current Step'] === 'Stake Interview' ? 'selected' : ''}>Stake Interview</option>
+                <option value="Stake Interview" ${record['Current Step'] === 'Stake Interview' ? 'selected' : ''}>Interview</option>
                 <option value="HC Approval" ${record['Current Step'] === 'HC Approval' ? 'selected' : ''}>HC Approval</option>
                 <option value="Sustaining" ${record['Current Step'] === 'Sustaining' ? 'selected' : ''}>Sustaining</option>
                 <option value="Ordination" ${record['Current Step'] === 'Ordination' ? 'selected' : ''}>Ordination</option>
@@ -2578,7 +2578,7 @@
               </select>
             </div>
             <div>
-              <label class="block text-xs text-slate-400 font-medium mb-1">Stake Presidency Date Approved</label>
+              <label class="block text-xs text-slate-400 font-medium mb-1">Presidency Date Approved</label>
               <input type="date" value="${record['Stake Presidency Date Approved'] || ''}" onchange="updateRecordField('Stake Presidency Date Approved', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
             </div>
             ${renderSelectField('Assigned to Oversee Sustaining / Ordination', 'Assigned to Oversee Sustaining / Ordination', [''].concat([...(state.isDemo ? (state.records.stakePresidency || mockData.stakePresidency) : state.stakePresidency || []), ...(state.isDemo ? (state.records.highCouncilors || mockData.highCouncilors) : state.highCouncilors || [])].filter(Boolean)), record)}
@@ -2607,9 +2607,9 @@
             
             <!-- Stake Conference Section (Ordination only) -->
             <div class="grid grid-cols-2 gap-3">
-              ${renderSelectField('Stake Conference Sustaining', 'Stake Conf Sustaining', ['Pending', 'Complete'], record)}
+              ${renderSelectField('Stake Conference Sustaining', 'Conference Sustaining', ['Pending', 'Complete'], record)}
               <div>
-                <label class="block text-xs text-slate-400 font-medium mb-1">Stake Conf Sustain Date</label>
+                <label class="block text-xs text-slate-400 font-medium mb-1">Conference Sustain Date</label>
                 <input type="date" value="${record['Stake Conference Sustain Date'] || ''}" onchange="updateRecordField('Stake Conference Sustain Date', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
             </div>
@@ -2685,7 +2685,7 @@
                 <input type="text" value="${record['Reason for Release'] || ''}" onchange="updateRecordField('Reason for Release', this.value)" placeholder="Reason" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
               </div>
               <div>
-                <label class="block text-xs text-slate-400 font-medium mb-1">Stake Presidency Date Approved</label>
+                <label class="block text-xs text-slate-400 font-medium mb-1">Presidency Date Approved</label>
                 <input type="date" value="${record['Stake Presidency Date Approved'] || ''}" onchange="updateRecordField('Stake Presidency Date Approved', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
             </div>
@@ -2751,24 +2751,74 @@
         const adminRoster = state.isDemo ? (state.admins || mockData.admins) : state.admins || [];
         const hcRoster = state.isDemo ? (state.highCouncilors || mockData.highCouncilors) : state.highCouncilors || [];
         
-        let ownerHtml = '<option value="">-- Select Owner --</option>';
-        ownerHtml += '<optgroup label="Groups"><option value="Everyone" ' + (record['Owner'] === 'Everyone' ? 'selected' : '') + '>Everyone</option><option value="High Council" ' + (record['Owner'] === 'High Council' ? 'selected' : '') + '>High Council</option><option value="Stake Presidency" ' + (record['Owner'] === 'Stake Presidency' ? 'selected' : '') + '>Stake Presidency</option></optgroup>';
+        const hasApproval = (name) => String(record[`Approval [${name}]`] || "").toUpperCase() === "FALSE" || String(record[`Approval [${name}]`] || "").toUpperCase() === "TRUE";
+        
+        let ownerHtml = `
+          <div class="relative">
+            <button type="button" onclick="document.getElementById('owner-dropdown-menu').classList.toggle('hidden')" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500 flex justify-between items-center text-left">
+              <span class="truncate">${record['Owner'] || 'Custom / None'}</span>
+              <i data-lucide="chevron-down" class="w-4 h-4 ml-2 flex-shrink-0"></i>
+            </button>
+            <div id="owner-dropdown-menu" class="hidden absolute z-50 mt-1 w-full bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-3 max-h-64 overflow-y-auto custom-scrollbar">
+              
+              <div class="mb-3">
+                <h5 class="text-[10px] uppercase font-bold text-slate-400 mb-1.5">Groups</h5>
+                <label class="flex items-center gap-2 text-sm text-slate-200 mb-1 cursor-pointer hover:bg-slate-800/50 p-1 rounded">
+                  <input type="checkbox" onchange="handleOwnerGroupSelect('Everyone', this.checked)" class="rounded bg-slate-800 border-slate-600 text-emerald-500 w-4 h-4"> <span class="select-none">Everyone</span>
+                </label>
+                <label class="flex items-center gap-2 text-sm text-slate-200 mb-1 cursor-pointer hover:bg-slate-800/50 p-1 rounded">
+                  <input type="checkbox" onchange="handleOwnerGroupSelect('High Council', this.checked)" class="rounded bg-slate-800 border-slate-600 text-emerald-500 w-4 h-4"> <span class="select-none">High Council</span>
+                </label>
+                <label class="flex items-center gap-2 text-sm text-slate-200 mb-1 cursor-pointer hover:bg-slate-800/50 p-1 rounded">
+                  <input type="checkbox" onchange="handleOwnerGroupSelect('Presidency', this.checked)" class="rounded bg-slate-800 border-slate-600 text-emerald-500 w-4 h-4"> <span class="select-none">Presidency</span>
+                </label>
+              </div>
+        `;
         
         if (adminRoster.length > 0) {
-          ownerHtml += '<optgroup label="Admins">';
-          ownerHtml += adminRoster.map(name => `<option value="${name}" ${record['Owner'] === name ? 'selected' : ''}>${name}</option>`).join('');
-          ownerHtml += '</optgroup>';
+          ownerHtml += `
+            <div class="mb-3">
+              <h5 class="text-[10px] uppercase font-bold text-slate-400 mb-1.5">Admins</h5>
+              ${adminRoster.map(name => `
+                <label class="flex items-center gap-2 text-sm text-slate-300 mb-1 cursor-pointer hover:bg-slate-800/50 p-1 rounded">
+                  <input type="checkbox" data-name="${name}" ${hasApproval(name) ? 'checked' : ''} class="owner-checkbox rounded bg-slate-800 border-slate-600 text-emerald-500 w-3.5 h-3.5"> <span class="select-none">${name}</span>
+                </label>
+              `).join('')}
+            </div>
+          `;
         }
         if (spRoster.length > 0) {
-          ownerHtml += '<optgroup label="Stake Presidency">';
-          ownerHtml += spRoster.map(name => `<option value="${name}" ${record['Owner'] === name ? 'selected' : ''}>${name}</option>`).join('');
-          ownerHtml += '</optgroup>';
+          ownerHtml += `
+            <div class="mb-3">
+              <h5 class="text-[10px] uppercase font-bold text-slate-400 mb-1.5">Presidency</h5>
+              ${spRoster.map(name => `
+                <label class="flex items-center gap-2 text-sm text-slate-300 mb-1 cursor-pointer hover:bg-slate-800/50 p-1 rounded">
+                  <input type="checkbox" data-name="${name}" data-group="Presidency" ${hasApproval(name) ? 'checked' : ''} class="owner-checkbox rounded bg-slate-800 border-slate-600 text-emerald-500 w-3.5 h-3.5"> <span class="select-none">${name}</span>
+                </label>
+              `).join('')}
+            </div>
+          `;
         }
         if (hcRoster.length > 0) {
-          ownerHtml += '<optgroup label="High Council">';
-          ownerHtml += hcRoster.map(name => `<option value="${name}" ${record['Owner'] === name ? 'selected' : ''}>${name}</option>`).join('');
-          ownerHtml += '</optgroup>';
+          ownerHtml += `
+            <div class="mb-3">
+              <h5 class="text-[10px] uppercase font-bold text-slate-400 mb-1.5">High Council</h5>
+              ${hcRoster.map(name => `
+                <label class="flex items-center gap-2 text-sm text-slate-300 mb-1 cursor-pointer hover:bg-slate-800/50 p-1 rounded">
+                  <input type="checkbox" data-name="${name}" data-group="High Council" ${hasApproval(name) ? 'checked' : ''} class="owner-checkbox rounded bg-slate-800 border-slate-600 text-emerald-500 w-3.5 h-3.5"> <span class="select-none">${name}</span>
+                </label>
+              `).join('')}
+            </div>
+          `;
         }
+        
+        ownerHtml += `
+              <div class="sticky bottom-0 bg-slate-900 pt-2 pb-1 border-t border-slate-800 mt-2">
+                <button type="button" onclick="applyOwnerSelection()" class="w-full bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold py-2 rounded-lg text-sm transition-all shadow-lg">Apply Selections</button>
+              </div>
+            </div>
+          </div>
+        `;
 
         html += `
           <!-- Section 1: Action Description & Owner -->
@@ -2778,9 +2828,7 @@
             ${state.role === 'admin' ? `
             <div>
               <label class="block text-xs text-slate-400 font-medium mb-1">Owner</label>
-              <select onchange="updateActionOwner(this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                ${ownerHtml}
-              </select>
+              ${ownerHtml}
             </div>
             ` : `
             <div>
@@ -3004,28 +3052,43 @@
       datalist.innerHTML = allNames.map(name => `<option value="${name}"></option>`).join('');
     }
 
-    function updateActionOwner(newOwner) {
+    function handleOwnerGroupSelect(group, isChecked) {
+      const checkboxes = document.querySelectorAll('.owner-checkbox');
+      checkboxes.forEach(cb => {
+        if (group === 'Everyone') cb.checked = isChecked;
+        else if (cb.dataset.group === group) cb.checked = isChecked;
+      });
+    }
+
+    function applyOwnerSelection() {
       if (state.role !== 'admin') return;
       const record = state.activeRecord.record;
       if (!record || state.activeRecord.type !== 'Actions') return;
       
-      const loadToast = showToast('Updating owner...', 'info', 0);
+      const loadToast = showToast('Saving assignments...', 'info', 0);
+      const checkboxes = document.querySelectorAll('.owner-checkbox');
+      const updates = {};
       
-      const spRoster = state.isDemo ? (state.stakePresidency || mockData.stakePresidency) : state.stakePresidency || [];
-      const adminRoster = state.isDemo ? (state.admins || mockData.admins) : state.admins || [];
-      const hcRoster = state.isDemo ? (state.highCouncilors || mockData.highCouncilors) : state.highCouncilors || [];
-      const allNames = [...adminRoster, ...spRoster, ...hcRoster];
+      let assignedCount = 0;
+      let allCount = checkboxes.length;
       
-      const updates = { Owner: newOwner };
-      allNames.forEach(name => {
-         if (!name) return;
-         let inGroup = false;
-         if (newOwner === "Everyone") inGroup = true;
-         else if (newOwner === "High Council" && hcRoster.includes(name)) inGroup = true;
-         else if (newOwner === "Stake Presidency" && spRoster.includes(name)) inGroup = true;
-         else if (newOwner === name) inGroup = true;
+      checkboxes.forEach(cb => { if(cb.checked) assignedCount++; });
+      let newOwnerStr = "Custom";
+      if (assignedCount === allCount && allCount > 0) newOwnerStr = "Everyone";
+      else if (assignedCount === 0) newOwnerStr = "None";
+      
+      updates["Owner"] = newOwnerStr;
+      
+      checkboxes.forEach(cb => {
+         const name = cb.dataset.name;
+         const currentVal = String(record[`Approval [${name}]`] || "").toUpperCase();
          
-         updates[`Approval [${name}]`] = inGroup ? "FALSE" : "";
+         if (cb.checked) {
+            if (currentVal !== "TRUE") updates[`Approval [${name}]`] = "FALSE";
+            else updates[`Approval [${name}]`] = "TRUE"; // preserve true
+         } else {
+            updates[`Approval [${name}]`] = "";
+         }
       });
       
       Object.assign(record, updates);
@@ -3038,11 +3101,11 @@
       }).then(res => {
          dismissToast(loadToast);
          if(res.success) {
-            showToast('Owner updated and approvals reset', 'success');
+            showToast('Owner assignments saved', 'success');
             renderModalContent('Actions', record);
             renderDashboard(); 
          } else {
-            showToast('Failed to update owner', 'error');
+            showToast('Failed to save assignments', 'error');
          }
       }).catch(err => {
          dismissToast(loadToast);
@@ -4124,7 +4187,7 @@
             </div>
           </div>
           <div>
-            <label class="block text-sm font-medium text-slate-400 mb-1">Stake Presidency Date Approved</label>
+            <label class="block text-sm font-medium text-slate-400 mb-1">Presidency Date Approved</label>
             <input type="date" id="form-sp-approved-date" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
           </div>
           <div class="grid grid-cols-2 gap-3">
@@ -4165,7 +4228,7 @@
           <div>
             <label class="block text-sm font-medium text-slate-400 mb-1">Current Step</label>
             <select id="form-current-step" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
-              <option value="Stake Interview" selected>Stake Interview</option>
+              <option value="Stake Interview" selected>Interview</option>
               <option value="HC Approval">HC Approval</option>
               <option value="Sustaining">Sustaining</option>
               <option value="Ordination">Ordination</option>
@@ -4177,7 +4240,7 @@
             <input type="text" list="stake-presidency-hc-list" id="form-oversee-assigned" placeholder="Select or type name" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
           </div>
           <div>
-            <label class="block text-sm font-medium text-slate-400 mb-1">Stake Presidency Date Approved</label>
+            <label class="block text-sm font-medium text-slate-400 mb-1">Presidency Date Approved</label>
             <input type="date" id="form-sp-approved-date" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
           </div>
           <div>
@@ -4207,7 +4270,7 @@
             </select>
           </div>
           <div>
-            <label class="block text-sm font-medium text-slate-400 mb-1">Stake Presidency Date Approved</label>
+            <label class="block text-sm font-medium text-slate-400 mb-1">Presidency Date Approved</label>
             <input type="date" id="form-sp-approved-date" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
           </div>
           <div class="grid grid-cols-2 gap-3">
