@@ -327,6 +327,25 @@
               <i data-lucide="plus" class="w-3.5 h-3.5"></i> Create New Action
             </button>
           </div>
+          
+          <div class="pt-2 border-t border-slate-800 space-y-2">
+            <div class="flex items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <label class="flex items-center gap-1.5 cursor-pointer text-xs font-medium text-slate-300 select-none">
+                  <input type="checkbox" id="filter-action-open" checked onchange="renderDashboard()" class="w-3.5 h-3.5 rounded text-emerald-600 focus:ring-emerald-500 bg-slate-800 border-slate-700">
+                  Open
+                </label>
+                <label class="flex items-center gap-1.5 cursor-pointer text-xs font-medium text-slate-300 select-none">
+                  <input type="checkbox" id="filter-action-closed" onchange="renderDashboard()" class="w-3.5 h-3.5 rounded text-emerald-600 focus:ring-emerald-500 bg-slate-800 border-slate-700">
+                  Closed
+                </label>
+              </div>
+              <div class="relative flex-1 max-w-[200px]">
+                <input type="text" id="filter-action-search" oninput="renderDashboard()" placeholder="Search..." class="w-full glass rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2"></i>
+              </div>
+            </div>
+          </div>
         </div>
         
         <div id="list-actions" class="space-y-3"></div>
@@ -1723,10 +1742,42 @@
         renderCardList('list-releases', releases, 'Release Only', 'user-minus', 'border-amber-500/30');
       } else if (state.dashboardViewType === 'actions') {
         const container = document.getElementById('list-actions');
-        if (state.records.actions.length === 0) {
-          container.innerHTML = `<div class="glass p-6 rounded-xl text-center"><p class="text-sm text-slate-400">No actions found.</p></div>`;
+        
+        const openCheck = document.getElementById('filter-action-open');
+        const closedCheck = document.getElementById('filter-action-closed');
+        const searchInput = document.getElementById('filter-action-search');
+        
+        const showOpen = openCheck ? openCheck.checked : true;
+        const showClosed = closedCheck ? closedCheck.checked : false;
+        const query = (searchInput ? searchInput.value.trim().toLowerCase() : '');
+        
+        const filteredActions = state.records.actions.filter(a => {
+          let hasPending = false;
+          let hasAny = false;
+          Object.keys(a).forEach(k => {
+             if (k.startsWith("Approval [")) {
+               const val = String(a[k]).toUpperCase();
+               if (val === "FALSE") hasPending = true;
+               if (val === "TRUE" || val === "FALSE") hasAny = true;
+             }
+          });
+          const isOpen = hasPending || !hasAny;
+          
+          if (isOpen && !showOpen) return false;
+          if (!isOpen && !showClosed) return false;
+          
+          if (query) {
+            const text = ((a["Topic"] || "") + " " + (a["Action"] || "") + " " + (a["Owner"] || "") + " " + (a["Notes"] || "")).toLowerCase();
+            if (!text.includes(query)) return false;
+          }
+          
+          return true;
+        });
+
+        if (filteredActions.length === 0) {
+          container.innerHTML = `<div class="glass p-6 rounded-xl text-center"><p class="text-sm text-slate-400">No actions found matching filters.</p></div>`;
         } else {
-          container.innerHTML = state.records.actions.map(a => `
+          container.innerHTML = filteredActions.map(a => `
             <div class="glass p-4 rounded-xl border border-slate-800 space-y-2 relative" onclick="openRecordDetails('Actions', '${a["Timestamp"]}', '')">
               <div class="flex justify-between items-start">
                 <h4 class="font-bold text-slate-100 text-sm">${a["Topic"] || "No Topic"}</h4>
@@ -2682,11 +2733,16 @@
         
         let completedCount = 0;
         let pendingCount = 0;
+        const pendingNames = [];
         Object.keys(record).forEach(key => {
           if (key.startsWith("Approval [")) {
             const val = String(record[key]).toUpperCase();
+            const name = key.replace("Approval [", "").replace("]", "");
             if (val === "TRUE") completedCount++;
-            else if (val === "FALSE") pendingCount++;
+            else if (val === "FALSE") {
+              pendingCount++;
+              pendingNames.push(name);
+            }
           }
         });
         const totalAssigned = completedCount + pendingCount;
@@ -2763,6 +2819,13 @@
               <div class="w-full bg-slate-800 rounded-full h-1.5 mb-2">
                 <div class="bg-emerald-500 h-1.5 rounded-full" style="width: ${totalAssigned === 0 ? 0 : (completedCount / totalAssigned) * 100}%"></div>
               </div>
+              
+              ${pendingNames.length > 0 ? `
+              <div class="text-[11px] text-slate-400 bg-slate-800/50 p-2.5 rounded-lg mt-2 border border-slate-700/50 leading-relaxed">
+                <span class="font-bold text-slate-300 block mb-1">Awaiting completion from:</span> 
+                ${pendingNames.join(", ")}
+              </div>
+              ` : ''}
               
               <div class="flex justify-end pt-2">
                 <button onclick="closeAction()" ${pendingCount === 0 ? 'disabled' : ''} class="px-4 py-2 ${pendingCount === 0 ? 'bg-slate-800/50 text-slate-500 border-slate-800/50 cursor-not-allowed' : 'bg-slate-800 text-emerald-400 hover:bg-slate-700 active:scale-95 border-slate-700'} font-bold rounded-lg transition-all border flex items-center gap-2 text-sm">
