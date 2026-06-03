@@ -977,6 +977,7 @@
         localStorage.setItem('tracker_api_url', state.apiUrl);
         document.getElementById('settings-api-url').value = state.apiUrl;
       }
+
       
       if (!state.apiUrl) {
         showToast('Please enter the API Connection URL', 'error');
@@ -4693,6 +4694,26 @@
         document.getElementById('demo-indicator').classList.add('hidden');
         logout(); // Force re-login with the new sheet endpoint
       }
+    }
+
+    function copyShareLink() {
+      if (!state.apiUrl) {
+        showToast('Please save a Web App URL first', 'error');
+        return;
+      }
+      
+      // Prevent users from accidentally copying a file:// or Google Apps Script URL
+      if (window.location.hostname.includes('google') || window.location.protocol === 'file:') {
+        showToast('You must access the app via your Vercel URL to generate a share link!', 'error');
+        alert("Action Denied: You are currently viewing the app through the old Google Apps Script URL (or a local file).\n\nPlease navigate to your official Vercel URL (e.g. https://calling-tracker.vercel.app) in your browser, and click Copy Share Link from there!");
+        return;
+      }
+
+      const url = new URL(window.location.href);
+      url.searchParams.set('api', state.apiUrl);
+      navigator.clipboard.writeText(url.toString())
+        .then(() => showToast('Share link copied to clipboard!', 'success'))
+        .catch(() => showToast('Failed to copy link', 'error'));
     }
 
     function savePINs() {
