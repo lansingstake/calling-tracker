@@ -1678,38 +1678,7 @@
             }
           });
 
-          document.getElementById('count-hc-tasks').innerText = personalTasks.length;
-          
-          const personalContainer = document.getElementById('hc-dashboard-tasks');
-          if (personalTasks.length === 0) {
-            personalContainer.innerHTML = `<p class="text-sm text-slate-500 italic text-center py-4">You have no pending assigned tasks</p>`;
-          } else {
-            personalContainer.innerHTML = personalTasks.map(t => `
-              <div class="glass p-3.5 rounded-xl border border-slate-800 flex justify-between items-center shadow-md">
-                <div>
-                  <p class="text-sm font-bold text-slate-100">${t.task}: ${t.name}</p>
-                  <p class="text-[11px] text-slate-400 font-medium">${t.details}</p>
-                </div>
-                <button onclick="openRecordDetails('${t.type === 'calling' ? 'Callings Releasings' : t.type === 'ordination' ? 'Ordinations' : 'Release Only'}', '${t.record["Timestamp"]}', '${t.name.replace(/'/g, "\\'")}')" class="px-2.5 py-1 text-[11px] font-bold bg-indigo-600 text-white rounded hover:bg-indigo-500 active:scale-95 transition-all">
-                  Update
-                </button>
-              </div>
-            `).join('');
-          }
-        } else if (state.role === 'admin') {
-          if (releasesContainer) releasesContainer.classList.add('hidden');
-          if (hcTasksContainer) hcTasksContainer.classList.remove('hidden');
-
-          const dbTasksHeader = document.querySelector('#hc-dashboard-tasks-container h3');
-          if (dbTasksHeader) {
-            dbTasksHeader.innerHTML = `
-              <i data-lucide="check-square" class="w-4 h-4 text-emerald-400"></i>
-              My Assigned Tasks (${state.username || 'Admin'})
-            `;
-          }
-
-          const personalTasks = [];
-          
+          // Add Actions to personal tasks
           state.records.actions.forEach(a => {
             const approval = String(a["Approval [" + state.username + "]"] || "").toUpperCase();
             if (approval !== "TRUE") {
@@ -1729,7 +1698,7 @@
                   <p class="text-sm font-bold text-slate-100">${t.task}: ${t.name}</p>
                   <p class="text-[11px] text-slate-400 font-medium">${t.details}</p>
                 </div>
-                <button onclick="openRecordDetails('Actions', '${t.record["Timestamp"]}', '')" class="px-2.5 py-1 text-[11px] font-bold bg-emerald-600 text-white rounded hover:bg-emerald-500 active:scale-95 transition-all">
+                <button onclick="openRecordDetails('${t.type === 'calling' ? 'Callings Releasings' : t.type === 'ordination' ? 'Ordinations' : t.type === 'Actions' ? 'Actions' : 'Release Only'}', '${t.record["Timestamp"]}', '${t.name.replace(/'/g, "\\'")}')" class="px-2.5 py-1 text-[11px] font-bold bg-indigo-600 text-white rounded hover:bg-indigo-500 active:scale-95 transition-all">
                   Update
                 </button>
               </div>
