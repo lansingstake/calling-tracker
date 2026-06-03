@@ -779,6 +779,7 @@
               state.admins = res.admins || [];
               if (res.adminPin) state.adminPin = res.adminPin;
               if (res.hcPin) state.hcPin = res.hcPin;
+              if (res.spreadsheetUrl) state.spreadsheetUrl = res.spreadsheetUrl;
               showMainUI();
             } else {
               localStorage.removeItem('tracker_pin');
@@ -1159,8 +1160,11 @@
     }
 
     function openSpreadsheet() {
-      const url = state.spreadsheetUrl || 'https://docs.google.com/spreadsheets/d/1y9H8inSfbasTKYhHxLPVoHyWGQKG72240xbvohjKtVE/';
-      window.open(url, '_blank');
+      if (!state.spreadsheetUrl) {
+        showToast('Spreadsheet URL is not available. Try logging out and back in.', 'error');
+        return;
+      }
+      window.open(state.spreadsheetUrl, '_blank');
     }
 
     // Core API Client Fetch Function
