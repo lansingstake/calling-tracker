@@ -758,7 +758,7 @@
         state.apiUrl = apiParam;
         localStorage.setItem('tracker_api_url', apiParam);
         // Clean up URL visually
-        window.history.replaceState({}, document.title, window.location.pathname);
+        // window.history.replaceState({}, document.title, window.location.pathname); // Removed to fix iOS Safari "Add to Home Screen" ignoring query parameters
       }
       
       lucide.createIcons();
