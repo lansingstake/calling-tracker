@@ -3135,6 +3135,24 @@
       `;
     }
 
+    // Helper to safely get record value considering ambiguous sheet headers (e.g. question marks)
+    function getRecordValue(record, fieldKey) {
+      if (!record) return '';
+      if (record[fieldKey] !== undefined && record[fieldKey] !== null) return record[fieldKey];
+      
+      const noQ = fieldKey.replace('?', '');
+      if (record[noQ] !== undefined && record[noQ] !== null) return record[noQ];
+      
+      const withQ = fieldKey + '?';
+      if (record[withQ] !== undefined && record[withQ] !== null) return record[withQ];
+      
+      if (fieldKey.includes('Ready for Sustaining')) {
+        if (record['Ready for Sustaining?'] !== undefined && record['Ready for Sustaining?'] !== null) return record['Ready for Sustaining?'];
+        if (record['Ready for Sustaining'] !== undefined && record['Ready for Sustaining'] !== null) return record['Ready for Sustaining'];
+      }
+      return '';
+    }
+
     function renderSelectField(fieldKey, labelText, options, record) {
       const isAdmin = state.role === 'admin';
       const isHC = state.role === 'hc';
@@ -3179,7 +3197,7 @@
       
       const canEdit = isAdmin || (isHC && hcWhitelist.includes(fieldKey)) || (isPres && presWhitelist.includes(fieldKey));
       const disabledHtml = canEdit ? '' : 'disabled';
-      const currentValue = record[fieldKey] || '';
+      const currentValue = getRecordValue(record, fieldKey);
       
       const optionsHtml = options.map(opt => {
         const val = typeof opt === 'string' ? opt : opt.value;
@@ -3216,7 +3234,7 @@
       
       const canEdit = isAdmin || (isHC && hcWhitelist.includes(fieldKey)) || (isPres && presWhitelist.includes(fieldKey));
       const disabledHtml = canEdit ? '' : 'readonly';
-      const currentValue = record[fieldKey] || '';
+      const currentValue = getRecordValue(record, fieldKey);
       
       return `
         <div>
@@ -3482,6 +3500,20 @@
       
       const updates = {};
       updates[fieldKey] = value;
+      
+      // Auto-inject aliases to guarantee backend Google Sheet match
+      if (fieldKey.endsWith('?')) {
+        updates[fieldKey.slice(0, -1)] = value;
+      } else {
+        updates[fieldKey + '?'] = value;
+      }
+      
+      if (fieldKey.includes('Ready for Sustaining')) {
+        updates['Ready for Sustaining'] = value;
+        updates['Ready for Sustaining?'] = value;
+        updates['Ready for Sustaining / Setting Apart'] = value;
+        updates['Ready for Sustaining / Setting Apart?'] = value;
+      }
       
       if (state.activeRecord.type === 'Actions') {
         const d = new Date();
