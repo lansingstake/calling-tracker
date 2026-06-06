@@ -808,6 +808,19 @@
         if (state.isDemo) {
           loadDemoData();
         }
+        
+        const btnLogin = document.getElementById('btn-login');
+        const loginPin = document.getElementById('login-pin');
+        if (btnLogin) {
+          btnLogin.disabled = true;
+          btnLogin.classList.add('opacity-70', 'cursor-wait');
+          btnLogin.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>Signing In...</span>';
+        }
+        if (loginPin) {
+          loginPin.disabled = true;
+          loginPin.classList.add('opacity-50', 'cursor-wait');
+        }
+
         apiCall('login', { pin: state.pin, username: state.username })
           .then(res => {
             if (res.success) {
@@ -829,6 +842,18 @@
           .catch(() => {
             showToast('Connection failed. Switching to demo mode.', 'warning');
             toggleDemoMode();
+          })
+          .finally(() => {
+            if (btnLogin) {
+              btnLogin.disabled = false;
+              btnLogin.classList.remove('opacity-70', 'cursor-wait');
+              btnLogin.innerHTML = '<span>Continue</span><i data-lucide="arrow-right" class="w-4 h-4"></i>';
+              lucide.createIcons();
+            }
+            if (loginPin) {
+              loginPin.disabled = false;
+              loginPin.classList.remove('opacity-50', 'cursor-wait');
+            }
           });
       } else if (state.isDemo) {
         // If isDemo is active but no PIN is saved, default to admin demo login
@@ -1010,11 +1035,21 @@
       }
 
       // Submit API Call
-      document.getElementById('btn-login').disabled = true;
+      const btnLogin = document.getElementById('btn-login');
+      const loginPin = document.getElementById('login-pin');
+      
+      if (btnLogin) {
+        btnLogin.disabled = true;
+        btnLogin.classList.add('opacity-70', 'cursor-wait');
+        btnLogin.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>Signing In...</span>';
+      }
+      if (loginPin) {
+        loginPin.disabled = true;
+        loginPin.classList.add('opacity-50', 'cursor-wait');
+      }
       
       apiCall('login', { pin: pin, username: hcName || '' })
         .then(res => {
-          document.getElementById('btn-login').disabled = false;
           if (res.success) {
             if (res.role === 'admin_sp_pending') {
               // PIN matches admin/presidency, show role selector
@@ -1094,9 +1129,20 @@
           }
         })
         .catch(err => {
-          document.getElementById('btn-login').disabled = false;
           showToast('Connection failed. Starting in demo mode.', 'warning');
           toggleDemoMode();
+        })
+        .finally(() => {
+          if (btnLogin) {
+            btnLogin.disabled = false;
+            btnLogin.classList.remove('opacity-70', 'cursor-wait');
+            btnLogin.innerHTML = '<span>Continue</span><i data-lucide="arrow-right" class="w-4 h-4"></i>';
+            lucide.createIcons();
+          }
+          if (loginPin) {
+            loginPin.disabled = false;
+            loginPin.classList.remove('opacity-50', 'cursor-wait');
+          }
         });
     }
 
