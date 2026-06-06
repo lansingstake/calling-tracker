@@ -2442,7 +2442,7 @@
           
           <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 w-full mb-4">
             <label class="block text-base text-emerald-400 font-bold mb-2 text-center">Current Step</label>
-            <select onchange="updateRecordField('Current Step', this.value)" ${isAdmin ? '' : 'disabled'} class="w-full glass rounded-lg px-2.5 py-2 text-base text-emerald-400 font-medium focus:outline-none border-[2px] border-emerald-500/30">
+            <select onchange="updateRecordField('Current Step', this.value)" ${isAdmin ? '' : 'disabled'} class="w-full glass rounded-lg px-2.5 py-2 text-base text-emerald-400 font-medium text-center focus:outline-none border-[2px] border-emerald-500/30">
               <option value=""></option>
               <option value="HC Approval" ${record['Current Step'] === 'HC Approval' ? 'selected' : ''}>HC Approval</option>
               <option value="Call / Release" ${record['Current Step'] === 'Call / Release' ? 'selected' : ''}>Call / Release</option>
@@ -2701,7 +2701,7 @@
 
           <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 w-full mb-4">
             <label class="block text-base text-emerald-400 font-bold mb-2 text-center">Current Step</label>
-            <select onchange="updateRecordField('Current Step', this.value)" ${isAdmin ? '' : 'disabled'} class="w-full glass rounded-lg px-2.5 py-2 text-base text-emerald-400 font-medium focus:outline-none border-[2px] border-emerald-500/30">
+            <select onchange="updateRecordField('Current Step', this.value)" ${isAdmin ? '' : 'disabled'} class="w-full glass rounded-lg px-2.5 py-2 text-base text-emerald-400 font-medium text-center focus:outline-none border-[2px] border-emerald-500/30">
               <option value=""></option>
               <option value="Stake Interview" ${record['Current Step'] === 'Stake Interview' ? 'selected' : ''}>Interview</option>
               <option value="HC Approval" ${record['Current Step'] === 'HC Approval' ? 'selected' : ''}>HC Approval</option>
@@ -2855,7 +2855,7 @@
         html += `
           <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 w-full mb-4">
             <label class="block text-base text-emerald-400 font-bold mb-2 text-center">Current Step</label>
-            <select onchange="updateRecordField('Current Step', this.value)" ${isAdmin ? '' : 'disabled'} class="w-full glass rounded-lg px-2.5 py-2 text-base text-emerald-400 font-medium focus:outline-none border-[2px] border-emerald-500/30">
+            <select onchange="updateRecordField('Current Step', this.value)" ${isAdmin ? '' : 'disabled'} class="w-full glass rounded-lg px-2.5 py-2 text-base text-emerald-400 font-medium text-center focus:outline-none border-[2px] border-emerald-500/30">
               <option value=""></option>
               <option value="Pending Approval" ${record['Current Step'] === 'Pending Approval' ? 'selected' : ''}>Pending Approval</option>
               <option value="Assigned" ${record['Current Step'] === 'Assigned' ? 'selected' : ''}>Assigned</option>
