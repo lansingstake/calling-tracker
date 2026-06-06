@@ -2219,6 +2219,10 @@
       const modal = document.getElementById('record-modal');
       const drawer = modal.querySelector('div');
       
+      // Reset scroll position to top
+      const scrollContainer = document.getElementById('modal-content');
+      if (scrollContainer) scrollContainer.scrollTop = 0;
+      
       modal.classList.remove('hidden');
       setTimeout(() => {
         modal.classList.remove('opacity-0');
@@ -2275,6 +2279,10 @@
       
       const modal = document.getElementById('create-action-modal');
       const drawer = modal.querySelector('div');
+      
+      // Reset scroll position to top
+      const scrollContainer = modal.querySelector('.overflow-y-auto');
+      if (scrollContainer) scrollContainer.scrollTop = 0;
       
       modal.classList.remove('hidden');
       setTimeout(() => {
