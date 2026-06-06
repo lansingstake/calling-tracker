@@ -2534,7 +2534,7 @@
 
           <hr class="border-slate-800">
 
-          ${isAdmin || (record['Member to Release'] && ['HC Approval', 'Call / Release', 'Sustain', 'Set Apart'].includes(record['Current Step'])) ? `
+          ${isAdmin || (record['Member to Release'] && ['HC Approval', 'Call / Release', 'Sustain'].includes(record['Current Step'])) ? `
           <!-- Section 2: Member to Release -->
           <div class="space-y-4">
             <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Member to Release</h4>
@@ -2545,10 +2545,10 @@
                 <input type="text" value="${record['Member to Release'] || ''}" onchange="updateRecordField('Member to Release', this.value)" ${isHC || isPres ? 'readonly disabled' : ''} placeholder="Name" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
               ` : '<div></div>'}
-              ${isAdmin || ['Call / Release', 'Sustain', 'Set Apart'].includes(record['Current Step']) ? renderSelectField('Notified of Release?', 'Notified of Release?', ['Yes', 'No'], record) : ''}
+              ${isAdmin || ['Call / Release', 'Sustain'].includes(record['Current Step']) ? renderSelectField('Notified of Release?', 'Notified of Release?', ['Yes', 'No'], record) : ''}
             </div>
             <div class="grid grid-cols-2 gap-3">
-              ${isAdmin || ['Call / Release', 'Sustain', 'Set Apart'].includes(record['Current Step']) ? renderSelectField('Key Returned?', 'Key Returned?', ['Yes', 'No', 'N/A'], record) : ''}
+              ${isAdmin || ['Call / Release', 'Sustain'].includes(record['Current Step']) ? renderSelectField('Key Returned?', 'Key Returned?', ['Yes', 'No', 'N/A'], record) : ''}
               ${isAdmin ? renderSelectField('Removed from Google Drive and Calendar Invites?', 'Removed from Drive / Calendar?', ['Yes', 'No', 'N/A'], record) : ''}
             </div>
           </div>
