@@ -2453,6 +2453,12 @@
               <option value="Declined" ${record['Current Step'] === 'Declined' ? 'selected' : ''}>Declined</option>
               <option value="Cancelled" ${record['Current Step'] === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
             </select>
+            ${isAdmin ? `
+            <div class="flex flex-wrap gap-2 justify-center mt-3">
+              <button onclick="document.getElementById('cr-sustain').scrollIntoView({behavior: 'smooth'})" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-bold uppercase tracking-wider rounded-lg border border-slate-700 transition-colors shadow-sm">Sustain & Set Apart</button>
+              <button onclick="document.getElementById('cr-training').scrollIntoView({behavior: 'smooth'})" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-bold uppercase tracking-wider rounded-lg border border-slate-700 transition-colors shadow-sm">Training & Onboarding</button>
+            </div>
+            ` : ''}
           </div>
 
           ${isAdmin || record['Current Step'] === 'HC Approval' ? `
@@ -2557,7 +2563,7 @@
           ` : ''}
 
           <!-- Section 3: Sustaining & Setting Apart -->
-          <div class="space-y-4">
+          <div id="cr-sustain" class="space-y-4">
             ${isAdmin || ['Call / Release', 'Sustain', 'Set Apart'].includes(record['Current Step']) ? `<h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Sustain & Set Apart</h4>` : ''}
             
             ${isAdmin || ['Call / Release', 'Sustain'].includes(record['Current Step']) ? `
@@ -2617,7 +2623,7 @@
 
           ${isAdmin || ['Call / Release', 'Sustain', 'Set Apart', 'Training'].includes(record['Current Step']) ? `
           <!-- Section 4: Training & Onboarding -->
-          <div class="space-y-4">
+          <div id="cr-training" class="space-y-4">
             <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Training & Onboarding</h4>
             <div class="grid grid-cols-2 gap-3">
               ${isAdmin ? renderSelectField('Ready for Training?', 'Ready for Training?', ['Yes', 'No'], record) : ''}
@@ -2702,6 +2708,12 @@
               <option value="Cancelled" ${record['Current Step'] === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
               <option value="Complete" ${record['Current Step'] === 'Complete' ? 'selected' : ''}>Complete</option>
             </select>
+            ${isAdmin ? `
+            <div class="flex flex-wrap gap-2 justify-center mt-3">
+              <button onclick="document.getElementById('ord-sustain').scrollIntoView({behavior: 'smooth'})" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-bold uppercase tracking-wider rounded-lg border border-slate-700 transition-colors shadow-sm">Sustain & Ordain</button>
+              <button onclick="document.getElementById('ord-certificate').scrollIntoView({behavior: 'smooth'})" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-bold uppercase tracking-wider rounded-lg border border-slate-700 transition-colors shadow-sm">Certificate & LCR</button>
+            </div>
+            ` : ''}
           </div>
 
           ${isAdmin || record['Current Step'] === 'HC Approval' ? `
@@ -2763,7 +2775,7 @@
 
           ${isAdmin || ['Sustaining', 'Ordination'].includes(record['Current Step']) ? `
           <!-- Section 2: Sustaining & Ordination -->
-          <div class="space-y-4">
+          <div id="ord-sustain" class="space-y-4">
             <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Sustain & Ordain</h4>
             <div class="grid grid-cols-2 gap-3">
               ${isAdmin || ['Sustaining', 'Ordination'].includes(record['Current Step']) ? `
@@ -2800,7 +2812,7 @@
 
           ${isAdmin ? `
           <!-- Section 3: Certificate & Office Admin -->
-          <div class="space-y-4">
+          <div id="ord-certificate" class="space-y-4">
             <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Certificate & LCR</h4>
             <div class="grid grid-cols-2 gap-3">
               ${renderSelectField('Certificate Printed?', 'Cert Printed?', ['Yes', 'No'], record)}
