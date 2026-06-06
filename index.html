@@ -2453,13 +2453,16 @@
               <option value="Declined" ${record['Current Step'] === 'Declined' ? 'selected' : ''}>Declined</option>
               <option value="Cancelled" ${record['Current Step'] === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
             </select>
-            ${isAdmin ? `
-            <div class="flex flex-wrap gap-2 justify-center mt-3">
+          </div>
+          ${isAdmin ? `
+          <div class="mb-4">
+            <label class="block text-[10px] text-slate-400 font-bold mb-2 text-center uppercase tracking-wider">Jump To</label>
+            <div class="flex flex-wrap gap-2 justify-center">
               <button onclick="document.getElementById('cr-sustain').scrollIntoView({behavior: 'smooth'})" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-bold uppercase tracking-wider rounded-lg border border-slate-700 transition-colors shadow-sm">Sustain & Set Apart</button>
               <button onclick="document.getElementById('cr-training').scrollIntoView({behavior: 'smooth'})" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-bold uppercase tracking-wider rounded-lg border border-slate-700 transition-colors shadow-sm">Training & Onboarding</button>
             </div>
-            ` : ''}
           </div>
+          ` : ''}
 
           ${isAdmin || record['Current Step'] === 'HC Approval' ? `
           <!-- Approval Vote grid -->
@@ -2708,13 +2711,16 @@
               <option value="Cancelled" ${record['Current Step'] === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
               <option value="Complete" ${record['Current Step'] === 'Complete' ? 'selected' : ''}>Complete</option>
             </select>
-            ${isAdmin ? `
-            <div class="flex flex-wrap gap-2 justify-center mt-3">
+          </div>
+          ${isAdmin ? `
+          <div class="mb-4">
+            <label class="block text-[10px] text-slate-400 font-bold mb-2 text-center uppercase tracking-wider">Jump To</label>
+            <div class="flex flex-wrap gap-2 justify-center">
               <button onclick="document.getElementById('ord-sustain').scrollIntoView({behavior: 'smooth'})" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-bold uppercase tracking-wider rounded-lg border border-slate-700 transition-colors shadow-sm">Sustain & Ordain</button>
               <button onclick="document.getElementById('ord-certificate').scrollIntoView({behavior: 'smooth'})" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-bold uppercase tracking-wider rounded-lg border border-slate-700 transition-colors shadow-sm">Certificate & LCR</button>
             </div>
-            ` : ''}
           </div>
+          ` : ''}
 
           ${isAdmin || record['Current Step'] === 'HC Approval' ? `
           <!-- Approval Vote grid -->
