@@ -2406,6 +2406,22 @@
         html += `
           ${approvalBannerHtml}
           
+          <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 w-full mb-4">
+            <label class="block text-base text-emerald-400 font-bold mb-2 text-center">Current Step</label>
+            <select onchange="updateRecordField('Current Step', this.value)" ${isAdmin ? '' : 'disabled'} class="w-full glass rounded-lg px-2.5 py-2 text-base text-emerald-400 font-medium focus:outline-none border-[2px] border-emerald-500/30">
+              <option value=""></option>
+              <option value="HC Approval" ${record['Current Step'] === 'HC Approval' ? 'selected' : ''}>HC Approval</option>
+              <option value="Call / Release" ${record['Current Step'] === 'Call / Release' ? 'selected' : ''}>Call / Release</option>
+              <option value="Sustain" ${record['Current Step'] === 'Sustain' ? 'selected' : ''}>Sustain</option>
+              <option value="Set Apart" ${record['Current Step'] === 'Set Apart' ? 'selected' : ''}>Set Apart</option>
+              <option value="Training" ${record['Current Step'] === 'Training' ? 'selected' : ''}>Training</option>
+              <option value="Complete" ${record['Current Step'] === 'Complete' ? 'selected' : ''}>Complete</option>
+              <option value="Declined" ${record['Current Step'] === 'Declined' ? 'selected' : ''}>Declined</option>
+              <option value="Cancelled" ${record['Current Step'] === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+            </select>
+          </div>
+
+          ${isAdmin || record['Current Step'] === 'HC Approval' ? `
           <!-- Approval Vote grid -->
           <div class="space-y-2.5">
             <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
@@ -2422,41 +2438,29 @@
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="block text-xs text-slate-400 font-medium mb-1">High Council Approval Date</label>
-              <input type="date" value="${record['High Council Approval Date'] || ''}" onchange="updateRecordField('High Council Approval Date', this.value)" ${isHC ? 'readonly disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+              <input type="date" value="${record['High Council Approval Date'] || ''}" onchange="updateRecordField('High Council Approval Date', this.value)" ${isHC || isPres ? 'readonly disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
             </div>
           </div>
 
           <hr class="border-slate-800">
+          ` : ''}
 
           <!-- Section 1: Workflow & Key Info -->
           <div class="space-y-4">
             <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Workflow & Key Info</h4>
             <div>
               <label class="block text-xs text-slate-400 font-medium mb-1">Calling Name</label>
-              <input type="text" value="${record['Calling'] || ''}" onchange="updateRecordField('Calling', this.value)" ${isHC ? 'readonly disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+              <input type="text" value="${record['Calling'] || ''}" onchange="updateRecordField('Calling', this.value)" ${isHC || isPres ? 'readonly disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
             </div>
             <div>
               <label class="block text-xs text-slate-400 font-medium mb-1">Unit</label>
-              <select onchange="updateRecordField('Unit', this.value)" ${isHC ? 'disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+              <select onchange="updateRecordField('Unit', this.value)" ${isHC || isPres ? 'disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
                 <option value=""></option>
                 ${['Charlotte', 'YSA', 'Holt', 'Jackson', 'Lansing', 'Owosso', 'Portland', 'St Johns', 'Williamston'].map(u => `<option value="${u}" ${record['Unit'] === u ? 'selected' : ''}>${u}</option>`).join('')}
               </select>
             </div>
-            <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 w-full">
-              <label class="block text-base text-emerald-400 font-bold mb-2 text-center">Current Step</label>
-              <select onchange="updateRecordField('Current Step', this.value)" ${isHC ? 'disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-base text-emerald-400 font-medium focus:outline-none border-[2px] border-emerald-500/30">
-                <option value=""></option>
-                <option value="HC Approval" ${record['Current Step'] === 'HC Approval' ? 'selected' : ''}>HC Approval</option>
-                <option value="Call / Release" ${record['Current Step'] === 'Call / Release' ? 'selected' : ''}>Call / Release</option>
-                <option value="Sustain" ${record['Current Step'] === 'Sustain' ? 'selected' : ''}>Sustain</option>
-                <option value="Set Apart" ${record['Current Step'] === 'Set Apart' ? 'selected' : ''}>Set Apart</option>
-                <option value="Training" ${record['Current Step'] === 'Training' ? 'selected' : ''}>Training</option>
-                <option value="Complete" ${record['Current Step'] === 'Complete' ? 'selected' : ''}>Complete</option>
-                <option value="Declined" ${record['Current Step'] === 'Declined' ? 'selected' : ''}>Declined</option>
-                <option value="Cancelled" ${record['Current Step'] === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
-              </select>
-            </div>
-            ${!isHC ? `
+            
+            ${isAdmin ? `
             <div class="grid grid-cols-2 gap-3">
               ${renderNameInputField('Recommended By', 'Recommended By', record)}
               <div>
@@ -2465,53 +2469,71 @@
               </div>
             </div>
             ` : ''}
+            
+            ${isAdmin || record['Current Step'] === 'HC Approval' ? `
             <div>
               <label class="block text-xs text-slate-400 font-medium mb-1">Current Calling</label>
-              <input type="text" value="${record['Current Calling'] || ''}" onchange="updateRecordField('Current Calling', this.value)" ${isHC ? 'readonly disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+              <input type="text" value="${record['Current Calling'] || ''}" onchange="updateRecordField('Current Calling', this.value)" ${isHC || isPres ? 'readonly disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
             </div>
+            ` : ''}
+
+            ${isAdmin || ['HC Approval', 'Call / Release', 'Sustain'].includes(record['Current Step']) ? `
             <div class="grid grid-cols-2 gap-3">
               ${renderSelectField('Need to be Released?', 'Need to be Released?', ['Yes', 'No'], record)}
             </div>
-            ${!isHC ? `
+            ` : ''}
+            
+            ${isAdmin ? `
             <div>
               <label class="block text-xs text-slate-400 font-medium mb-1">Presidency Date Approved</label>
               <input type="date" value="${record['Stake Presidency Date Approved'] || ''}" onchange="updateRecordField('Stake Presidency Date Approved', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
             </div>
             ` : ''}
+            
+            ${isAdmin || record['Current Step'] === 'Call / Release' ? `
             <div class="grid grid-cols-2 gap-3">
               ${renderSelectField('Assigned to Extend Calling / Release', 'Assigned to Call / Release', [''].concat([...(state.isDemo ? (state.records.stakePresidency || mockData.stakePresidency) : state.stakePresidency || []), ...(state.isDemo ? (state.records.highCouncilors || mockData.highCouncilors) : state.highCouncilors || [])].filter(Boolean)), record)}
               ${renderSelectField('Calling Accepted?', 'Calling Accepted?', ['Accepted', 'Declined', 'Waiting for Answer'], record)}
             </div>
+            ` : ''}
           </div>
 
           <hr class="border-slate-800">
 
+          ${isAdmin || (record['Member to Release'] && ['HC Approval', 'Call / Release', 'Sustain', 'Set Apart', 'Training'].includes(record['Current Step'])) ? `
           <!-- Section 2: Member to Release -->
           <div class="space-y-4">
             <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Member to Release</h4>
             <div class="grid grid-cols-2 gap-3">
+              ${isAdmin || ['HC Approval', 'Call / Release', 'Sustain'].includes(record['Current Step']) ? `
               <div>
                 <label class="block text-xs text-slate-400 font-medium mb-1">Member to Release</label>
-                <input type="text" value="${record['Member to Release'] || ''}" onchange="updateRecordField('Member to Release', this.value)" ${isHC ? 'readonly disabled' : ''} placeholder="Name" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+                <input type="text" value="${record['Member to Release'] || ''}" onchange="updateRecordField('Member to Release', this.value)" ${isHC || isPres ? 'readonly disabled' : ''} placeholder="Name" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
-              ${renderSelectField('Notified of Release?', 'Notified of Release?', ['Yes', 'No'], record)}
+              ` : '<div></div>'}
+              ${isAdmin || ['Call / Release', 'Sustain', 'Set Apart', 'Training'].includes(record['Current Step']) ? renderSelectField('Notified of Release?', 'Notified of Release?', ['Yes', 'No'], record) : ''}
             </div>
             <div class="grid grid-cols-2 gap-3">
-              ${renderSelectField('Key Returned?', 'Key Returned?', ['Yes', 'No', 'N/A'], record)}
-              ${renderSelectField('Removed from Google Drive and Calendar Invites?', 'Removed from Drive / Calendar?', ['Yes', 'No', 'N/A'], record)}
+              ${isAdmin || ['Call / Release', 'Sustain', 'Set Apart', 'Training'].includes(record['Current Step']) ? renderSelectField('Key Returned?', 'Key Returned?', ['Yes', 'No', 'N/A'], record) : ''}
+              ${isAdmin ? renderSelectField('Removed from Google Drive and Calendar Invites?', 'Removed from Drive / Calendar?', ['Yes', 'No', 'N/A'], record) : ''}
             </div>
           </div>
 
           <hr class="border-slate-800">
+          ` : ''}
 
           <!-- Section 3: Sustaining & Setting Apart -->
           <div class="space-y-4">
-            <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Sustain & Set Apart</h4>
+            ${isAdmin || ['Call / Release', 'Sustain', 'Set Apart', 'Training'].includes(record['Current Step']) ? `<h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Sustain & Set Apart</h4>` : ''}
+            
+            ${isAdmin || ['Call / Release', 'Sustain'].includes(record['Current Step']) ? `
             <div class="grid grid-cols-2 gap-3">
               ${renderSelectField('Ready for Sustaining / Setting Apart?', 'Ready for Sustaining?', ['Yes', 'No'], record)}
-              ${!isHC ? renderSelectField('Over the Pulpit Sustaining', 'Pulpit Sustaining Type', ['All Units', 'Home Unit Only', 'None'], record) : ''}
+              ${isAdmin ? renderSelectField('Over the Pulpit Sustaining', 'Pulpit Sustaining Type', ['All Units', 'Home Unit Only', 'None'], record) : ''}
             </div>
-            ${!isHC ? `
+            ` : ''}
+            
+            ${isAdmin ? `
             <div class="grid grid-cols-2 gap-3">
               ${renderSelectField('Stake Conference Sustaining', 'Conference Sustaining', ['Pending', 'Complete'], record)}
               <div>
@@ -2520,27 +2542,30 @@
               </div>
             </div>
             ` : ''}
+            
+            ${isAdmin || ['Sustain', 'Set Apart', 'Training'].includes(record['Current Step']) ? `
             <div class="grid grid-cols-2 gap-3">
               <div>
                 <label class="block text-xs text-slate-400 font-medium mb-1">Date Sustained</label>
                 <input type="date" value="${record['Date Sustained'] || ''}" onchange="updateRecordField('Date Sustained', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
+              ${isAdmin || ['Set Apart', 'Training'].includes(record['Current Step']) ? `
               <div>
                 <label class="block text-xs text-slate-400 font-medium mb-1">Date Set Apart</label>
                 <input type="date" value="${record['Date Set Apart'] || ''}" onchange="updateRecordField('Date Set Apart', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
+              ` : '<div></div>'}
             </div>
+            ` : ''}
+            
+            ${isAdmin || ['Call / Release', 'Sustain', 'Set Apart'].includes(record['Current Step']) ? `
             <div class="grid grid-cols-2 gap-3">
               ${(() => {
                 const spRoster = state.isDemo ? (state.records.stakePresidency || []) : (state.stakePresidency || []);
                 const hcRoster = state.isDemo ? (state.records.highCouncilors || []) : (state.highCouncilors || []);
                 const spHcOptions = [...spRoster, ...hcRoster];
                 const setApartOptions = spHcOptions.map(name => `<option value="${name}" ${record['Set Apart By'] === name ? 'selected' : ''}>${name}</option>`).join('');
-                const isAdmin = state.role === 'admin';
-                const isHC = state.role === 'hc';
-                const isPres = state.role === 'presidency';
-                const canEdit = isAdmin || isPres;
-                const disabledHtml = canEdit ? '' : 'disabled';
+                const disabledHtml = isAdmin ? '' : 'disabled';
                 return `<div>
                   <label class="block text-sm text-slate-400 font-medium mb-1">Assigned to Set Apart</label>
                   <select onchange="updateRecordField('Set Apart By', this.value)" ${disabledHtml} class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
@@ -2549,17 +2574,19 @@
                   </select>
                 </div>`;
               })()}
-              ${!isHC ? renderSelectField('LCR Updated?', 'LCR Updated?', ['Yes', 'No'], record) : ''}
+              ${isAdmin ? renderSelectField('LCR Updated?', 'LCR Updated?', ['Yes', 'No'], record) : ''}
             </div>
+            ` : ''}
           </div>
 
-          <hr class="border-slate-800">
+          ${isAdmin || ['Call / Release', 'Sustain', 'Set Apart', 'Training'].includes(record['Current Step']) ? `<hr class="border-slate-800">` : ''}
 
+          ${isAdmin || ['Call / Release', 'Sustain', 'Set Apart'].includes(record['Current Step']) ? `
           <!-- Section 4: Training & Onboarding -->
           <div class="space-y-4">
             <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Training & Onboarding</h4>
             <div class="grid grid-cols-2 gap-3">
-              ${!isHC ? renderSelectField('Ready for Training?', 'Ready for Training?', ['Yes', 'No'], record) : ''}
+              ${isAdmin ? renderSelectField('Ready for Training?', 'Ready for Training?', ['Yes', 'No'], record) : ''}
               ${renderSelectField('Assigned Trainer', 'Assigned Trainer', [''].concat([...(state.isDemo ? (state.records.stakePresidency || mockData.stakePresidency) : state.stakePresidency || []), ...(state.isDemo ? (state.records.highCouncilors || mockData.highCouncilors) : state.highCouncilors || [])].filter(Boolean)), record)}
             </div>
             <div class="grid grid-cols-2 gap-3">
@@ -2567,19 +2594,20 @@
               ${renderSelectField('Training Provided?', 'Training Provided?', ['Yes', 'No'], record)}
             </div>
           </div>
+          ` : ''}
 
-          ${!isHC ? `
-          <div class="grid grid-cols-2 gap-3">
+          ${isAdmin ? `
+          <div class="grid grid-cols-2 gap-3 mt-4">
             ${renderSelectField('Added to Google Drive and Calendar Invites?', 'Added to Drive/Calendar?', ['Yes', 'No', 'N/A'], record)}
           </div>
           ` : ''}
 
-          <hr class="border-slate-800">
+          ${isAdmin || ['Call / Release', 'Sustain', 'Set Apart'].includes(record['Current Step']) || isAdmin ? `<hr class="border-slate-800">` : ''}
 
           <!-- Notes -->
           <div>
             <label class="block text-xs text-slate-400 font-medium mb-1">Notes</label>
-            <textarea onchange="updateRecordField('Notes', this.value)" rows="2" ${isHC ? 'readonly disabled' : ''} class="w-full glass rounded-lg p-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Notes'] || ''}</textarea>
+            <textarea onchange="updateRecordField('Notes', this.value)" rows="2" ${isHC || isPres ? 'readonly disabled' : ''} class="w-full glass rounded-lg p-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Notes'] || ''}</textarea>
           </div>
         `;
       } 
@@ -2628,6 +2656,21 @@
         html += `
           ${approvalBannerHtml}
 
+          <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 w-full mb-4">
+            <label class="block text-base text-emerald-400 font-bold mb-2 text-center">Current Step</label>
+            <select onchange="updateRecordField('Current Step', this.value)" ${isAdmin ? '' : 'disabled'} class="w-full glass rounded-lg px-2.5 py-2 text-base text-emerald-400 font-medium focus:outline-none border-[2px] border-emerald-500/30">
+              <option value=""></option>
+              <option value="Stake Interview" ${record['Current Step'] === 'Stake Interview' ? 'selected' : ''}>Interview</option>
+              <option value="HC Approval" ${record['Current Step'] === 'HC Approval' ? 'selected' : ''}>HC Approval</option>
+              <option value="Sustaining" ${record['Current Step'] === 'Sustaining' ? 'selected' : ''}>Sustaining</option>
+              <option value="Ordination" ${record['Current Step'] === 'Ordination' ? 'selected' : ''}>Ordination</option>
+              <option value="Certificate" ${record['Current Step'] === 'Certificate' ? 'selected' : ''}>Certificate</option>
+              <option value="Cancelled" ${record['Current Step'] === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+              <option value="Complete" ${record['Current Step'] === 'Complete' ? 'selected' : ''}>Complete</option>
+            </select>
+          </div>
+
+          ${isAdmin || record['Current Step'] === 'HC Approval' ? `
           <!-- Approval Vote grid -->
           <div class="space-y-2.5">
             <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
@@ -2644,36 +2687,25 @@
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="block text-xs text-slate-400 font-medium mb-1">High Council Approval Date</label>
-              <input type="date" value="${record['High Council Approval Date'] || ''}" onchange="updateRecordField('High Council Approval Date', this.value)" ${isHC ? 'readonly disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+              <input type="date" value="${record['High Council Approval Date'] || ''}" onchange="updateRecordField('High Council Approval Date', this.value)" ${isHC || isPres ? 'readonly disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
             </div>
           </div>
 
           <hr class="border-slate-800">
+          ` : ''}
 
           <!-- Section 1: Workflow & Key Info -->
           <div class="space-y-4">
             <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Workflow & Key Info</h4>
             <div>
               <label class="block text-xs text-slate-400 font-medium mb-1">Unit</label>
-              <select onchange="updateRecordField('Unit', this.value)" ${isHC ? 'disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+              <select onchange="updateRecordField('Unit', this.value)" ${isHC || isPres ? 'disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
                 <option value=""></option>
                 ${['Charlotte', 'YSA', 'Holt', 'Jackson', 'Lansing', 'Owosso', 'Portland', 'St Johns', 'Williamston'].map(u => `<option value="${u}" ${record['Unit'] === u ? 'selected' : ''}>${u}</option>`).join('')}
               </select>
             </div>
-            <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 w-full">
-              <label class="block text-base text-emerald-400 font-bold mb-2 text-center">Current Step</label>
-              <select onchange="updateRecordField('Current Step', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-emerald-400 font-medium focus:outline-none border-[2px] border-emerald-500/30">
-                <option value=""></option>
-                <option value="Stake Interview" ${record['Current Step'] === 'Stake Interview' ? 'selected' : ''}>Interview</option>
-                <option value="HC Approval" ${record['Current Step'] === 'HC Approval' ? 'selected' : ''}>HC Approval</option>
-                <option value="Sustaining" ${record['Current Step'] === 'Sustaining' ? 'selected' : ''}>Sustaining</option>
-                <option value="Ordination" ${record['Current Step'] === 'Ordination' ? 'selected' : ''}>Ordination</option>
-                <option value="Certificate" ${record['Current Step'] === 'Certificate' ? 'selected' : ''}>Certificate</option>
-                <option value="Cancelled" ${record['Current Step'] === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
-                <option value="Complete" ${record['Current Step'] === 'Complete' ? 'selected' : ''}>Complete</option>
-              </select>
-            </div>
-            ${!isHC ? `
+            
+            ${isAdmin ? `
             <div>
               <label class="block text-xs text-slate-400 font-medium mb-1">Interview Status</label>
               <select onchange="updateRecordField('Interview Status', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
@@ -2687,19 +2719,25 @@
               <input type="date" value="${record['Stake Presidency Date Approved'] || ''}" onchange="updateRecordField('Stake Presidency Date Approved', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
             </div>
             ` : ''}
+            
+            ${isAdmin || ['Sustaining', 'Ordination'].includes(record['Current Step']) ? `
             ${renderSelectField('Assigned to Oversee Sustaining / Ordination', 'Assigned to Oversee Sustaining / Ordination', [''].concat([...(state.isDemo ? (state.records.stakePresidency || mockData.stakePresidency) : state.stakePresidency || []), ...(state.isDemo ? (state.records.highCouncilors || mockData.highCouncilors) : state.highCouncilors || [])].filter(Boolean)), record)}
+            ` : ''}
           </div>
 
-          <hr class="border-slate-800">
+          ${isAdmin || ['Sustaining', 'Ordination'].includes(record['Current Step']) ? `<hr class="border-slate-800">` : ''}
 
+          ${isAdmin || ['Sustaining', 'Ordination'].includes(record['Current Step']) ? `
           <!-- Section 2: Sustaining & Ordination -->
           <div class="space-y-4">
             <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Sustain & Ordain</h4>
             <div class="grid grid-cols-2 gap-3">
+              ${isAdmin || record['Current Step'] === 'Sustaining' ? `
               <div>
                 <label class="block text-xs text-slate-400 font-medium mb-1">Date Sustained</label>
                 <input type="date" value="${record['Date Sustained'] || ''}" onchange="updateRecordField('Date Sustained', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
+              ` : '<div></div>'}
               <div>
                 <label class="block text-xs text-slate-400 font-medium mb-1">Ordained Date</label>
                 <input type="date" value="${record['Ordained Date'] || ''}" onchange="updateRecordField('Ordained Date', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
@@ -2712,7 +2750,7 @@
             </div>
             
             <!-- Stake Conference Section (Ordination only) -->
-            ${!isHC ? `
+            ${isAdmin ? `
             <div class="grid grid-cols-2 gap-3">
               ${renderSelectField('Stake Conference Sustaining', 'Conference Sustaining', ['Pending', 'Complete'], record)}
               <div>
@@ -2722,10 +2760,11 @@
             </div>
             ` : ''}
           </div>
+          ` : ''}
 
-          <hr class="border-slate-800">
+          ${isAdmin ? `<hr class="border-slate-800">` : ''}
 
-          ${!isHC ? `
+          ${isAdmin ? `
           <!-- Section 3: Certificate & Office Admin -->
           <div class="space-y-4">
             <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Certificate & LCR</h4>
@@ -2755,39 +2794,40 @@
           <!-- Notes -->
           <div>
             <label class="block text-xs text-slate-400 font-medium mb-1">Notes</label>
-            <textarea onchange="updateRecordField('Notes', this.value)" rows="2" ${isHC ? 'readonly disabled' : ''} class="w-full glass rounded-lg p-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Notes'] || ''}</textarea>
+            <textarea onchange="updateRecordField('Notes', this.value)" rows="2" ${isHC || isPres ? 'readonly disabled' : ''} class="w-full glass rounded-lg p-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Notes'] || ''}</textarea>
           </div>
         `;
       }
       
       else if (type === 'Release Only') {
         html += `
+          <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 w-full mb-4">
+            <label class="block text-base text-emerald-400 font-bold mb-2 text-center">Current Step</label>
+            <select onchange="updateRecordField('Current Step', this.value)" ${isAdmin ? '' : 'disabled'} class="w-full glass rounded-lg px-2.5 py-2 text-base text-emerald-400 font-medium focus:outline-none border-[2px] border-emerald-500/30">
+              <option value=""></option>
+              <option value="Pending Approval" ${record['Current Step'] === 'Pending Approval' ? 'selected' : ''}>Pending Approval</option>
+              <option value="Assigned" ${record['Current Step'] === 'Assigned' ? 'selected' : ''}>Assigned</option>
+              <option value="Update System + LCR" ${record['Current Step'] === 'Update System + LCR' ? 'selected' : ''}>Update System + LCR</option>
+              <option value="Cancelled" ${record['Current Step'] === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+              <option value="Complete" ${record['Current Step'] === 'Complete' ? 'selected' : ''}>Complete</option>
+            </select>
+          </div>
+
           <!-- Section 1: Workflow & Key Info -->
           <div class="space-y-4">
             <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Workflow & Key Info</h4>
             <div class="grid grid-cols-2 gap-3">
               <div>
                 <label class="block text-xs text-slate-400 font-medium mb-1">Calling to be Released From</label>
-                <input type="text" value="${record['Calling to be Released From'] || ''}" onchange="updateRecordField('Calling to be Released From', this.value)" ${isHC ? 'readonly disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+                <input type="text" value="${record['Calling to be Released From'] || ''}" onchange="updateRecordField('Calling to be Released From', this.value)" ${isHC || isPres ? 'readonly disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
               <div>
                 <label class="block text-xs text-slate-400 font-medium mb-1">Unit</label>
-                <select onchange="updateRecordField('Unit', this.value)" ${isHC ? 'disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                <select onchange="updateRecordField('Unit', this.value)" ${isHC || isPres ? 'disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
                   <option value=""></option>
                   ${['Charlotte', 'YSA', 'Holt', 'Jackson', 'Lansing', 'Owosso', 'Portland', 'St Johns', 'Williamston'].map(u => `<option value="${u}" ${record['Unit'] === u ? 'selected' : ''}>${u}</option>`).join('')}
                 </select>
               </div>
-            </div>
-            <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 w-full">
-              <label class="block text-base text-emerald-400 font-bold mb-2 text-center">Current Step</label>
-              <select onchange="updateRecordField('Current Step', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-emerald-400 font-medium focus:outline-none border-[2px] border-emerald-500/30">
-                <option value=""></option>
-                <option value="Pending Approval" ${record['Current Step'] === 'Pending Approval' ? 'selected' : ''}>Pending Approval</option>
-                <option value="Assigned" ${record['Current Step'] === 'Assigned' ? 'selected' : ''}>Assigned</option>
-                <option value="Update System + LCR" ${record['Current Step'] === 'Update System + LCR' ? 'selected' : ''}>Update System + LCR</option>
-                <option value="Cancelled" ${record['Current Step'] === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
-                <option value="Complete" ${record['Current Step'] === 'Complete' ? 'selected' : ''}>Complete</option>
-              </select>
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div>
@@ -2831,7 +2871,7 @@
           <!-- Notes -->
           <div>
             <label class="block text-xs text-slate-400 font-medium mb-1">Notes</label>
-            <textarea onchange="updateRecordField('Notes', this.value)" rows="2" class="w-full glass rounded-lg p-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Notes'] || ''}</textarea>
+            <textarea onchange="updateRecordField('Notes', this.value)" rows="2" ${isHC || isPres ? 'readonly disabled' : ''} class="w-full glass rounded-lg p-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Notes'] || ''}</textarea>
           </div>
         `;
       }
