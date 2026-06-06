@@ -1751,6 +1751,12 @@
           
           // Admin and Presidency use unit filter
           let matchesUnit = unitFilter === 'all' || r["Unit"] === unitFilter;
+          
+          // Hide "Admin Review" steps from Presidency dashboard
+          if (isPresidency && r["Current Step"] === "Admin Review") {
+            return false;
+          }
+          
           return matchesSearch && matchesUnit;
         };
 
@@ -2032,9 +2038,9 @@
     }
 
     // Step order for grouping on admin/presidency dashboard
-    const CALLING_STEP_ORDER = ['HC Approval', 'Call / Release', 'Sustain', 'Set Apart', 'Training'];
-    const ORDINATION_STEP_ORDER = ['Stake Interview', 'HC Approval', 'Sustaining', 'Ordination', 'Certificate'];
-    const RELEASE_STEP_ORDER = ['Release Pending', 'Pending Approval', 'Assigned', 'Update System + LCR'];
+    const CALLING_STEP_ORDER = ['Admin Review', 'HC Approval', 'Call / Release', 'Sustain', 'Set Apart', 'Training'];
+    const ORDINATION_STEP_ORDER = ['Admin Review', 'Stake Interview', 'HC Approval', 'Sustaining', 'Ordination', 'Certificate'];
+    const RELEASE_STEP_ORDER = ['Admin Review', 'Release Pending', 'Pending Approval', 'Assigned', 'Update System + LCR'];
     const FINISHED_STEPS = ['Complete', 'Declined', 'Cancelled', 'Release Complete', 'Release Completed'];
 
     function renderCardList(containerId, list, type, icon, borderColorClass) {
@@ -2490,6 +2496,7 @@
             <label class="block text-base text-emerald-400 font-bold mb-2 text-center">Current Step</label>
             <select onchange="updateRecordField('Current Step', this.value)" ${isAdmin ? '' : 'disabled'} class="w-full glass rounded-lg px-2.5 py-2 text-base text-emerald-400 font-medium text-center focus:outline-none border-[2px] border-emerald-500/30">
               <option value=""></option>
+              <option value="Admin Review" ${record['Current Step'] === 'Admin Review' ? 'selected' : ''}>Admin Review</option>
               <option value="HC Approval" ${record['Current Step'] === 'HC Approval' ? 'selected' : ''}>HC Approval</option>
               <option value="Call / Release" ${record['Current Step'] === 'Call / Release' ? 'selected' : ''}>Call / Release</option>
               <option value="Sustain" ${record['Current Step'] === 'Sustain' ? 'selected' : ''}>Sustain</option>
@@ -2749,6 +2756,7 @@
             <label class="block text-base text-emerald-400 font-bold mb-2 text-center">Current Step</label>
             <select onchange="updateRecordField('Current Step', this.value)" ${isAdmin ? '' : 'disabled'} class="w-full glass rounded-lg px-2.5 py-2 text-base text-emerald-400 font-medium text-center focus:outline-none border-[2px] border-emerald-500/30">
               <option value=""></option>
+              <option value="Admin Review" ${record['Current Step'] === 'Admin Review' ? 'selected' : ''}>Admin Review</option>
               <option value="Stake Interview" ${record['Current Step'] === 'Stake Interview' ? 'selected' : ''}>Interview</option>
               <option value="HC Approval" ${record['Current Step'] === 'HC Approval' ? 'selected' : ''}>HC Approval</option>
               <option value="Sustaining" ${record['Current Step'] === 'Sustaining' ? 'selected' : ''}>Sustaining</option>
@@ -2903,6 +2911,7 @@
             <label class="block text-base text-emerald-400 font-bold mb-2 text-center">Current Step</label>
             <select onchange="updateRecordField('Current Step', this.value)" ${isAdmin ? '' : 'disabled'} class="w-full glass rounded-lg px-2.5 py-2 text-base text-emerald-400 font-medium text-center focus:outline-none border-[2px] border-emerald-500/30">
               <option value=""></option>
+              <option value="Admin Review" ${record['Current Step'] === 'Admin Review' ? 'selected' : ''}>Admin Review</option>
               <option value="Pending Approval" ${record['Current Step'] === 'Pending Approval' ? 'selected' : ''}>Pending Approval</option>
               <option value="Assigned" ${record['Current Step'] === 'Assigned' ? 'selected' : ''}>Assigned</option>
               <option value="Update System + LCR" ${record['Current Step'] === 'Update System + LCR' ? 'selected' : ''}>Update System + LCR</option>
@@ -3575,6 +3584,18 @@
     // Update single fields (checklist options, text, dates)
     function updateRecordField(fieldKey, value) {
       if (!state.activeRecord) return;
+      
+      // Prompt logic for Training Provided
+      if ((fieldKey === 'Training Provided?' || fieldKey === 'Training Provided') && value === 'Yes') {
+        setTimeout(() => {
+          const isComplete = window.confirm("Training is Complete. Would you consider this calling complete?");
+          if (isComplete) {
+            updateRecordField('Current Step', 'Complete');
+          } else {
+            updateRecordField('Current Step', 'Admin Review');
+          }
+        }, 300);
+      }
       
       const updates = {};
       updates[fieldKey] = value;
@@ -4536,7 +4557,8 @@
             <div>
               <label class="block text-sm font-medium text-slate-400 mb-1">Current Step</label>
               <select id="form-current-step" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
-                <option value="HC Approval" selected>HC Approval</option>
+                <option value="Admin Review" selected>Admin Review</option>
+                <option value="HC Approval">HC Approval</option>
                 <option value="Call / Release">Call / Release</option>
                 <option value="Set Apart">Set Apart</option>
                 <option value="Training">Training</option>
@@ -4589,6 +4611,7 @@
           <div>
             <label class="block text-sm font-medium text-slate-400 mb-1">Current Step</label>
             <select id="form-current-step" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
+              <option value="Admin Review">Admin Review</option>
               <option value="Stake Interview" selected>Interview</option>
               <option value="HC Approval">HC Approval</option>
               <option value="Sustaining">Sustaining</option>
@@ -4625,6 +4648,7 @@
           <div>
             <label class="block text-sm font-medium text-slate-400 mb-1">Current Step</label>
             <select id="form-current-step" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
+              <option value="Admin Review">Admin Review</option>
               <option value="Pending Approval" selected>Pending Approval</option>
               <option value="Assigned">Assigned</option>
               <option value="Update System + LCR">Update System + LCR</option>
