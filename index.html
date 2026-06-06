@@ -2545,10 +2545,10 @@
                 <input type="text" value="${record['Member to Release'] || ''}" onchange="updateRecordField('Member to Release', this.value)" ${isHC || isPres ? 'readonly disabled' : ''} placeholder="Name" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
               ` : '<div></div>'}
-              ${isAdmin || ['Call / Release', 'Sustain', 'Set Apart', 'Training'].includes(record['Current Step']) ? renderSelectField('Notified of Release?', 'Notified of Release?', ['Yes', 'No'], record) : ''}
+              ${isAdmin || ['Call / Release', 'Sustain', 'Set Apart'].includes(record['Current Step']) ? renderSelectField('Notified of Release?', 'Notified of Release?', ['Yes', 'No'], record) : ''}
             </div>
             <div class="grid grid-cols-2 gap-3">
-              ${isAdmin || ['Call / Release', 'Sustain', 'Set Apart', 'Training'].includes(record['Current Step']) ? renderSelectField('Key Returned?', 'Key Returned?', ['Yes', 'No', 'N/A'], record) : ''}
+              ${isAdmin || ['Call / Release', 'Sustain', 'Set Apart'].includes(record['Current Step']) ? renderSelectField('Key Returned?', 'Key Returned?', ['Yes', 'No', 'N/A'], record) : ''}
               ${isAdmin ? renderSelectField('Removed from Google Drive and Calendar Invites?', 'Removed from Drive / Calendar?', ['Yes', 'No', 'N/A'], record) : ''}
             </div>
           </div>
@@ -2577,13 +2577,13 @@
             </div>
             ` : ''}
             
-            ${isAdmin || ['Sustain', 'Set Apart', 'Training'].includes(record['Current Step']) ? `
+            ${isAdmin || ['Sustain', 'Set Apart'].includes(record['Current Step']) ? `
             <div class="grid grid-cols-2 gap-3">
               <div>
                 <label class="block text-xs text-slate-400 font-medium mb-1">Date Sustained</label>
                 <input type="date" value="${record['Date Sustained'] || ''}" onchange="updateRecordField('Date Sustained', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
-              ${isAdmin || ['Set Apart', 'Training'].includes(record['Current Step']) ? `
+              ${isAdmin || ['Set Apart'].includes(record['Current Step']) ? `
               <div>
                 <label class="block text-xs text-slate-400 font-medium mb-1">Date Set Apart</label>
                 <input type="date" value="${record['Date Set Apart'] || ''}" onchange="updateRecordField('Date Set Apart', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
@@ -2615,7 +2615,7 @@
 
           ${isAdmin || ['Call / Release', 'Sustain', 'Set Apart', 'Training'].includes(record['Current Step']) ? `<hr class="border-slate-800">` : ''}
 
-          ${isAdmin || ['Call / Release', 'Sustain', 'Set Apart'].includes(record['Current Step']) ? `
+          ${isAdmin || ['Call / Release', 'Sustain', 'Set Apart', 'Training'].includes(record['Current Step']) ? `
           <!-- Section 4: Training & Onboarding -->
           <div class="space-y-4">
             <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Training & Onboarding</h4>
@@ -3102,7 +3102,9 @@
       const hcWhitelist = [
         "Calling Accepted?",
         "Notified of Release?",
-        "Key Returned?"
+        "Key Returned?",
+        "Key Provided?", "Key Provided",
+        "Training Provided?", "Training Provided"
       ];
       
       const presWhitelist = [
@@ -3171,7 +3173,9 @@
       const hcWhitelist = [
         "Calling Accepted?",
         "Notified of Release?",
-        "Key Returned?"
+        "Key Returned?",
+        "Key Provided?", "Key Provided",
+        "Training Provided?", "Training Provided"
       ];
       
       const presWhitelist = [
@@ -3181,7 +3185,7 @@
         "Set Apart By", "Ordained By",
         "Ready for Training?", "Ready for Training",
         "Assigned to Extend Calling / Release", "Assigned to Oversee Sustaining / Ordination", "Assigned to Extend Release",
-        "Assigned Trainer", "Recommended By",
+        "Recommended By",
         "Key Provided?", "Key Provided",
         "Training Provided?", "Training Provided",
         "Ready for High Council Approval?",
@@ -3237,7 +3241,7 @@
       
       const presWhitelist = [
         ...hcWhitelist,
-        "Set Apart By", "Assigned Trainer", "Entered By",
+        "Set Apart By", "Entered By",
         "Assigned to Extend Calling / Release", "Assigned to Oversee Sustaining / Ordination", "Assigned to Extend Release",
         "Recommended By"
       ];
