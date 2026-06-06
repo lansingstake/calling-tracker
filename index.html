@@ -2534,7 +2534,7 @@
 
           <hr class="border-slate-800">
 
-          ${isAdmin || (record['Member to Release'] && ['HC Approval', 'Call / Release', 'Sustain', 'Set Apart', 'Training'].includes(record['Current Step'])) ? `
+          ${isAdmin || (record['Member to Release'] && ['HC Approval', 'Call / Release', 'Sustain', 'Set Apart'].includes(record['Current Step'])) ? `
           <!-- Section 2: Member to Release -->
           <div class="space-y-4">
             <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Member to Release</h4>
@@ -2558,7 +2558,7 @@
 
           <!-- Section 3: Sustaining & Setting Apart -->
           <div class="space-y-4">
-            ${isAdmin || ['Call / Release', 'Sustain', 'Set Apart', 'Training'].includes(record['Current Step']) ? `<h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Sustain & Set Apart</h4>` : ''}
+            ${isAdmin || ['Call / Release', 'Sustain', 'Set Apart'].includes(record['Current Step']) ? `<h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Sustain & Set Apart</h4>` : ''}
             
             ${isAdmin || ['Call / Release', 'Sustain'].includes(record['Current Step']) ? `
             <div class="grid grid-cols-2 gap-3">
@@ -2613,7 +2613,7 @@
             ` : ''}
           </div>
 
-          ${isAdmin || ['Call / Release', 'Sustain', 'Set Apart', 'Training'].includes(record['Current Step']) ? `<hr class="border-slate-800">` : ''}
+          ${isAdmin || ['Call / Release', 'Sustain', 'Set Apart'].includes(record['Current Step']) ? `<hr class="border-slate-800">` : ''}
 
           ${isAdmin || ['Call / Release', 'Sustain', 'Set Apart', 'Training'].includes(record['Current Step']) ? `
           <!-- Section 4: Training & Onboarding -->
