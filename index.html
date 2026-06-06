@@ -2766,7 +2766,7 @@
           <div class="space-y-4">
             <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Sustain & Ordain</h4>
             <div class="grid grid-cols-2 gap-3">
-              ${isAdmin || record['Current Step'] === 'Sustaining' ? `
+              ${isAdmin || ['Sustaining', 'Ordination'].includes(record['Current Step']) ? `
               <div>
                 <label class="block text-xs text-slate-400 font-medium mb-1">Date Sustained</label>
                 <input type="date" value="${record['Date Sustained'] || ''}" onchange="updateRecordField('Date Sustained', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
