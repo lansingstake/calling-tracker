@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Calling Tracker</title>
-  <link rel="icon" type="image/png" href="ct-logo.png">
-  <link rel="apple-touch-icon" href="ct-logo.png">
+  <link rel="icon" type="image/png" href="CT%20Favicon.png">
+  <link rel="apple-touch-icon" href="CT%20Favicon.png">
   <!-- SEO & PWA Meta -->
   <meta name="description" content="Mobile tracker for church callings, ordinations, and releases.">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -129,7 +129,7 @@
   <!-- Top Navigation / Status Header -->
   <header id="app-header" class="glass sticky top-0 z-40 px-4 py-3 flex items-center justify-between border-b border-slate-800">
       <div class="flex items-center gap-2">
-        <img src="ct-logo.png" alt="CT Logo" class="w-8 h-8 rounded-lg shadow-lg shadow-indigo-500/20 object-cover">
+        <img src="CT%20Favicon.png" alt="CT Logo" class="w-8 h-8 rounded-lg shadow-lg shadow-indigo-500/20 object-cover">
         <div>
           <h1 id="app-title" class="text-base sm:text-lg font-bold tracking-tight leading-tight">Calling Tracker</h1>
           <span id="demo-indicator" class="hidden text-[11px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1.5 py-0.5 rounded-full font-medium">Demo Mode</span>
@@ -753,13 +753,37 @@
     document.addEventListener('DOMContentLoaded', () => {
       // Parse API URL from query parameters (for easy onboarding)
       const params = new URLSearchParams(window.location.search);
-      const apiParam = params.get('api');
+      let apiParam = params.get('api');
+      
+      // Fallback to checking hash (iOS Safari Add to Home Screen workaround)
+      if (!apiParam && window.location.hash && window.location.hash.includes('api=')) {
+        const hashStr = window.location.hash.substring(1);
+        const hashParams = new URLSearchParams(hashStr);
+        apiParam = hashParams.get('api');
+      }
+
       if (apiParam) {
         state.apiUrl = apiParam;
         localStorage.setItem('tracker_api_url', apiParam);
-        // Clean up URL visually
-        // window.history.replaceState({}, document.title, window.location.pathname); // Removed to fix iOS Safari "Add to Home Screen" ignoring query parameters
+        // Change URL to use hash instead of query param. iOS Safari is more reliable 
+        // at preserving hash fragments when creating a home screen shortcut.
+        window.history.replaceState({}, document.title, window.location.pathname + '#api=' + encodeURIComponent(apiParam));
       }
+      
+      // Dynamically inject a Web App Manifest to preserve start_url for iOS Safari
+      const manifest = {
+        name: "Calling Tracker",
+        short_name: "Callings",
+        display: "standalone",
+        start_url: window.location.href,
+        icons: [{ src: "CT%20Favicon.png", sizes: "192x192", type: "image/png" }]
+      };
+      const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+      const manifestUrl = URL.createObjectURL(blob);
+      const link = document.createElement('link');
+      link.rel = 'manifest';
+      link.href = manifestUrl;
+      document.head.appendChild(link);
       
       lucide.createIcons();
       initUI();
