@@ -2422,7 +2422,7 @@
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="block text-xs text-slate-400 font-medium mb-1">High Council Approval Date</label>
-              <input type="date" value="${record['High Council Approval Date'] || ''}" onchange="updateRecordField('High Council Approval Date', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+              <input type="date" value="${record['High Council Approval Date'] || ''}" onchange="updateRecordField('High Council Approval Date', this.value)" ${isHC ? 'readonly disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
             </div>
           </div>
 
@@ -2444,7 +2444,7 @@
             </div>
             <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 w-full">
               <label class="block text-base text-emerald-400 font-bold mb-2 text-center">Current Step</label>
-              <select onchange="updateRecordField('Current Step', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-emerald-400 font-medium focus:outline-none border-[2px] border-emerald-500/30">
+              <select onchange="updateRecordField('Current Step', this.value)" ${isHC ? 'disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-base text-emerald-400 font-medium focus:outline-none border-[2px] border-emerald-500/30">
                 <option value=""></option>
                 <option value="HC Approval" ${record['Current Step'] === 'HC Approval' ? 'selected' : ''}>HC Approval</option>
                 <option value="Call / Release" ${record['Current Step'] === 'Call / Release' ? 'selected' : ''}>Call / Release</option>
@@ -2456,6 +2456,7 @@
                 <option value="Cancelled" ${record['Current Step'] === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
               </select>
             </div>
+            ${!isHC ? `
             <div class="grid grid-cols-2 gap-3">
               ${renderNameInputField('Recommended By', 'Recommended By', record)}
               <div>
@@ -2463,17 +2464,20 @@
                 <input type="date" value="${record['Unit Leader Date Contacted'] || ''}" onchange="updateRecordField('Unit Leader Date Contacted', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
             </div>
+            ` : ''}
             <div>
               <label class="block text-xs text-slate-400 font-medium mb-1">Current Calling</label>
-              <input type="text" value="${record['Current Calling'] || ''}" onchange="updateRecordField('Current Calling', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+              <input type="text" value="${record['Current Calling'] || ''}" onchange="updateRecordField('Current Calling', this.value)" ${isHC ? 'readonly disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
             </div>
             <div class="grid grid-cols-2 gap-3">
               ${renderSelectField('Need to be Released?', 'Need to be Released?', ['Yes', 'No'], record)}
             </div>
+            ${!isHC ? `
             <div>
               <label class="block text-xs text-slate-400 font-medium mb-1">Presidency Date Approved</label>
               <input type="date" value="${record['Stake Presidency Date Approved'] || ''}" onchange="updateRecordField('Stake Presidency Date Approved', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
             </div>
+            ` : ''}
             <div class="grid grid-cols-2 gap-3">
               ${renderSelectField('Assigned to Extend Calling / Release', 'Assigned to Call / Release', [''].concat([...(state.isDemo ? (state.records.stakePresidency || mockData.stakePresidency) : state.stakePresidency || []), ...(state.isDemo ? (state.records.highCouncilors || mockData.highCouncilors) : state.highCouncilors || [])].filter(Boolean)), record)}
               ${renderSelectField('Calling Accepted?', 'Calling Accepted?', ['Accepted', 'Declined', 'Waiting for Answer'], record)}
@@ -2488,7 +2492,7 @@
             <div class="grid grid-cols-2 gap-3">
               <div>
                 <label class="block text-xs text-slate-400 font-medium mb-1">Member to Release</label>
-                <input type="text" value="${record['Member to Release'] || ''}" onchange="updateRecordField('Member to Release', this.value)" placeholder="Name" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+                <input type="text" value="${record['Member to Release'] || ''}" onchange="updateRecordField('Member to Release', this.value)" ${isHC ? 'readonly disabled' : ''} placeholder="Name" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
               ${renderSelectField('Notified of Release?', 'Notified of Release?', ['Yes', 'No'], record)}
             </div>
@@ -2505,8 +2509,9 @@
             <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Sustain & Set Apart</h4>
             <div class="grid grid-cols-2 gap-3">
               ${renderSelectField('Ready for Sustaining / Setting Apart?', 'Ready for Sustaining?', ['Yes', 'No'], record)}
-              ${renderSelectField('Over the Pulpit Sustaining', 'Pulpit Sustaining Type', ['All Units', 'Home Unit Only', 'None'], record)}
+              ${!isHC ? renderSelectField('Over the Pulpit Sustaining', 'Pulpit Sustaining Type', ['All Units', 'Home Unit Only', 'None'], record) : ''}
             </div>
+            ${!isHC ? `
             <div class="grid grid-cols-2 gap-3">
               ${renderSelectField('Stake Conference Sustaining', 'Conference Sustaining', ['Pending', 'Complete'], record)}
               <div>
@@ -2514,6 +2519,7 @@
                 <input type="date" value="${record['Stake Conference Sustain Date'] || ''}" onchange="updateRecordField('Stake Conference Sustain Date', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
             </div>
+            ` : ''}
             <div class="grid grid-cols-2 gap-3">
               <div>
                 <label class="block text-xs text-slate-400 font-medium mb-1">Date Sustained</label>
@@ -2533,7 +2539,7 @@
                 const isAdmin = state.role === 'admin';
                 const isHC = state.role === 'hc';
                 const isPres = state.role === 'presidency';
-                const canEdit = isAdmin || isHC || isPres;
+                const canEdit = isAdmin || isPres;
                 const disabledHtml = canEdit ? '' : 'disabled';
                 return `<div>
                   <label class="block text-sm text-slate-400 font-medium mb-1">Assigned to Set Apart</label>
@@ -2543,7 +2549,7 @@
                   </select>
                 </div>`;
               })()}
-              ${renderSelectField('LCR Updated?', 'LCR Updated?', ['Yes', 'No'], record)}
+              ${!isHC ? renderSelectField('LCR Updated?', 'LCR Updated?', ['Yes', 'No'], record) : ''}
             </div>
           </div>
 
@@ -2553,7 +2559,7 @@
           <div class="space-y-4">
             <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Training & Onboarding</h4>
             <div class="grid grid-cols-2 gap-3">
-              ${renderSelectField('Ready for Training?', 'Ready for Training?', ['Yes', 'No'], record)}
+              ${!isHC ? renderSelectField('Ready for Training?', 'Ready for Training?', ['Yes', 'No'], record) : ''}
               ${renderSelectField('Assigned Trainer', 'Assigned Trainer', [''].concat([...(state.isDemo ? (state.records.stakePresidency || mockData.stakePresidency) : state.stakePresidency || []), ...(state.isDemo ? (state.records.highCouncilors || mockData.highCouncilors) : state.highCouncilors || [])].filter(Boolean)), record)}
             </div>
             <div class="grid grid-cols-2 gap-3">
@@ -2562,16 +2568,18 @@
             </div>
           </div>
 
+          ${!isHC ? `
           <div class="grid grid-cols-2 gap-3">
             ${renderSelectField('Added to Google Drive and Calendar Invites?', 'Added to Drive/Calendar?', ['Yes', 'No', 'N/A'], record)}
           </div>
+          ` : ''}
 
           <hr class="border-slate-800">
 
           <!-- Notes -->
           <div>
             <label class="block text-xs text-slate-400 font-medium mb-1">Notes</label>
-            <textarea onchange="updateRecordField('Notes', this.value)" rows="2" class="w-full glass rounded-lg p-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Notes'] || ''}</textarea>
+            <textarea onchange="updateRecordField('Notes', this.value)" rows="2" ${isHC ? 'readonly disabled' : ''} class="w-full glass rounded-lg p-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Notes'] || ''}</textarea>
           </div>
         `;
       } 
@@ -2636,7 +2644,7 @@
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="block text-xs text-slate-400 font-medium mb-1">High Council Approval Date</label>
-              <input type="date" value="${record['High Council Approval Date'] || ''}" onchange="updateRecordField('High Council Approval Date', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+              <input type="date" value="${record['High Council Approval Date'] || ''}" onchange="updateRecordField('High Council Approval Date', this.value)" ${isHC ? 'readonly disabled' : ''} class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
             </div>
           </div>
 
@@ -2665,6 +2673,7 @@
                 <option value="Complete" ${record['Current Step'] === 'Complete' ? 'selected' : ''}>Complete</option>
               </select>
             </div>
+            ${!isHC ? `
             <div>
               <label class="block text-xs text-slate-400 font-medium mb-1">Interview Status</label>
               <select onchange="updateRecordField('Interview Status', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
@@ -2677,6 +2686,7 @@
               <label class="block text-xs text-slate-400 font-medium mb-1">Presidency Date Approved</label>
               <input type="date" value="${record['Stake Presidency Date Approved'] || ''}" onchange="updateRecordField('Stake Presidency Date Approved', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
             </div>
+            ` : ''}
             ${renderSelectField('Assigned to Oversee Sustaining / Ordination', 'Assigned to Oversee Sustaining / Ordination', [''].concat([...(state.isDemo ? (state.records.stakePresidency || mockData.stakePresidency) : state.stakePresidency || []), ...(state.isDemo ? (state.records.highCouncilors || mockData.highCouncilors) : state.highCouncilors || [])].filter(Boolean)), record)}
           </div>
 
@@ -2695,13 +2705,14 @@
                 <input type="date" value="${record['Ordained Date'] || ''}" onchange="updateRecordField('Ordained Date', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
             </div>
-            ${renderSelectField('Ordained By', 'Ordained By', [''].concat([...(state.isDemo ? (state.records.stakePresidency || mockData.stakePresidency) : state.stakePresidency || []), ...(state.isDemo ? (state.records.highCouncilors || mockData.highCouncilors) : state.highCouncilors || [])].filter(Boolean)), record)}
+            ${renderNameInputField('Ordained By', 'Ordained By', record)}
             <div>
-              <label class="block text-xs text-slate-400 font-medium mb-1">Out of Unit Member Info</label>
+              <label class="block text-xs text-slate-400 font-medium mb-1">Out of Unit Member Info<br><span class="text-[10px] opacity-75 font-normal">(Name, Birthdate, Home Ward/ Branch, Member ID if available)</span></label>
               <textarea onchange="updateRecordField('Out of Unit Member Info', this.value)" rows="2" class="w-full glass rounded-lg p-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Out of Unit Member Info'] || ''}</textarea>
             </div>
             
             <!-- Stake Conference Section (Ordination only) -->
+            ${!isHC ? `
             <div class="grid grid-cols-2 gap-3">
               ${renderSelectField('Stake Conference Sustaining', 'Conference Sustaining', ['Pending', 'Complete'], record)}
               <div>
@@ -2709,10 +2720,12 @@
                 <input type="date" value="${record['Stake Conference Sustain Date'] || ''}" onchange="updateRecordField('Stake Conference Sustain Date', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
               </div>
             </div>
+            ` : ''}
           </div>
 
           <hr class="border-slate-800">
 
+          ${!isHC ? `
           <!-- Section 3: Certificate & Office Admin -->
           <div class="space-y-4">
             <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Certificate & LCR</h4>
@@ -2737,11 +2750,12 @@
           </div>
 
           <hr class="border-slate-800">
+          ` : ''}
 
           <!-- Notes -->
           <div>
             <label class="block text-xs text-slate-400 font-medium mb-1">Notes</label>
-            <textarea onchange="updateRecordField('Notes', this.value)" rows="2" class="w-full glass rounded-lg p-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Notes'] || ''}</textarea>
+            <textarea onchange="updateRecordField('Notes', this.value)" rows="2" ${isHC ? 'readonly disabled' : ''} class="w-full glass rounded-lg p-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Notes'] || ''}</textarea>
           </div>
         `;
       }
@@ -3014,17 +3028,17 @@
       const hcWhitelist = [
         "Calling Accepted?",
         "Notified of Release?",
-        "Key Returned?",
+        "Key Returned?"
+      ];
+      
+      const presWhitelist = [
+        ...hcWhitelist,
         "Date Sustained",
         "Date Set Apart", "Ordained Date",
         "Set Apart By", "Ordained By",
         "Ready for Training?", "Ready for Training",
         "Key Provided?", "Key Provided",
-        "Training Provided?", "Training Provided"
-      ];
-      
-      const presWhitelist = [
-        ...hcWhitelist,
+        "Training Provided?", "Training Provided",
         "Removed from Google Drive and Calendar Invites?",
         "Removed from Google Drive and Calendar Invites (if applicable)?",
         "Added to Google Drive and Calendar Invites?"
@@ -3065,7 +3079,11 @@
       const hcWhitelist = [
         "Calling Accepted?",
         "Notified of Release?",
-        "Key Returned?",
+        "Key Returned?"
+      ];
+      
+      const presWhitelist = [
+        ...hcWhitelist,
         "Date Sustained",
         "Date Set Apart", "Ordained Date",
         "Set Apart By", "Ordained By",
@@ -3083,11 +3101,7 @@
         "Entered By",
         "Date Entered",
         "Stake-Wide Unit Release Required?",
-        "Release Complete?"
-      ];
-      
-      const presWhitelist = [
-        ...hcWhitelist,
+        "Release Complete?",
         "Removed from Google Drive and Calendar Invites?",
         "Removed from Google Drive and Calendar Invites (if applicable)?",
         "Added to Google Drive and Calendar Invites?",
@@ -3126,13 +3140,14 @@
       const isPres = state.role === 'presidency';
       
       const hcWhitelist = [
-        "Set Apart By", "Ordained By", "Assigned Trainer", "Entered By",
-        "Assigned to Extend Calling / Release", "Assigned to Oversee Sustaining / Ordination", "Assigned to Extend Release",
-        "Recommended By"
+        "Ordained By"
       ];
       
       const presWhitelist = [
-        ...hcWhitelist
+        ...hcWhitelist,
+        "Set Apart By", "Assigned Trainer", "Entered By",
+        "Assigned to Extend Calling / Release", "Assigned to Oversee Sustaining / Ordination", "Assigned to Extend Release",
+        "Recommended By"
       ];
       
       const canEdit = isAdmin || (isHC && hcWhitelist.includes(fieldKey)) || (isPres && presWhitelist.includes(fieldKey));
