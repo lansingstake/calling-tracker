@@ -2197,6 +2197,23 @@
         </span>`;
       }
 
+      let assignedBadgeHtml = '';
+      if (state.role === 'admin' || state.role === 'presidency') {
+        let assignedPerson = '';
+        if (step.includes('Call') || step.includes('Release')) {
+          assignedPerson = r['Assigned to Extend Calling / Release'] || r['Assigned to Extend Release'] || '';
+        } else if (step.includes('Set Apart') || step.includes('Apart')) {
+          assignedPerson = r['Set Apart By'] || '';
+        } else if (step.includes('Training')) {
+          assignedPerson = r['Assigned Trainer'] || '';
+        }
+        if (assignedPerson) {
+          assignedBadgeHtml = `<span class="text-[11px] bg-slate-800 text-amber-400 border border-slate-700 px-2 py-0.5 rounded-full flex items-center gap-1 font-semibold whitespace-nowrap">
+            Assigned: ${assignedPerson}
+          </span>`;
+        }
+      }
+
       const reorderButtons = (state.role === 'admin') ? `
         <div class="flex flex-col gap-0.5 mr-2" onclick="event.stopPropagation()">
           <button onclick="moveRecord('${type}', '${r["Timestamp"]}', '${name.replace(/'/g, "\\'")}', -1)" class="p-1 hover:bg-slate-700/50 rounded text-slate-400 hover:text-slate-200 transition-colors">
@@ -2219,24 +2236,9 @@
             <div class="flex items-center gap-2 pt-1.5 flex-wrap">
               <span class="text-[11px] font-medium border px-2 py-0.5 rounded-full ${badgeColor}">${step}</span>
               ${votePillHtml}
+              ${assignedBadgeHtml}
               ${votedBadgeHtml}
             </div>
-            ${(() => {
-              if (state.role === 'admin' || state.role === 'presidency') {
-                let assignedPerson = '';
-                if (step.includes('Call') || step.includes('Release')) {
-                  assignedPerson = r['Assigned to Extend Calling / Release'] || r['Assigned to Extend Release'] || '';
-                } else if (step.includes('Set Apart') || step.includes('Apart')) {
-                  assignedPerson = r['Set Apart By'] || '';
-                } else if (step.includes('Training')) {
-                  assignedPerson = r['Assigned Trainer'] || '';
-                }
-                if (assignedPerson) {
-                  return `<p class="text-[11px] text-amber-400 font-medium mt-1">Assigned: ${assignedPerson}</p>`;
-                }
-              }
-              return '';
-            })()}
           </div>
           <div class="flex items-center">
             ${reorderButtons}
