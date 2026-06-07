@@ -2173,7 +2173,7 @@
       
       // Calculate approvals count
       let votePillHtml = '';
-      if (type !== 'Release Only') {
+      if (type !== 'Release Only' && step === 'HC Approval') {
         let approves = 0;
         if (state.highCouncilors) {
           state.highCouncilors.forEach(hcName => {
@@ -2217,8 +2217,8 @@
             </div>
             <p class="text-sm text-slate-400 font-medium">${desc}</p>
             <div class="flex items-center gap-2 pt-1.5 flex-wrap">
-              ${votePillHtml}
               <span class="text-[11px] font-medium border px-2 py-0.5 rounded-full ${badgeColor}">${step}</span>
+              ${votePillHtml}
               ${votedBadgeHtml}
             </div>
             ${(() => {
