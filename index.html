@@ -1801,6 +1801,9 @@
 
           // Render HC/Presidency Personal Tasks in Dashboard
           const usernameLower = state.username.toLowerCase();
+          const adminRoster = state.isDemo ? (state.records.admins || mockData.admins || []) : (state.admins || []);
+          const admin1 = String(adminRoster[0] || "").toLowerCase();
+          const admin2 = String(adminRoster[1] || "").toLowerCase();
           const personalTasks = [];
           const taskUnitFilter = unitFilter;
           
@@ -1808,16 +1811,22 @@
             if (taskUnitFilter !== 'all' && c["Unit"] !== taskUnitFilter) return;
             const ext = String(c["Assigned to Extend Calling / Release"] || "").toLowerCase();
             const tr = String(c["Assigned Trainer"] || "").toLowerCase();
+            const overseer = String(c["Assigned to Oversee Sustaining / Ordination"] || "").toLowerCase();
+            const setApart = String(c["Set Apart By"] || "").toLowerCase();
             const step = c["Current Step"];
             
-            if (usernameLower && (ext.includes(usernameLower) || tr.includes(usernameLower))) {
-              if (step === 'Call / Release') {
+            if (!usernameLower) return;
+            
+            if (step === 'Admin Review' && admin1 === usernameLower && usernameLower.length > 0) {
+                personalTasks.push({ record: c, name: c["Member Name"], task: "Admin Review", details: `${c["Calling"]} (${c["Unit"]})`, type: 'calling' });
+            } else if (step === 'Call / Release' && ext.includes(usernameLower) && usernameLower.length > 0) {
                 personalTasks.push({ record: c, name: c["Member Name"], task: "Extend Calling & Release", details: `${c["Calling"]} (${c["Unit"]})`, type: 'calling' });
-              } else if (step === 'Set Apart' && tr.includes(usernameLower)) {
+            } else if (step === 'Sustain' && overseer.includes(usernameLower) && usernameLower.length > 0) {
+                personalTasks.push({ record: c, name: c["Member Name"], task: "Sustain", details: `${c["Calling"]} (${c["Unit"]})`, type: 'calling' });
+            } else if (step === 'Set Apart' && setApart.includes(usernameLower) && usernameLower.length > 0) {
                 personalTasks.push({ record: c, name: c["Member Name"], task: "Set Apart", details: `${c["Calling"]} (${c["Unit"]})`, type: 'calling' });
-              } else if (step === 'Training' && tr.includes(usernameLower)) {
+            } else if (step === 'Training' && tr.includes(usernameLower) && usernameLower.length > 0) {
                 personalTasks.push({ record: c, name: c["Member Name"], task: "Provide Training", details: `${c["Calling"]} (${c["Unit"]})`, type: 'calling' });
-              }
             }
           });
           
@@ -1826,28 +1835,32 @@
             const overseer = String(o["Assigned to Oversee Sustaining / Ordination"] || "").toLowerCase();
             const step = o["Current Step"];
             
-            if (usernameLower && overseer.includes(usernameLower)) {
-              if (step === 'Interview') {
+            if (!usernameLower) return;
+
+            if (step === 'Admin Review' && admin1 === usernameLower && usernameLower.length > 0) {
+                personalTasks.push({ record: o, name: o["Member Name"], task: "Admin Review", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination' });
+            } else if (step === 'Stake Interview' && admin2 === usernameLower && usernameLower.length > 0) {
                 personalTasks.push({ record: o, name: o["Member Name"], task: "Conduct HP Interview", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination' });
-              } else if (step === 'Ordination') {
+            } else if (step === 'Sustaining' && overseer.includes(usernameLower) && usernameLower.length > 0) {
+                personalTasks.push({ record: o, name: o["Member Name"], task: "Sustain", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination' });
+            } else if (step === 'Ordination' && overseer.includes(usernameLower) && usernameLower.length > 0) {
                 personalTasks.push({ record: o, name: o["Member Name"], task: "HP Ordination", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination' });
-              }
+            } else if (step === 'Certificate' && admin1 === usernameLower && usernameLower.length > 0) {
+                personalTasks.push({ record: o, name: o["Member Name"], task: "Certificate & LCR", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination' });
             }
           });
           
           state.records.releases.forEach(r => {
             if (taskUnitFilter !== 'all' && r["Unit"] !== taskUnitFilter) return;
-            let assignee = r["Assigned to Extend Release"] || "";
-            const matchingCalling = state.records.callings.find(c => 
-              c["Member to Release"] && 
-              c["Member to Release"].trim().toLowerCase() === r["Member Name"].trim().toLowerCase()
-            );
-            if (matchingCalling) {
-              assignee = matchingCalling["Assigned to Extend Calling / Release"] || assignee;
-            }
-            const ext = String(assignee).toLowerCase();
-            if (usernameLower && ext.includes(usernameLower) && r["Current Step"] === 'Release Pending') {
-              personalTasks.push({ record: r, name: r["Member Name"], task: "Extend Release", details: `${r["Calling to be Released From"]} (${r["Unit"]})`, type: 'release' });
+            const assignee = String(r["Assigned to Extend Release"] || "").toLowerCase();
+            const step = r["Current Step"];
+            
+            if (!usernameLower) return;
+            
+            if (step === 'Admin Review' && admin1 === usernameLower && usernameLower.length > 0) {
+                personalTasks.push({ record: r, name: r["Member Name"], task: "Admin Review", details: `${r["Calling to be Released From"]} (${r["Unit"]})`, type: 'release' });
+            } else if (step === 'Release' && assignee.includes(usernameLower) && usernameLower.length > 0) {
+                personalTasks.push({ record: r, name: r["Member Name"], task: "Extend Release", details: `${r["Calling to be Released From"]} (${r["Unit"]})`, type: 'release' });
             }
           });
 
@@ -2924,11 +2937,9 @@
             <select onchange="updateRecordField('Current Step', this.value)" ${isAdmin ? '' : 'disabled'} class="current-step-select w-full glass rounded-lg px-2.5 py-2 text-base text-emerald-400 font-medium text-center focus:outline-none border-[2px] border-emerald-500/30">
               <option value=""></option>
               <option value="Admin Review" ${record['Current Step'] === 'Admin Review' ? 'selected' : ''}>Admin Review</option>
-              <option value="Pending Approval" ${record['Current Step'] === 'Pending Approval' ? 'selected' : ''}>Pending Approval</option>
-              <option value="Assigned" ${record['Current Step'] === 'Assigned' ? 'selected' : ''}>Assigned</option>
-              <option value="Update System + LCR" ${record['Current Step'] === 'Update System + LCR' ? 'selected' : ''}>Update System + LCR</option>
-              <option value="Cancelled" ${record['Current Step'] === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+              <option value="Release" ${record['Current Step'] === 'Release' ? 'selected' : ''}>Release</option>
               <option value="Complete" ${record['Current Step'] === 'Complete' ? 'selected' : ''}>Complete</option>
+              <option value="Cancelled" ${record['Current Step'] === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
             </select>
           </div>
 
@@ -2959,7 +2970,7 @@
               </div>
             </div>
             <div class="grid grid-cols-2 gap-3">
-              ${renderSelectField('Assigned to Extend Release', 'Assigned to Extend Release', [''].concat([...(state.isDemo ? (state.records.stakePresidency || mockData.stakePresidency) : state.stakePresidency || []), ...(state.isDemo ? (state.records.highCouncilors || mockData.highCouncilors) : state.highCouncilors || [])].filter(Boolean)), record)}
+              ${renderSelectField('Assigned to Extend Release', 'Assigned to Release', [''].concat([...(state.isDemo ? (state.records.stakePresidency || mockData.stakePresidency) : state.stakePresidency || []), ...(state.isDemo ? (state.records.highCouncilors || mockData.highCouncilors) : state.highCouncilors || [])].filter(Boolean)), record)}
             </div>
           </div>
 
