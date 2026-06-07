@@ -138,7 +138,13 @@
 </script>
 
   <!-- Top Navigation / Status Header -->
-
+  <!-- Demo Mode Banner -->
+  <div id="demo-mode-banner" class="hidden bg-amber-500 text-amber-950 px-4 py-2 items-center justify-center sticky top-0 z-[60] shadow-md shadow-amber-500/20 border-b border-amber-600">
+    <div class="flex items-center gap-2 font-bold uppercase tracking-wider text-sm">
+      <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+      Demo Mode
+    </div>
+  </div>
   <header id="app-header" class="glass sticky top-0 z-40 px-4 py-3 flex items-center justify-between border-b border-slate-800">
       <div class="flex items-center gap-2">
         <img src="CT%20Favicon.png" alt="CT Logo" class="w-8 h-8 rounded-lg shadow-lg shadow-indigo-500/20 object-cover">
@@ -1186,6 +1192,8 @@
       document.getElementById('bottom-nav').style.display = 'flex';
       
       const demoBtn = document.getElementById('demo-mode-settings-btn');
+      const demoBanner = document.getElementById('demo-mode-banner');
+      
       if (demoBtn) {
         if (state.demoMode) {
           demoBtn.classList.remove('hidden');
@@ -1193,6 +1201,16 @@
         } else {
           demoBtn.classList.add('hidden');
           demoBtn.classList.remove('inline-flex');
+        }
+      }
+      
+      if (demoBanner) {
+        if (state.demoMode) {
+          demoBanner.classList.remove('hidden');
+          demoBanner.classList.add('flex');
+        } else {
+          demoBanner.classList.add('hidden');
+          demoBanner.classList.remove('flex');
         }
       }
       
