@@ -2710,7 +2710,7 @@
             <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400 text-center">Training & Onboarding</h4>
             <div class="grid grid-cols-2 gap-3">
               ${isAdmin ? renderSelectField('Ready for Training?', 'Ready for Training?', ['Yes', 'No'], record) : ''}
-              ${renderSelectField('Assigned Trainer', 'Assigned Trainer', [''].concat([...(state.isDemo ? (state.records.stakePresidency || mockData.stakePresidency) : state.stakePresidency || []), ...(state.isDemo ? (state.records.highCouncilors || mockData.highCouncilors) : state.highCouncilors || [])].filter(Boolean)), record)}
+              ${renderNameInputField('Assigned Trainer', 'Assigned Trainer', record)}
             </div>
             <div class="grid grid-cols-2 gap-3">
               ${renderSelectField('Key Provided?', 'Key Provided?', ['Yes', 'No', 'N/A'], record)}
