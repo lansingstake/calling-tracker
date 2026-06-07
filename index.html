@@ -5227,12 +5227,8 @@
       const units = [];
       for (let i = 0; i < 12; i++) {
         const val = document.getElementById(`hc-input-${i}`).value.trim();
-        if (!val) {
-          showToast(`Seat ${i+1} cannot be blank`, 'error');
-          return;
-        }
         names.push(val);
-        const unitVal = document.getElementById(`hc-unit-${i}`).value;
+        const unitVal = val ? document.getElementById(`hc-unit-${i}`).value : "";
         units.push(unitVal);
       }
 
