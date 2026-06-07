@@ -5054,7 +5054,8 @@
           const unit = hcUnits[i] || '';
           
           // Use dynamic stakeUnits with a blank fallback at the top
-          const dropdownUnits = ["", ...stakeUnits];
+          const validUnits = stakeUnits.filter(u => u.trim() !== "");
+          const dropdownUnits = ["", ...validUnits];
           const optionsHtml = dropdownUnits.map(u => `<option value="${u}" ${u === unit ? 'selected' : ''}>${u || 'No Unit Assigned'}</option>`).join('');
           return `
             <div class="flex items-center gap-2 p-2 bg-slate-900/40 rounded-xl border border-slate-800/60">
@@ -5202,7 +5203,7 @@
       }
       
       const filteredUnits = inputs.filter(Boolean);
-      state.stakeUnits = filteredUnits.length > 0 ? filteredUnits : [""];
+      state.stakeUnits = inputs.length > 0 ? inputs : [""];
       
       // Update the HC Dropdowns immediately with the new inputs array
       renderSettings();
