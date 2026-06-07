@@ -3273,7 +3273,8 @@
         "Notified of Release?",
         "Key Returned?",
         "Key Provided?", "Key Provided",
-        "Training Provided?", "Training Provided"
+        "Training Provided?", "Training Provided",
+        "Assigned Trainer"
       ];
       
       const presWhitelist = [
@@ -3282,7 +3283,7 @@
         "Date Set Apart", "Ordained Date",
         "Set Apart By", "Ordained By",
         "Ready for Training?", "Ready for Training",
-        "Assigned to Extend Calling / Release", "Assigned to Oversee Sustaining / Ordination", "Assigned to Extend Release",
+        "Assigned to Extend Calling / Release", "Assigned to Oversee Sustaining / Ordination", "Assigned to Extend Release", "Assigned Trainer",
         "Recommended By",
         "Key Provided?", "Key Provided",
         "Training Provided?", "Training Provided",
@@ -3314,7 +3315,8 @@
       const optionsHtml = options.map(opt => {
         const val = typeof opt === 'string' ? opt : opt.value;
         const label = typeof opt === 'string' ? opt : opt.label;
-        return `<option value="${val}" ${currentValue === val ? 'selected' : ''}>${label}</option>`;
+        const isMatch = String(currentValue || "").trim().toLowerCase() === String(val || "").trim().toLowerCase() && (val !== "" || currentValue === "" || currentValue === undefined || currentValue === null);
+        return `<option value="${val}" ${isMatch ? 'selected' : ''}>${label}</option>`;
       }).join('');
       
       return `
@@ -3340,7 +3342,7 @@
       const presWhitelist = [
         ...hcWhitelist,
         "Set Apart By", "Entered By",
-        "Assigned to Extend Calling / Release", "Assigned to Oversee Sustaining / Ordination", "Assigned to Extend Release",
+        "Assigned to Extend Calling / Release", "Assigned to Oversee Sustaining / Ordination", "Assigned to Extend Release", "Assigned Trainer",
         "Recommended By"
       ];
       
