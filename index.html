@@ -138,6 +138,16 @@
 </script>
 
   <!-- Top Navigation / Status Header -->
+  <!-- Demo Mode Banner -->
+  <div id="demo-mode-banner" class="hidden bg-amber-500 text-amber-950 px-4 py-3 items-center justify-between sticky top-0 z-[60] shadow-md shadow-amber-500/20 border-b border-amber-600">
+    <div class="flex items-center gap-2 font-bold uppercase tracking-wider text-sm">
+      <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+      Demo Mode
+    </div>
+    <button onclick="clearDemoData()" class="bg-amber-950 text-amber-50 hover:bg-amber-900 px-4 py-1.5 rounded-lg text-sm font-bold shadow-sm transition-colors active:scale-95 border border-amber-800">
+      Go Live - Clear Demo Data
+    </button>
+  </div>
   <header id="app-header" class="glass sticky top-0 z-40 px-4 py-3 flex items-center justify-between border-b border-slate-800">
       <div class="flex items-center gap-2">
         <img src="CT%20Favicon.png" alt="CT Logo" class="w-8 h-8 rounded-lg shadow-lg shadow-indigo-500/20 object-cover">
@@ -851,6 +861,7 @@
               if (res.adminPin) state.adminPin = res.adminPin;
               if (res.hcPin) state.hcPin = res.hcPin;
               if (res.spreadsheetUrl) state.spreadsheetUrl = res.spreadsheetUrl;
+              if (res.demoMode) state.demoMode = res.demoMode;
               showMainUI();
             } else {
               localStorage.removeItem('tracker_pin');
@@ -1178,6 +1189,17 @@
       
       document.getElementById('bottom-nav').classList.remove('hidden');
       document.getElementById('bottom-nav').style.display = 'flex';
+      
+      const demoBanner = document.getElementById('demo-mode-banner');
+      if (demoBanner) {
+        if (state.demoMode) {
+          demoBanner.classList.remove('hidden');
+          demoBanner.classList.add('flex');
+        } else {
+          demoBanner.classList.add('hidden');
+          demoBanner.classList.remove('flex');
+        }
+      }
       
       if (state.role === 'admin') {
         document.getElementById('btn-open-data').classList.remove('hidden');
@@ -1749,6 +1771,34 @@
 
     function filterDashboard() {
       renderDashboard();
+    }
+
+    // Refresh Data Manually
+    function refreshData() {
+      fetchDashboardData();
+    }
+
+    // Clear Demo Data (Go Live)
+    function clearDemoData() {
+      if (!confirm("Are you sure you want to go live? This will PERMANENTLY WIPE all records, actions, and pulpit tracking data. It will also clear the Settings tab (excluding PINs). This action cannot be undone.")) {
+        return;
+      }
+
+      showToast('Wiping demo data...', 'info');
+      apiCall('clearDemoData', { pin: state.pin, username: state.username })
+        .then(res => {
+          if (res.success) {
+            showToast('Demo data wiped successfully!', 'success');
+            setTimeout(() => {
+              window.location.reload();
+            }, 1500);
+          } else {
+            showToast('Error: ' + res.error, 'error');
+          }
+        })
+        .catch(err => {
+          showToast('Failed to clear demo data.', 'error');
+        });
     }
 
     function renderDashboard() {
