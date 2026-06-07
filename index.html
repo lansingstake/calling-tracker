@@ -95,6 +95,11 @@
     .light-theme ~ head meta[name="theme-color"] { content: "#f1f5f9"; }
     /* Step group headers */
     .light-theme .step-group-header { background: rgba(226,232,240,0.7) !important; border-color: rgba(203,213,225,0.5) !important; }
+    .light-theme .step-group-icon { color: #4f46e5 !important; }
+    .light-theme .step-group-count { background: #4f46e5 !important; color: #ffffff !important; border-color: transparent !important; }
+    
+    /* Current Step dropdowns in dark mode */
+    body:not(.light-theme) .current-step-select { background: rgba(15, 23, 42, 0.7) !important; }
     /* Tab toggle container */
     .light-theme #db-tracker-toggle-card { background: rgba(241,245,249,0.6) !important; }
     /* Inactive tab button - ensure good contrast in both themes */
@@ -2086,10 +2091,10 @@
           
           return `
             <div class="mb-3">
-              <button onclick="toggleStepGroup('${groupId}')" class="w-full relative flex items-center justify-between px-3 py-2 rounded-lg bg-slate-700/40 border border-slate-600/40 hover:bg-slate-700/60 transition-all cursor-pointer">
-                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform" id="${groupId}-icon"></i>
+              <button onclick="toggleStepGroup('${groupId}')" class="step-group-header w-full relative flex items-center justify-between px-3 py-2 rounded-lg bg-slate-700/40 border border-slate-600/40 hover:bg-slate-700/60 transition-all cursor-pointer">
+                <i data-lucide="chevron-down" class="step-group-icon w-4 h-4 text-slate-400 transition-transform" id="${groupId}-icon"></i>
                 <span class="absolute left-1/2 -translate-x-1/2 text-xs font-bold uppercase tracking-wider text-slate-300">${step}</span>
-                <span class="text-[11px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded-full">${count}</span>
+                <span class="step-group-count text-[11px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded-full">${count}</span>
               </button>
               <div id="${groupId}" class="space-y-2 mt-2">
                 ${cardsHtml}
@@ -2494,7 +2499,7 @@
           
           <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 w-full mb-4">
             <label class="block text-base text-emerald-400 font-bold mb-2 text-center">Current Step</label>
-            <select onchange="updateRecordField('Current Step', this.value)" ${isAdmin ? '' : 'disabled'} class="w-full glass rounded-lg px-2.5 py-2 text-base text-emerald-400 font-medium text-center focus:outline-none border-[2px] border-emerald-500/30">
+            <select onchange="updateRecordField('Current Step', this.value)" ${isAdmin ? '' : 'disabled'} class="current-step-select w-full glass rounded-lg px-2.5 py-2 text-base text-emerald-400 font-medium text-center focus:outline-none border-[2px] border-emerald-500/30">
               <option value=""></option>
               <option value="Admin Review" ${record['Current Step'] === 'Admin Review' ? 'selected' : ''}>Admin Review</option>
               <option value="HC Approval" ${record['Current Step'] === 'HC Approval' ? 'selected' : ''}>HC Approval</option>
@@ -2754,7 +2759,7 @@
 
           <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 w-full mb-4">
             <label class="block text-base text-emerald-400 font-bold mb-2 text-center">Current Step</label>
-            <select onchange="updateRecordField('Current Step', this.value)" ${isAdmin ? '' : 'disabled'} class="w-full glass rounded-lg px-2.5 py-2 text-base text-emerald-400 font-medium text-center focus:outline-none border-[2px] border-emerald-500/30">
+            <select onchange="updateRecordField('Current Step', this.value)" ${isAdmin ? '' : 'disabled'} class="current-step-select w-full glass rounded-lg px-2.5 py-2 text-base text-emerald-400 font-medium text-center focus:outline-none border-[2px] border-emerald-500/30">
               <option value=""></option>
               <option value="Admin Review" ${record['Current Step'] === 'Admin Review' ? 'selected' : ''}>Admin Review</option>
               <option value="Stake Interview" ${record['Current Step'] === 'Stake Interview' ? 'selected' : ''}>Interview</option>
@@ -2909,7 +2914,7 @@
         html += `
           <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 w-full mb-4">
             <label class="block text-base text-emerald-400 font-bold mb-2 text-center">Current Step</label>
-            <select onchange="updateRecordField('Current Step', this.value)" ${isAdmin ? '' : 'disabled'} class="w-full glass rounded-lg px-2.5 py-2 text-base text-emerald-400 font-medium text-center focus:outline-none border-[2px] border-emerald-500/30">
+            <select onchange="updateRecordField('Current Step', this.value)" ${isAdmin ? '' : 'disabled'} class="current-step-select w-full glass rounded-lg px-2.5 py-2 text-base text-emerald-400 font-medium text-center focus:outline-none border-[2px] border-emerald-500/30">
               <option value=""></option>
               <option value="Admin Review" ${record['Current Step'] === 'Admin Review' ? 'selected' : ''}>Admin Review</option>
               <option value="Pending Approval" ${record['Current Step'] === 'Pending Approval' ? 'selected' : ''}>Pending Approval</option>
