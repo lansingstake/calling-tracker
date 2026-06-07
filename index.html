@@ -875,6 +875,7 @@
               state.highCouncilors = res.highCouncilors;
               state.highCouncilorUnits = res.highCouncilorUnits || [];
               state.stakePresidency = res.stakePresidency || [];
+              state.stakeUnits = res.stakeUnits || [];
               state.admins = res.admins || [];
               if (res.adminPin) state.adminPin = res.adminPin;
               if (res.hcPin) state.hcPin = res.hcPin;
@@ -1104,6 +1105,7 @@
               state.highCouncilors = res.highCouncilors;
               state.highCouncilorUnits = res.highCouncilorUnits || [];
               state.stakePresidency = res.stakePresidency || [];
+              state.stakeUnits = res.stakeUnits || [];
               state.admins = res.admins || [];
               
               const selector = document.getElementById('login-hc-name');
@@ -1131,6 +1133,7 @@
               state.highCouncilors = res.highCouncilors;
               state.highCouncilorUnits = res.highCouncilorUnits || [];
               state.stakePresidency = res.stakePresidency || [];
+              state.stakeUnits = res.stakeUnits || [];
               
               const selector = document.getElementById('login-hc-name');
               let selectHtml = '<option value="">-- Select your Name --</option>';
@@ -1152,6 +1155,7 @@
               state.highCouncilors = res.highCouncilors;
               state.highCouncilorUnits = res.highCouncilorUnits || [];
               state.stakePresidency = res.stakePresidency || [];
+              state.stakeUnits = res.stakeUnits || [];
               state.admins = res.admins || [];
               if (res.adminPin) state.adminPin = res.adminPin;
               if (res.hcPin) state.hcPin = res.hcPin;
@@ -1727,6 +1731,7 @@
             state.records.releases = sortRecordsByStoredOrder('Release Only', res.releases || []);
             state.records.sustainings = normalizeSustainings(res.sustainings || []);
             state.records.actions = res.actions || [];
+            state.stakeUnits = res.stakeUnits || [];
             updateRosterDatalist();
             runHeaderAudit();
             renderDashboard();
