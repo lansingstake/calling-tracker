@@ -530,7 +530,24 @@
 
     <!-- 6. SETTINGS / ADMIN PANEL VIEW -->
     <section id="view-settings" class="hidden space-y-4">
-      <!-- 6a. High Council Roster (Admin Only) -->
+      <!-- 6a. Stake Units (Admin Only) -->
+      <div id="settings-units-card" class="glass rounded-2xl p-5 shadow-xl space-y-4 hidden admin-only">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+          <i data-lucide="map-pin" class="w-4 h-4 text-amber-500"></i>
+          Stake Units
+        </h2>
+        <p class="text-[11px] text-slate-400">Manage the list of units (Wards/Branches) available in the dropdowns. Changes save automatically.</p>
+        
+        <div class="grid grid-cols-1 gap-2" id="units-inputs">
+          <!-- Dynamic Unit Inputs -->
+        </div>
+        
+        <button onclick="addUnitField()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold py-2.5 rounded-xl text-sm transition-all active:scale-95 flex items-center justify-center gap-2 mt-2 shadow-lg">
+          <i data-lucide="plus" class="w-4 h-4"></i> Add Unit
+        </button>
+      </div>
+
+      <!-- 6b. High Council Roster (Admin Only) -->
       <div id="settings-roster-card" class="glass rounded-2xl p-5 shadow-xl space-y-4 hidden">
         <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
           <i data-lucide="users" class="w-4 h-4 text-emerald-500"></i>
@@ -1219,6 +1236,7 @@
         document.getElementById('btn-open-data').style.display = 'flex';
         document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
         document.getElementById('settings-pins-card').classList.remove('hidden');
+        document.getElementById('settings-units-card').classList.remove('hidden');
         document.getElementById('settings-roster-card').classList.remove('hidden');
         document.getElementById('settings-presidency-card').classList.remove('hidden');
         document.getElementById('settings-admins-card').classList.remove('hidden');
@@ -1228,6 +1246,7 @@
         document.getElementById('btn-open-data').style.display = 'none';
         document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
         document.getElementById('settings-pins-card').classList.add('hidden');
+        document.getElementById('settings-units-card').classList.add('hidden');
         document.getElementById('settings-roster-card').classList.add('hidden');
         document.getElementById('settings-presidency-card').classList.add('hidden');
         document.getElementById('settings-admins-card').classList.add('hidden');
@@ -4998,16 +5017,45 @@
         document.getElementById('settings-admin-pin').value = state.isDemo ? '567890' : (state.adminPin || state.pin);
         document.getElementById('settings-hc-pin').value = state.isDemo ? '123456' : (state.hcPin || '');
         
+        const unitsContainer = document.getElementById('units-inputs');
+        let stakeUnits = state.isDemo ? (state.records.stakeUnits || mockData.stakeUnits || []) : (state.stakeUnits || []);
+        if (!stakeUnits || stakeUnits.length === 0) stakeUnits = [""]; // Ensure at least 1 unit field exists
+        
+        unitsContainer.innerHTML = stakeUnits.map((u, i) => {
+          const isFirst = i === 0;
+          return `
+            <div class="flex items-center gap-2 p-2 bg-slate-900/40 rounded-xl border border-slate-800/60">
+              <div class="flex-1 min-w-0">
+                <label class="block text-sm font-medium text-slate-400 mb-1 flex items-center justify-center">Unit ${i+1}</label>
+                <input type="text" id="unit-input-${i}" value="${u}" onblur="saveUnits()" class="w-full glass rounded-lg px-2.5 py-1.5 text-center text-sm focus:ring-1 focus:ring-amber-500 text-slate-300">
+              </div>
+              ${!isFirst ? `
+              <div class="w-10 flex items-end justify-center pb-1.5">
+                <button onclick="removeUnitField(${i})" class="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-lg transition-colors" title="Remove Unit">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+              </div>
+              ` : '<div class="w-10"></div>'}
+            </div>
+          `;
+        }).join('');
+        
         const rosterContainer = document.getElementById('roster-inputs');
-        const hcRoster = state.isDemo ? (state.records.highCouncilors || mockData.highCouncilors) : state.highCouncilors;
-        const hcUnits = state.isDemo ? (state.records.highCouncilorUnits || mockData.highCouncilorUnits) : state.highCouncilorUnits;
+        let hcRoster = state.isDemo ? (state.records.highCouncilors || mockData.highCouncilors) : (state.highCouncilors || []);
+        let hcUnits = state.isDemo ? (state.records.highCouncilorUnits || mockData.highCouncilorUnits) : (state.highCouncilorUnits || []);
+        
+        // Pad to 12
+        while (hcRoster.length < 12) hcRoster.push("");
+        while (hcUnits.length < 12) hcUnits.push("");
         
         rosterContainer.innerHTML = hcRoster.map((name, i) => {
           const isFailing = state.auditFails && state.auditFails.includes(name);
-          const alertHtml = isFailing ? `<i data-lucide="alert-circle" class="w-4 h-4 text-red-500 inline-block ml-1" title="Missing 'Approval [${name}]' column in Google Sheet!"></i>` : '';
+          const alertHtml = isFailing && name ? `<i data-lucide="alert-circle" class="w-4 h-4 text-red-500 inline-block ml-1" title="Missing 'Approval [${name}]' column in Google Sheet!"></i>` : '';
           const unit = hcUnits[i] || '';
-          const units = ["", "Charlotte", "Holt", "Jackson", "Lansing", "Portland", "Owosso", "St Johns", "Williamston", "YSA"];
-          const optionsHtml = units.map(u => `<option value="${u}" ${u === unit ? 'selected' : ''}>${u || 'No Unit Assigned'}</option>`).join('');
+          
+          // Use dynamic stakeUnits with a blank fallback at the top
+          const dropdownUnits = ["", ...stakeUnits];
+          const optionsHtml = dropdownUnits.map(u => `<option value="${u}" ${u === unit ? 'selected' : ''}>${u || 'No Unit Assigned'}</option>`).join('');
           return `
             <div class="flex items-center gap-2 p-2 bg-slate-900/40 rounded-xl border border-slate-800/60">
               <div class="flex-1 min-w-0">
@@ -5025,11 +5073,15 @@
         }).join('');
         
         const spContainer = document.getElementById('presidency-inputs');
-        const spRoster = state.isDemo ? (state.records.stakePresidency || mockData.stakePresidency) : state.stakePresidency;
+        let spRoster = state.isDemo ? (state.records.stakePresidency || mockData.stakePresidency) : (state.stakePresidency || []);
+        
+        // Pad to 3
+        while (spRoster.length < 3) spRoster.push("");
+        
         const spLabels = ["President", "1st Counselor", "2nd Counselor"];
         spContainer.innerHTML = spRoster.map((name, i) => {
           const isFailing = state.auditFails && state.auditFails.includes(name);
-          const alertHtml = isFailing ? `<i data-lucide="alert-circle" class="w-4 h-4 text-red-500 inline-block ml-1" title="Missing 'Approval [${name}]' column in Google Sheet!"></i>` : '';
+          const alertHtml = isFailing && name ? `<i data-lucide="alert-circle" class="w-4 h-4 text-red-500 inline-block ml-1" title="Missing 'Approval [${name}]' column in Google Sheet!"></i>` : '';
           return `
           <div>
             <label class="block text-sm font-medium text-slate-400 mb-1 flex items-center justify-center">${spLabels[i] || `Presidency Member ${i+1}`}${alertHtml}</label>
@@ -5038,7 +5090,11 @@
         `}).join('');
 
         const adminsContainer = document.getElementById('admins-inputs');
-        const adminsRoster = state.isDemo ? (state.records.admins || mockData.admins) : state.admins;
+        let adminsRoster = state.isDemo ? (state.records.admins || mockData.admins) : (state.admins || []);
+        
+        // Pad to 2
+        while (adminsRoster.length < 2) adminsRoster.push("");
+        
         const adminsLabels = ["Admin 1", "Admin 2"];
         adminsContainer.innerHTML = [0, 1].map(i => {
           const name = adminsRoster[i] || "";
@@ -5121,6 +5177,49 @@
           dismissToast(load);
           showToast('Connection error', 'error');
         });
+    }
+
+    function addUnitField() {
+      if (!state.stakeUnits) state.stakeUnits = [];
+      state.stakeUnits.push("");
+      renderSettings();
+    }
+
+    function removeUnitField(index) {
+      if (!state.stakeUnits) return;
+      state.stakeUnits.splice(index, 1);
+      renderSettings();
+      saveUnits(); // Auto-save after removing
+    }
+
+    let unitSaveTimeout = null;
+    function saveUnits() {
+      const inputs = [];
+      let i = 0;
+      while (document.getElementById(`unit-input-${i}`)) {
+        inputs.push(document.getElementById(`unit-input-${i}`).value.trim());
+        i++;
+      }
+      
+      const filteredUnits = inputs.filter(Boolean);
+      state.stakeUnits = filteredUnits.length > 0 ? filteredUnits : [""];
+      
+      // Update the HC Dropdowns immediately with the new inputs array
+      renderSettings();
+      
+      clearTimeout(unitSaveTimeout);
+      unitSaveTimeout = setTimeout(() => {
+        showToast('Saving units...', 'info');
+        apiCall('updateStakeUnits', { pin: state.pin, username: state.username, units: filteredUnits })
+          .then(res => {
+            if (res.success) {
+              showToast('Units saved successfully!', 'success');
+            } else {
+              showToast('Error saving units: ' + res.error, 'error');
+            }
+          })
+          .catch(() => showToast('Failed to save units', 'error'));
+      }, 500); // debounce
     }
 
     function saveRoster() {
