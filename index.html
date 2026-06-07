@@ -138,16 +138,7 @@
 </script>
 
   <!-- Top Navigation / Status Header -->
-  <!-- Demo Mode Banner -->
-  <div id="demo-mode-banner" class="hidden bg-amber-500 text-amber-950 px-4 py-3 items-center justify-between sticky top-0 z-[60] shadow-md shadow-amber-500/20 border-b border-amber-600">
-    <div class="flex items-center gap-2 font-bold uppercase tracking-wider text-sm">
-      <i data-lucide="alert-triangle" class="w-5 h-5"></i>
-      Demo Mode
-    </div>
-    <button onclick="clearDemoData()" class="bg-amber-950 text-amber-50 hover:bg-amber-900 px-4 py-1.5 rounded-lg text-sm font-bold shadow-sm transition-colors active:scale-95 border border-amber-800">
-      Go Live - Clear Demo Data
-    </button>
-  </div>
+
   <header id="app-header" class="glass sticky top-0 z-40 px-4 py-3 flex items-center justify-between border-b border-slate-800">
       <div class="flex items-center gap-2">
         <img src="CT%20Favicon.png" alt="CT Logo" class="w-8 h-8 rounded-lg shadow-lg shadow-indigo-500/20 object-cover">
@@ -629,10 +620,14 @@
 
       <!-- User Manual Button -->
       <div class="px-4 py-6 text-center">
-        <a href="https://docs.google.com/document/d/1oCk2XVfkBMPWIPRa3WUV-Zhte1lcji3I7cb4aXkUTHE/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 w-full px-6 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl transition-colors border border-slate-700 shadow-sm active:scale-[0.98]">
+        <a href="https://drive.google.com/file/d/11OoVWLZQIAphRd7Q7iV7sUCz78a7obZW/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 w-full px-6 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl transition-colors border border-slate-700 shadow-sm active:scale-[0.98]">
           <i data-lucide="book-open" class="w-5 h-5 text-indigo-400"></i>
           App User Manual
         </a>
+        <button id="demo-mode-settings-btn" onclick="clearDemoData()" class="hidden mt-4 inline-flex items-center justify-center gap-2 w-full px-6 py-3 bg-amber-950 hover:bg-amber-900 text-amber-50 font-bold rounded-xl transition-colors border border-amber-800 shadow-sm active:scale-[0.98]">
+          <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-500"></i>
+          Go Live - Clear Demo Data
+        </button>
       </div>
     </section>
 
@@ -1190,14 +1185,14 @@
       document.getElementById('bottom-nav').classList.remove('hidden');
       document.getElementById('bottom-nav').style.display = 'flex';
       
-      const demoBanner = document.getElementById('demo-mode-banner');
-      if (demoBanner) {
+      const demoBtn = document.getElementById('demo-mode-settings-btn');
+      if (demoBtn) {
         if (state.demoMode) {
-          demoBanner.classList.remove('hidden');
-          demoBanner.classList.add('flex');
+          demoBtn.classList.remove('hidden');
+          demoBtn.classList.add('inline-flex');
         } else {
-          demoBanner.classList.add('hidden');
-          demoBanner.classList.remove('flex');
+          demoBtn.classList.add('hidden');
+          demoBtn.classList.remove('inline-flex');
         }
       }
       
