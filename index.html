@@ -39,6 +39,12 @@
       -ms-overflow-style: none;
       scrollbar-width: none;
     }
+    
+    /* Center text inside date inputs on webkit browsers */
+    input[type="date"].text-center::-webkit-datetime-edit {
+      display: flex;
+      justify-content: center;
+    }
 
     /* ========== LIGHT THEME OVERRIDES ========== */
     body.light-theme {
