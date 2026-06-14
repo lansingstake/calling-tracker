@@ -4155,15 +4155,22 @@
       const downDisabled = idx === listLen - 1 ? 'opacity-20 pointer-events-none' : '';
       
       if (isAdmin) {
-        // Admin view: show incomplete units in gold, Mark Complete button
         const status = (cand["Status"] || "Pending").trim();
-        const incompleteUnits = STAKE_UNITS.filter(u => {
+        
+        // Determine which units are relevant for this item
+        // "Home Unit Only" items only have their home unit column set (True/False); others are empty
+        const hasData = (val) => val === 'Complete' || val === 'True' || val === 'False' || val === true || val === false;
+        const relevantUnits = STAKE_UNITS.filter(u => hasData(cand[u]));
+        const isHomeUnitOnly = relevantUnits.length <= 1;
+        
+        const unitsToCheck = isHomeUnitOnly ? relevantUnits : STAKE_UNITS;
+        const incompleteUnits = unitsToCheck.filter(u => {
           const val = cand[u];
           return val === 'False' || val === false || val === '' || val === undefined || val === null;
         });
         const incompleteHtml = incompleteUnits.length > 0
           ? `<p class="text-[11px] text-amber-400 font-medium mt-0.5">Remaining: ${incompleteUnits.join(', ')}</p>`
-          : `<p class="text-[11px] text-emerald-400 font-medium mt-0.5">All units complete</p>`;
+          : `<p class="text-[11px] text-emerald-400 font-medium mt-0.5">${isHomeUnitOnly ? 'Home unit complete' : 'All units complete'}</p>`;
         
         const adminActionHtml = status === 'Complete'
           ? `<span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-bold flex items-center gap-1"><i data-lucide="check-circle" class="w-3 h-3 text-emerald-400"></i> Complete</span>`
