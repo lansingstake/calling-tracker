@@ -274,18 +274,6 @@
 
         <!-- Actionable Section Lists -->
         <div id="dashboard-lists" class="space-y-6">
-          <!-- Release Only Section -->
-          <div id="dashboard-releases-container" class="space-y-3">
-            <div class="flex items-center justify-between">
-              <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                <i data-lucide="user-minus" class="w-4 h-4 text-amber-400"></i>
-                Release Only
-              </h3>
-              <span id="count-releases" class="text-[11px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-400 font-semibold">0</span>
-            </div>
-            <div id="list-releases" class="space-y-3"></div>
-          </div>
-
           <!-- Ordinations Section -->
           <div class="space-y-3">
             <div class="flex items-center justify-between">
@@ -296,6 +284,18 @@
               <span id="count-ordinations" class="text-[11px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-400 font-semibold">0</span>
             </div>
             <div id="list-ordinations" class="space-y-3"></div>
+          </div>
+
+          <!-- Release Only Section -->
+          <div id="dashboard-releases-container" class="space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                <i data-lucide="user-minus" class="w-4 h-4 text-amber-400"></i>
+                Release Only
+              </h3>
+              <span id="count-releases" class="text-[11px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-400 font-semibold">0</span>
+            </div>
+            <div id="list-releases" class="space-y-3"></div>
           </div>
 
           <!-- Callings/Releasings Section -->
@@ -1883,7 +1883,14 @@
         const isAdmin = (state.role === 'admin');
         
         if (isHC || isPresidency || isAdmin) {
-          if (releasesContainer) releasesContainer.classList.add('hidden');
+          if (releasesContainer) {
+            // Only hide releases container for HC; admin and presidency should see it
+            if (isHC) {
+              releasesContainer.classList.add('hidden');
+            } else {
+              releasesContainer.classList.remove('hidden');
+            }
+          }
           if (hcTasksContainer) hcTasksContainer.classList.remove('hidden');
 
           // Dynamically update the header for My Assigned Tasks with username
