@@ -1955,7 +1955,7 @@
             
             if (step === 'Admin Review' && admin1 === usernameLower && usernameLower.length > 0) {
                 personalTasks.push({ record: r, name: r["Member Name"], task: "Admin Review", details: `${r["Calling to be Released From"]} (${r["Unit"]})`, type: 'release' });
-            } else if (step === 'Release' && assignee.includes(usernameLower) && usernameLower.length > 0) {
+            } else if ((step === 'Release' || step === 'Assigned') && assignee.includes(usernameLower) && usernameLower.length > 0) {
                 personalTasks.push({ record: r, name: r["Member Name"], task: "Extend Release", details: `${r["Calling to be Released From"]} (${r["Unit"]})`, type: 'release' });
             }
           });
@@ -2160,7 +2160,7 @@
     // Step order for grouping on admin/presidency dashboard
     const CALLING_STEP_ORDER = ['Admin Review', 'HC Approval', 'Call / Release', 'Sustain', 'Set Apart', 'Training'];
     const ORDINATION_STEP_ORDER = ['Admin Review', 'Stake Interview', 'HC Approval', 'Sustaining', 'Ordination', 'Certificate'];
-    const RELEASE_STEP_ORDER = ['Admin Review', 'Release Pending', 'Pending Approval', 'Assigned', 'Update System + LCR'];
+    const RELEASE_STEP_ORDER = ['Admin Review', 'Release', 'Complete', 'Cancelled'];
     const FINISHED_STEPS = ['Complete', 'Declined', 'Cancelled', 'Release Complete', 'Release Completed'];
 
     function renderCardList(containerId, list, type, icon, borderColorClass) {
@@ -3901,15 +3901,11 @@
         const status = (s["Status"] || "Pending").trim();
         if (status === 'Complete') return; // Complete items don't belong on Pulpit screen
         
-        // Admin: show only Pending ordination items, not callings/releases
+        // Admin: show all pending sustaining items (ordinations, callings, releases)
         if (state.role === 'admin') {
           if (status === 'Pending') {
-            // Only include ordinations for admin
-            const isOrdination = s["Action"] === "Sustain" && (s["Calling"] === "Elder" || s["Calling"] === "High Priest");
-            if (isOrdination) {
-              activeSustainings.push(s);
-              keysSeen.add(key);
-            }
+            activeSustainings.push(s);
+            keysSeen.add(key);
           }
           return;
         }
