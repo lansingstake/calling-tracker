@@ -1962,7 +1962,7 @@
             
             if (step === 'Admin Review' && admin1 === usernameLower && usernameLower.length > 0) {
                 personalTasks.push({ record: r, name: r["Member Name"], task: "Admin Review", details: `${r["Calling to be Released From"]} (${r["Unit"]})`, type: 'release' });
-            } else if ((step === 'Release' || step === 'Assigned') && assignee.includes(usernameLower) && usernameLower.length > 0) {
+            } else if ((step === 'Extend Release' || step === 'Release' || step === 'Assigned') && assignee.includes(usernameLower) && usernameLower.length > 0) {
                 personalTasks.push({ record: r, name: r["Member Name"], task: "Extend Release", details: `${r["Calling to be Released From"]} (${r["Unit"]})`, type: 'release' });
             }
           });
@@ -2167,7 +2167,7 @@
     // Step order for grouping on admin/presidency dashboard
     const CALLING_STEP_ORDER = ['Admin Review', 'HC Approval', 'Call / Release', 'Sustain', 'Set Apart', 'Training'];
     const ORDINATION_STEP_ORDER = ['Admin Review', 'Stake Interview', 'HC Approval', 'Sustaining', 'Ordination', 'Certificate'];
-    const RELEASE_STEP_ORDER = ['Admin Review', 'Release', 'Complete', 'Cancelled'];
+    const RELEASE_STEP_ORDER = ['Admin Review', 'Extend Release', 'Pulpit Release', 'Complete', 'Cancelled'];
     const FINISHED_STEPS = ['Complete', 'Declined', 'Cancelled', 'Release Complete', 'Release Completed'];
 
     function renderCardList(containerId, list, type, icon, borderColorClass) {
@@ -3042,7 +3042,8 @@
             <select onchange="updateRecordField('Current Step', this.value)" ${isAdmin ? '' : 'disabled'} class="current-step-select w-full glass rounded-lg px-2.5 py-2 text-base text-emerald-400 font-medium text-center focus:outline-none border-[2px] border-emerald-500/30">
               <option value=""></option>
               <option value="Admin Review" ${record['Current Step'] === 'Admin Review' ? 'selected' : ''}>Admin Review</option>
-              <option value="Release" ${record['Current Step'] === 'Release' ? 'selected' : ''}>Release</option>
+              <option value="Extend Release" ${record['Current Step'] === 'Extend Release' ? 'selected' : ''}>Extend Release</option>
+              <option value="Pulpit Release" ${record['Current Step'] === 'Pulpit Release' ? 'selected' : ''}>Pulpit Release</option>
               <option value="Complete" ${record['Current Step'] === 'Complete' ? 'selected' : ''}>Complete</option>
               <option value="Cancelled" ${record['Current Step'] === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
             </select>
@@ -4004,6 +4005,20 @@
       
       // Filter list of releases (Action === "Release & Thank")
       const releases = filteredSustainings.filter(s => s["Action"] === "Release & Thank");
+
+      // Inject Release Only records at "Pulpit Release" step into the pulpit releases list
+      (state.records.releases || []).forEach(r => {
+        if (r["Current Step"] === 'Pulpit Release') {
+          releases.push({
+            "Individual": r["Member Name"] || "",
+            "Calling": r["Calling to be Released From"] || "",
+            "Unit": r["Unit"] || "",
+            "Action": "Release & Thank",
+            "Status": "Pending",
+            "_isReleaseOnly": true
+          });
+        }
+      });
       
       // Filter list of callings sustainings (Action === "Sustain" && Calling !== "Elder" && Calling !== "High Priest")
       const sustains = filteredSustainings.filter(s => s["Action"] === "Sustain" && s["Calling"] !== "Elder" && s["Calling"] !== "High Priest");
