@@ -1460,6 +1460,13 @@
               const item = list.find(r => r["Timestamp"] === payload.timestamp && r["Member Name"] === payload.memberName);
               if (item) {
                 Object.assign(item, payload.updates);
+                
+                // Create Pulpit Tracker entry when Release Only step changes to Pulpit Release
+                if (payload.type === 'Release Only' && payload.updates['Current Step'] === 'Pulpit Release') {
+                  const isStakeWide = item["Stake-Wide Unit Release Required?"] === "Yes" ? "All Units" : "Home Unit Only";
+                  addSustainingEntryDemo(item["Member Name"], item["Unit"], "Release & Thank", item["Calling to be Released From"], isStakeWide);
+                }
+                
                 saveDemoDatabase();
                 resolve({ success: true, message: 'Record updated locally' });
               } else {
