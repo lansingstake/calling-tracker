@@ -277,11 +277,11 @@
           <!-- Ordinations Section -->
           <div class="space-y-3">
             <div class="flex items-center justify-between">
-              <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                <i data-lucide="award" class="w-4 h-4 text-purple-400"></i>
+              <h3 class="text-lg font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                <i data-lucide="award" class="w-5 h-5 text-purple-400"></i>
                 Ordinations
               </h3>
-              <span id="count-ordinations" class="text-[11px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-400 font-semibold">0</span>
+              <span id="count-ordinations" class="text-sm bg-slate-800 px-3 py-1 rounded-full text-slate-300 font-bold">0</span>
             </div>
             <div id="list-ordinations" class="space-y-3"></div>
           </div>
@@ -289,11 +289,11 @@
           <!-- Release Only Section -->
           <div id="dashboard-releases-container" class="space-y-3">
             <div class="flex items-center justify-between">
-              <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                <i data-lucide="user-minus" class="w-4 h-4 text-amber-400"></i>
+              <h3 class="text-lg font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                <i data-lucide="user-minus" class="w-5 h-5 text-amber-400"></i>
                 Release Only
               </h3>
-              <span id="count-releases" class="text-[11px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-400 font-semibold">0</span>
+              <span id="count-releases" class="text-sm bg-slate-800 px-3 py-1 rounded-full text-slate-300 font-bold">0</span>
             </div>
             <div id="list-releases" class="space-y-3"></div>
           </div>
@@ -301,11 +301,11 @@
           <!-- Callings/Releasings Section -->
           <div class="space-y-3">
             <div class="flex items-center justify-between">
-              <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                <i data-lucide="user-plus" class="w-4 h-4 text-emerald-400"></i>
+              <h3 class="text-lg font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                <i data-lucide="user-plus" class="w-5 h-5 text-emerald-400"></i>
                 Callings & Releases
               </h3>
-              <span id="count-callings" class="text-[11px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-400 font-semibold">0</span>
+              <span id="count-callings" class="text-sm bg-slate-800 px-3 py-1 rounded-full text-slate-300 font-bold">0</span>
             </div>
             <div id="list-callings" class="space-y-3"></div>
           </div>
@@ -702,15 +702,15 @@
       <div class="space-y-6 px-6 pb-6 pt-4 overflow-y-auto scrollbar-hide flex-1">
         <div class="space-y-3">
           <div>
-            <label class="block text-sm text-slate-400 font-medium mb-1">Topic</label>
+            <label class="block text-sm text-slate-400 font-medium mb-1">Topic <span class="text-red-400">*</span></label>
             <input type="text" id="new-action-topic" placeholder="Action Topic" class="w-full glass rounded-lg px-3 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500">
           </div>
           <div>
-            <label class="block text-sm text-slate-400 font-medium mb-1">Action</label>
+            <label class="block text-sm text-slate-400 font-medium mb-1">Action <span class="text-red-400">*</span></label>
             <textarea id="new-action-desc" rows="3" placeholder="Action description..." class="w-full glass rounded-lg px-3 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500 resize-y"></textarea>
           </div>
           <div>
-            <label class="block text-sm text-slate-400 font-medium mb-1">Owner</label>
+            <label class="block text-sm text-slate-400 font-medium mb-1">Owner <span class="text-red-400">*</span></label>
             <select id="new-action-owner" class="w-full glass rounded-lg px-3 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500">
             </select>
           </div>
@@ -2501,8 +2501,8 @@
       const owner = document.getElementById('new-action-owner').value.trim();
       const notes = document.getElementById('new-action-notes').value.trim();
       
-      if (!topic || !action) {
-        showToast('Topic and Action are required.', 'error');
+      if (!topic || !action || !owner) {
+        showToast('Topic, Action, and Owner are required.', 'error');
         return;
       }
       
