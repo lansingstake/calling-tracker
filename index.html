@@ -1289,6 +1289,15 @@
               showMainUI();
               const welcomeName = state.role === 'admin' ? 'Admin' : state.role === 'presidency' ? `President ${res.username}` : `Brother ${res.username}`;
               showToast(`Welcome back, ${welcomeName}!`, 'success');
+              
+              // Auto-save the App URL to Settings so trigger-fired emails include the link
+              if (!state.isDemo && state.apiUrl) {
+                try {
+                  const fullAppUrl = new URL(window.location.href);
+                  fullAppUrl.searchParams.set('api', state.apiUrl);
+                  apiCall('saveAppUrl', { appUrl: fullAppUrl.toString() }).catch(() => {});
+                } catch(e) {}
+              }
             }
           } else {
             showToast(res.error || 'Authentication failed', 'error');
