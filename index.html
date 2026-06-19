@@ -605,6 +605,18 @@
         </button>
       </div>
 
+      <!-- Email Digests (Admin Only) -->
+      <div id="settings-emails-card" class="glass rounded-2xl p-5 shadow-xl space-y-4 hidden admin-only">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+          <i data-lucide="mail" class="w-4 h-4 text-indigo-400"></i>
+          Email Digests
+        </h2>
+        <p class="text-[11px] text-slate-400">Trigger a summary email to all High Councilors, Presidency, and Admins who have email addresses listed in the roster. The email contains their active assignments and action items.</p>
+        <button onclick="triggerEmailDigests()" id="btn-trigger-emails" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl text-sm transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/10">
+          <i data-lucide="send" class="w-4 h-4"></i> Send Email Digests
+        </button>
+      </div>
+
       <!-- 6c. API Connection -->
       <div class="glass rounded-2xl p-5 shadow-xl space-y-4">
         <h2 class="text-lg font-bold flex items-center gap-2">
@@ -770,8 +782,11 @@
       username: localStorage.getItem('tracker_username') || '',
       highCouncilors: [],
       highCouncilorUnits: [],
+      highCouncilorEmails: [],
       stakePresidency: [],
+      stakePresidencyEmails: [],
       admins: [],
+      adminEmails: [],
       records: { callings: [], ordinations: [], releases: [], sustainings: [], actions: [] },
       activeTab: 'dashboard',
       activeFilter: 'all',
@@ -798,8 +813,11 @@
     const mockData = {
       highCouncilors: [],
       highCouncilorUnits: [],
+      highCouncilorEmails: [],
       stakePresidency: [],
+      stakePresidencyEmails: [],
       admins: [],
+      adminEmails: [],
       records: [],
       sustainings: []
     };
@@ -881,9 +899,12 @@
               state.role = res.role;
               state.highCouncilors = res.highCouncilors;
               state.highCouncilorUnits = res.highCouncilorUnits || [];
+              state.highCouncilorEmails = res.highCouncilorEmails || [];
               state.stakePresidency = res.stakePresidency || [];
+              state.stakePresidencyEmails = res.stakePresidencyEmails || [];
               state.stakeUnits = res.stakeUnits || [];
               state.admins = res.admins || [];
+              state.adminEmails = res.adminEmails || [];
               if (res.adminPin) state.adminPin = res.adminPin;
               if (res.hcPin) state.hcPin = res.hcPin;
               if (res.spreadsheetUrl) state.spreadsheetUrl = res.spreadsheetUrl;
@@ -971,6 +992,12 @@
           state.records.highCouncilorUnits = [...mockData.highCouncilorUnits];
           saveDemoDatabase();
         }
+        if (!state.records.highCouncilorEmails) {
+          state.records.highCouncilorEmails = [];
+          state.records.stakePresidencyEmails = [];
+          state.records.adminEmails = [];
+          saveDemoDatabase();
+        }
         if (!state.records.actions) {
           state.records.actions = [];
           saveDemoDatabase();
@@ -984,11 +1011,20 @@
           sustainings: [...mockData.pulpitTracker],
           highCouncilors: [...mockData.highCouncilors],
           highCouncilorUnits: [...mockData.highCouncilorUnits],
+          highCouncilorEmails: [],
           stakePresidency: [...mockData.stakePresidency],
+          stakePresidencyEmails: [],
+          admins: [...mockData.admins],
+          adminEmails: [],
           actions: []
         };
         saveDemoDatabase();
       }
+      
+      // Map back to the live state
+      state.highCouncilorEmails = state.records.highCouncilorEmails || [];
+      state.stakePresidencyEmails = state.records.stakePresidencyEmails || [];
+      state.adminEmails = state.records.adminEmails || [];
       
       // Sanitize Stake Conference field for Release Only records (not applicable)
       let needsSave = false;
@@ -1161,9 +1197,12 @@
               state.username = res.username;
               state.highCouncilors = res.highCouncilors;
               state.highCouncilorUnits = res.highCouncilorUnits || [];
+              state.highCouncilorEmails = res.highCouncilorEmails || [];
               state.stakePresidency = res.stakePresidency || [];
+              state.stakePresidencyEmails = res.stakePresidencyEmails || [];
               state.stakeUnits = res.stakeUnits || [];
               state.admins = res.admins || [];
+              state.adminEmails = res.adminEmails || [];
               if (res.adminPin) state.adminPin = res.adminPin;
               if (res.hcPin) state.hcPin = res.hcPin;
               if (res.spreadsheetUrl) state.spreadsheetUrl = res.spreadsheetUrl;
@@ -1251,6 +1290,7 @@
         document.getElementById('settings-roster-card').classList.remove('hidden');
         document.getElementById('settings-presidency-card').classList.remove('hidden');
         document.getElementById('settings-admins-card').classList.remove('hidden');
+        document.getElementById('settings-emails-card').classList.remove('hidden');
         document.getElementById('db-tracker-toggle-card').classList.remove('hidden');
       } else {
         document.getElementById('btn-open-data').classList.add('hidden');
@@ -1261,6 +1301,7 @@
         document.getElementById('settings-roster-card').classList.add('hidden');
         document.getElementById('settings-presidency-card').classList.add('hidden');
         document.getElementById('settings-admins-card').classList.add('hidden');
+        document.getElementById('settings-emails-card').classList.add('hidden');
         document.getElementById('db-tracker-toggle-card').classList.add('hidden');
       }
 
@@ -1379,7 +1420,11 @@
                   username: payload.username, 
                   highCouncilors: state.records.highCouncilors || mockData.highCouncilors, 
                   highCouncilorUnits: state.records.highCouncilorUnits || mockData.highCouncilorUnits, 
-                  stakePresidency: state.records.stakePresidency || mockData.stakePresidency 
+                  highCouncilorEmails: state.records.highCouncilorEmails || mockData.highCouncilorEmails || [],
+                  stakePresidency: state.records.stakePresidency || mockData.stakePresidency,
+                  stakePresidencyEmails: state.records.stakePresidencyEmails || mockData.stakePresidencyEmails || [],
+                  admins: state.records.admins || mockData.admins || [],
+                  adminEmails: state.records.adminEmails || mockData.adminEmails || []
                 });
               } else {
                 resolve({ 
@@ -1387,7 +1432,11 @@
                   role: 'admin_sp_pending', 
                   highCouncilors: state.records.highCouncilors || mockData.highCouncilors, 
                   highCouncilorUnits: state.records.highCouncilorUnits || mockData.highCouncilorUnits, 
-                  stakePresidency: state.records.stakePresidency || mockData.stakePresidency 
+                  highCouncilorEmails: state.records.highCouncilorEmails || mockData.highCouncilorEmails || [],
+                  stakePresidency: state.records.stakePresidency || mockData.stakePresidency,
+                  stakePresidencyEmails: state.records.stakePresidencyEmails || mockData.stakePresidencyEmails || [],
+                  admins: state.records.admins || mockData.admins || [],
+                  adminEmails: state.records.adminEmails || mockData.adminEmails || []
                 });
               }
             } else if (payload.pin === '123456') {
@@ -1398,7 +1447,11 @@
                   username: payload.username, 
                   highCouncilors: state.records.highCouncilors || mockData.highCouncilors, 
                   highCouncilorUnits: state.records.highCouncilorUnits || mockData.highCouncilorUnits, 
-                  stakePresidency: state.records.stakePresidency || mockData.stakePresidency 
+                  highCouncilorEmails: state.records.highCouncilorEmails || mockData.highCouncilorEmails || [],
+                  stakePresidency: state.records.stakePresidency || mockData.stakePresidency,
+                  stakePresidencyEmails: state.records.stakePresidencyEmails || mockData.stakePresidencyEmails || [],
+                  admins: state.records.admins || mockData.admins || [],
+                  adminEmails: state.records.adminEmails || mockData.adminEmails || []
                 });
               } else {
                 resolve({ 
@@ -1406,7 +1459,11 @@
                   role: 'hc_pending', 
                   highCouncilors: state.records.highCouncilors || mockData.highCouncilors, 
                   highCouncilorUnits: state.records.highCouncilorUnits || mockData.highCouncilorUnits, 
-                  stakePresidency: state.records.stakePresidency || mockData.stakePresidency 
+                  highCouncilorEmails: state.records.highCouncilorEmails || mockData.highCouncilorEmails || [],
+                  stakePresidency: state.records.stakePresidency || mockData.stakePresidency,
+                  stakePresidencyEmails: state.records.stakePresidencyEmails || mockData.stakePresidencyEmails || [],
+                  admins: state.records.admins || mockData.admins || [],
+                  adminEmails: state.records.adminEmails || mockData.adminEmails || []
                 });
               }
             } else {
@@ -5089,15 +5146,18 @@
         const rosterContainer = document.getElementById('roster-inputs');
         let hcRoster = state.isDemo ? (state.records.highCouncilors || mockData.highCouncilors) : (state.highCouncilors || []);
         let hcUnits = state.isDemo ? (state.records.highCouncilorUnits || mockData.highCouncilorUnits) : (state.highCouncilorUnits || []);
+        let hcEmails = state.isDemo ? (state.records.highCouncilorEmails || mockData.highCouncilorEmails || []) : (state.highCouncilorEmails || []);
         
         // Pad to 12
         while (hcRoster.length < 12) hcRoster.push("");
         while (hcUnits.length < 12) hcUnits.push("");
+        while (hcEmails.length < 12) hcEmails.push("");
         
         rosterContainer.innerHTML = hcRoster.map((name, i) => {
           const isFailing = state.auditFails && state.auditFails.includes(name);
           const alertHtml = isFailing && name ? `<i data-lucide="alert-circle" class="w-4 h-4 text-red-500 inline-block ml-1" title="Missing 'Approval [${name}]' column in Google Sheet!"></i>` : '';
           const unit = hcUnits[i] || '';
+          const email = hcEmails[i] || '';
           
           // Use dynamic stakeUnits with a blank fallback at the top
           const validUnits = stakeUnits.filter(u => u.trim() !== "");
@@ -5105,11 +5165,16 @@
           const optionsHtml = dropdownUnits.map(u => `<option value="${u}" ${u === unit ? 'selected' : ''}>${u || 'No Unit Assigned'}</option>`).join('');
           return `
             <div class="flex items-center gap-2 p-2 bg-slate-900/40 rounded-xl border border-slate-800/60">
-              <div class="flex-1 min-w-0">
-                <label class="block text-sm font-medium text-slate-400 mb-1 flex items-center justify-center">High Councilor ${i+1}${alertHtml}</label>
-                <input type="text" id="hc-input-${i}" value="${name}" class="w-full glass rounded-lg px-2.5 py-1.5 text-center text-sm focus:ring-1 focus:ring-indigo-500 text-slate-300">
+              <div class="flex-grow flex-shrink min-w-0 space-y-1.5">
+                <div>
+                  <label class="block text-xs font-medium text-slate-400 mb-0.5 flex items-center justify-center">High Councilor ${i+1}${alertHtml}</label>
+                  <input type="text" id="hc-input-${i}" value="${name}" placeholder="Name" class="w-full glass rounded-lg px-2.5 py-1 text-center text-sm focus:ring-1 focus:ring-indigo-500 text-slate-300">
+                </div>
+                <div>
+                  <input type="text" id="hc-email-${i}" value="${email}" placeholder="Email Address" class="w-full glass rounded-lg px-2.5 py-1 text-center text-xs focus:ring-1 focus:ring-indigo-500 text-slate-300">
+                </div>
               </div>
-              <div class="w-36">
+              <div class="w-36 flex-shrink-0">
                 <label class="block text-sm font-medium text-slate-400 mb-1 text-center">Unit Assigned</label>
                 <select id="hc-unit-${i}" class="w-full glass rounded-lg px-2 py-1.5 text-center text-sm focus:ring-1 focus:ring-indigo-500 text-slate-300">
                   ${optionsHtml}
@@ -5121,36 +5186,52 @@
         
         const spContainer = document.getElementById('presidency-inputs');
         let spRoster = state.isDemo ? (state.records.stakePresidency || mockData.stakePresidency) : (state.stakePresidency || []);
+        let spEmails = state.isDemo ? (state.records.stakePresidencyEmails || mockData.stakePresidencyEmails || []) : (state.stakePresidencyEmails || []);
         
         // Pad to 3
         while (spRoster.length < 3) spRoster.push("");
+        while (spEmails.length < 3) spEmails.push("");
         
         const spLabels = ["President", "1st Counselor", "2nd Counselor"];
         spContainer.innerHTML = spRoster.map((name, i) => {
           const isFailing = state.auditFails && state.auditFails.includes(name);
           const alertHtml = isFailing && name ? `<i data-lucide="alert-circle" class="w-4 h-4 text-red-500 inline-block ml-1" title="Missing 'Approval [${name}]' column in Google Sheet!"></i>` : '';
+          const email = spEmails[i] || '';
           return `
-          <div>
-            <label class="block text-sm font-medium text-slate-400 mb-1 flex items-center justify-center">${spLabels[i] || `Presidency Member ${i+1}`}${alertHtml}</label>
-            <input type="text" id="sp-input-${i}" value="${name}" class="w-full glass rounded-lg px-2.5 py-1.5 text-center text-sm focus:ring-1 focus:ring-indigo-500 text-slate-300">
+          <div class="space-y-1.5">
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1 flex items-center justify-center">${spLabels[i] || `Presidency Member ${i+1}`}${alertHtml}</label>
+              <input type="text" id="sp-input-${i}" value="${name}" placeholder="Name" class="w-full glass rounded-lg px-2.5 py-1 text-center text-sm focus:ring-1 focus:ring-indigo-500 text-slate-300">
+            </div>
+            <div>
+              <input type="text" id="sp-email-${i}" value="${email}" placeholder="Email" class="w-full glass rounded-lg px-2.5 py-1 text-center text-xs focus:ring-1 focus:ring-indigo-500 text-slate-300">
+            </div>
           </div>
         `}).join('');
 
         const adminsContainer = document.getElementById('admins-inputs');
         let adminsRoster = state.isDemo ? (state.records.admins || mockData.admins) : (state.admins || []);
+        let adminEmails = state.isDemo ? (state.records.adminEmails || mockData.adminEmails || []) : (state.adminEmails || []);
         
         // Pad to 2
         while (adminsRoster.length < 2) adminsRoster.push("");
+        while (adminEmails.length < 2) adminEmails.push("");
         
         const adminsLabels = ["Admin 1", "Admin 2"];
         adminsContainer.innerHTML = [0, 1].map(i => {
           const name = adminsRoster[i] || "";
           const isFailing = state.auditFails && state.auditFails.includes(name);
           const alertHtml = isFailing && name ? `<i data-lucide="alert-circle" class="w-4 h-4 text-red-500 inline-block ml-1" title="Missing 'Approval [${name}]' column in Google Sheet!"></i>` : '';
+          const email = adminEmails[i] || '';
           return `
-          <div>
-            <label class="block text-sm font-medium text-slate-400 mb-1 flex items-center justify-center">${adminsLabels[i]}${alertHtml}</label>
-            <input type="text" id="admin-input-${i}" value="${name}" class="w-full glass rounded-lg px-2.5 py-1.5 text-center text-sm focus:ring-1 focus:ring-emerald-500 text-slate-300">
+          <div class="space-y-1.5">
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1 flex items-center justify-center">${adminsLabels[i]}${alertHtml}</label>
+              <input type="text" id="admin-input-${i}" value="${name}" placeholder="Name" class="w-full glass rounded-lg px-2.5 py-1 text-center text-sm focus:ring-1 focus:ring-emerald-500 text-slate-300">
+            </div>
+            <div>
+              <input type="text" id="admin-email-${i}" value="${email}" placeholder="Email" class="w-full glass rounded-lg px-2.5 py-1 text-center text-xs focus:ring-1 focus:ring-emerald-500 text-slate-300">
+            </div>
           </div>
         `}).join('');
         
@@ -5272,11 +5353,14 @@
     function saveRoster() {
       const names = [];
       const units = [];
+      const emails = [];
       for (let i = 0; i < 12; i++) {
         const val = document.getElementById(`hc-input-${i}`).value.trim();
         names.push(val);
         const unitVal = val ? document.getElementById(`hc-unit-${i}`).value : "";
         units.push(unitVal);
+        const emailVal = val ? document.getElementById(`hc-email-${i}`).value.trim() : "";
+        emails.push(emailVal);
       }
 
       const btn = document.getElementById('btn-save-roster');
@@ -5286,18 +5370,20 @@
       if (state.isDemo) {
         state.records.highCouncilors = names;
         state.records.highCouncilorUnits = units;
+        state.records.highCouncilorEmails = emails;
         saveDemoDatabase();
         dismissToast(load);
         showToast('Roster and unit relationships updated!', 'success');
         state.highCouncilors = names;
         state.highCouncilorUnits = units;
+        state.highCouncilorEmails = emails;
         renderSettings();
         fetchDashboardData();
         btn.disabled = false;
         return;
       }
 
-      apiCall('updateHighCouncilors', { names: names, units: units })
+      apiCall('updateHighCouncilors', { names: names, units: units, emails: emails })
         .then(res => {
           btn.disabled = false;
           dismissToast(load);
@@ -5305,6 +5391,7 @@
             showToast('Roster and unit relationships updated!', 'success');
             state.highCouncilors = names;
             state.highCouncilorUnits = units;
+            state.highCouncilorEmails = emails;
             renderSettings();
             fetchDashboardData();
           } else {
@@ -5320,6 +5407,7 @@
 
     function savePresidencyRoster() {
       const names = [];
+      const emails = [];
       for (let i = 0; i < 3; i++) {
         const val = document.getElementById(`sp-input-${i}`).value.trim();
         if (!val) {
@@ -5327,24 +5415,35 @@
           return;
         }
         names.push(val);
+        const emailVal = document.getElementById(`sp-email-${i}`).value.trim();
+        emails.push(emailVal);
       }
 
       const btn = document.getElementById('btn-save-presidency');
       btn.disabled = true;
       const load = showToast('Saving presidency roster...', 'info', 0);
       
-      apiCall('updateStakePresidency', { names: names })
+      if (state.isDemo) {
+        state.records.stakePresidency = names;
+        state.records.stakePresidencyEmails = emails;
+        saveDemoDatabase();
+        dismissToast(load);
+        showToast('Stake Presidency roster updated successfully!', 'success');
+        state.stakePresidency = names;
+        state.stakePresidencyEmails = emails;
+        renderSettings();
+        btn.disabled = false;
+        return;
+      }
+
+      apiCall('updateStakePresidency', { names: names, emails: emails })
         .then(res => {
           btn.disabled = false;
           dismissToast(load);
           if (res.success) {
             showToast('Stake Presidency roster updated successfully!', 'success');
-            if (state.isDemo) {
-              state.records.stakePresidency = names;
-              saveDemoDatabase();
-            } else {
-              state.stakePresidency = names;
-            }
+            state.stakePresidency = names;
+            state.stakePresidencyEmails = emails;
             renderSettings();
           } else {
             showToast(res.error || 'Failed to update roster', 'error');
@@ -5359,28 +5458,40 @@
 
     function saveAdminsRoster() {
       const names = [];
+      const emails = [];
       for (let i = 0; i < 2; i++) {
         const val = document.getElementById(`admin-input-${i}`).value.trim();
         // Admins can be blank if there's only 1 admin, so we just push whatever it is
         names.push(val);
+        const emailVal = document.getElementById(`admin-email-${i}`).value.trim();
+        emails.push(emailVal);
       }
 
       const btn = document.getElementById('btn-save-admins');
       btn.disabled = true;
       const load = showToast('Saving admins roster...', 'info', 0);
       
-      apiCall('updateAdmins', { names: names })
+      if (state.isDemo) {
+        state.records.admins = names;
+        state.records.adminEmails = emails;
+        saveDemoDatabase();
+        dismissToast(load);
+        showToast('Admins roster updated successfully!', 'success');
+        state.admins = names;
+        state.adminEmails = emails;
+        renderSettings();
+        btn.disabled = false;
+        return;
+      }
+
+      apiCall('updateAdmins', { names: names, emails: emails })
         .then(res => {
           btn.disabled = false;
           dismissToast(load);
           if (res.success) {
             showToast('Admins roster updated successfully!', 'success');
-            if (state.isDemo) {
-              state.records.admins = names;
-              saveDemoDatabase();
-            } else {
-              state.admins = names;
-            }
+            state.admins = names;
+            state.adminEmails = emails;
             renderSettings();
           } else {
             showToast(res.error || 'Failed to update admins', 'error');
@@ -5390,6 +5501,68 @@
           btn.disabled = false;
           dismissToast(load);
           showToast('Connection error updating admins roster', 'error');
+        });
+    }
+
+    function triggerEmailDigests() {
+      const btn = document.getElementById('btn-trigger-emails');
+      if (btn) btn.disabled = true;
+      const load = showToast('Preparing email digests...', 'info', 0);
+      
+      const appUrl = new URL(window.location.href);
+      appUrl.searchParams.set('api', state.apiUrl);
+      const appUrlString = appUrl.toString();
+      
+      if (state.isDemo) {
+        // Simulate sending emails in Demo Mode
+        setTimeout(() => {
+          dismissToast(load);
+          if (btn) btn.disabled = false;
+          let emailCount = 0;
+          let details = [];
+          
+          const hcRoster = state.records.highCouncilors || mockData.highCouncilors || [];
+          const hcEmails = state.records.highCouncilorEmails || mockData.highCouncilorEmails || [];
+          const spRoster = state.records.stakePresidency || mockData.stakePresidency || [];
+          const spEmails = state.records.stakePresidencyEmails || mockData.stakePresidencyEmails || [];
+          const adminRoster = state.records.admins || mockData.admins || [];
+          const adminEmails = state.records.adminEmails || mockData.adminEmails || [];
+          
+          const checkEmail = (name, email) => {
+            if (email && name) {
+              emailCount++;
+              details.push(`${name} (${email})`);
+            }
+          };
+          
+          hcRoster.forEach((n, i) => checkEmail(n, hcEmails[i]));
+          spRoster.forEach((n, i) => checkEmail(n, spEmails[i]));
+          adminRoster.forEach((n, i) => checkEmail(n, adminEmails[i]));
+          
+          if (emailCount === 0) {
+            showToast('No email addresses found in the rosters to send digests to.', 'warning');
+          } else {
+            showToast(`[Demo Mode] Simulated email digests successfully sent to ${emailCount} people: ${details.join(', ')}`, 'success', 8000);
+          }
+        }, 1500);
+        return;
+      }
+      
+      apiCall('sendAssignmentEmails', { appUrl: appUrlString })
+        .then(res => {
+          if (btn) btn.disabled = false;
+          dismissToast(load);
+          if (res.success) {
+            const sentCount = res.results ? res.results.length : 0;
+            showToast(`Successfully sent email digests to ${sentCount} people!`, 'success');
+          } else {
+            showToast(res.error || 'Failed to send email digests', 'error');
+          }
+        })
+        .catch(err => {
+          if (btn) btn.disabled = false;
+          dismissToast(load);
+          showToast('Connection error sending email digests', 'error');
         });
     }
 
