@@ -2318,6 +2318,8 @@
         let assignedPerson = '';
         if (step.includes('Call') || step.includes('Release')) {
           assignedPerson = r['Assigned to Extend Calling / Release'] || r['Assigned to Extend Release'] || '';
+        } else if (step.includes('Sustain') || step.includes('Ordination')) {
+          assignedPerson = r['Assigned to Oversee Sustaining / Ordination'] || '';
         } else if (step.includes('Set Apart') || step.includes('Apart')) {
           assignedPerson = r['Set Apart By'] || '';
         } else if (step.includes('Training')) {
