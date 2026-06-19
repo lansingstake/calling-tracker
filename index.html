@@ -247,6 +247,11 @@
           <div class="bg-slate-900/60 p-1 rounded-xl border border-slate-800">
             <button onclick="setDashboardViewType('actions')" id="btn-db-actions" class="w-full py-1.5 text-sm font-semibold rounded-lg text-emerald-500 hover:text-emerald-400 border border-emerald-500/30 transition-all">Actions</button>
           </div>
+          <div class="bg-slate-900/60 p-1 rounded-xl border border-slate-800">
+            <button onclick="openRemoteApprovalModal()" id="btn-remote-approval" class="w-full py-1.5 text-sm font-semibold rounded-lg text-amber-400 hover:text-amber-300 border border-amber-500/30 transition-all flex items-center justify-center gap-1.5">
+              <i data-lucide="vote" class="w-3.5 h-3.5"></i> Send Remote Approval Request
+            </button>
+          </div>
         </div>
       </div>
 
@@ -767,6 +772,42 @@
         
         <button onclick="submitNewAction()" id="btn-submit-action" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-emerald-500/20 active:scale-95 flex items-center justify-center gap-2 mt-4">
           <i data-lucide="plus" class="w-4 h-4"></i> Create Action
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Remote Approval Request Modal -->
+  <div id="remote-approval-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-end justify-center hidden opacity-0 transition-opacity duration-300">
+    <div class="w-full max-w-md bg-slate-900 border-t border-slate-800 rounded-t-3xl shadow-2xl max-h-[85vh] translate-y-full transition-transform duration-300 flex flex-col">
+      <!-- Modal Header -->
+      <div class="sticky top-0 z-10 bg-slate-900 rounded-t-3xl px-6 pt-6 pb-3 border-b border-slate-800/60 flex-shrink-0">
+        <div class="flex justify-between items-start">
+          <div class="min-w-0 flex-1">
+            <span class="text-[11px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">HC Approval</span>
+            <h2 class="text-lg font-bold mt-1 text-slate-100">Remote Approval Request</h2>
+            <p class="text-xs text-slate-400 mt-0.5">Select callings / ordinations to send for HC vote</p>
+          </div>
+          <button onclick="closeRemoteApprovalModal()" class="p-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-white transition-colors flex-shrink-0 ml-3 flex items-center justify-center w-8 h-8">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Scrollable Content -->
+      <div class="space-y-4 px-6 pb-6 pt-4 overflow-y-auto scrollbar-hide flex-1">
+        <!-- Select All -->
+        <label class="flex items-center gap-2.5 cursor-pointer select-none p-2 rounded-lg hover:bg-slate-800/50 transition-colors border-b border-slate-800 pb-3">
+          <input type="checkbox" id="remote-approval-select-all" onchange="toggleRemoteApprovalSelectAll(this.checked)" class="w-4 h-4 rounded text-amber-500 focus:ring-amber-500 bg-slate-800 border-slate-700">
+          <span class="text-sm font-bold text-slate-200">Select All</span>
+        </label>
+
+        <!-- Records List -->
+        <div id="remote-approval-records" class="space-y-2"></div>
+
+        <!-- Send Button -->
+        <button onclick="sendRemoteApprovalRequest()" id="btn-send-remote-approval" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-amber-500/20 active:scale-95 flex items-center justify-center gap-2 mt-4">
+          <i data-lucide="send" class="w-4 h-4"></i> Send Approval Request to High Council
         </button>
       </div>
     </div>
@@ -5796,6 +5837,153 @@
           el.remove();
         }, 300);
       }
+    }
+
+    // ============================================================
+    // REMOTE APPROVAL REQUEST
+    // ============================================================
+
+    function openRemoteApprovalModal() {
+      // Gather callings and ordinations at HC Approval step
+      const callings = (state.records.callings || []).filter(c => c['Current Step'] === 'HC Approval');
+      const ordinations = (state.records.ordinations || []).filter(o => o['Current Step'] === 'HC Approval');
+      const allRecords = [];
+
+      callings.forEach(c => {
+        allRecords.push({
+          name: c['Member Name'] || '',
+          unit: c['Unit'] || '',
+          callingOrPriesthood: c['Calling'] || '',
+          type: 'Calling',
+          timestamp: c['Timestamp'] || ''
+        });
+      });
+
+      ordinations.forEach(o => {
+        allRecords.push({
+          name: o['Member Name'] || '',
+          unit: o['Unit'] || '',
+          callingOrPriesthood: o['Priesthood Office'] || '',
+          type: 'Ordination',
+          timestamp: o['Timestamp'] || ''
+        });
+      });
+
+      const container = document.getElementById('remote-approval-records');
+      const selectAllCb = document.getElementById('remote-approval-select-all');
+      if (selectAllCb) selectAllCb.checked = false;
+
+      if (allRecords.length === 0) {
+        container.innerHTML = `
+          <div class="glass p-6 rounded-xl text-center space-y-2 border border-slate-800">
+            <i data-lucide="check-circle" class="w-8 h-8 text-emerald-400 mx-auto"></i>
+            <p class="text-sm text-slate-400">No callings or ordinations are currently at the HC Approval step.</p>
+          </div>
+        `;
+        document.getElementById('btn-send-remote-approval').classList.add('hidden');
+      } else {
+        document.getElementById('btn-send-remote-approval').classList.remove('hidden');
+        container.innerHTML = allRecords.map((rec, idx) => {
+          const typeBadge = rec.type === 'Calling'
+            ? '<span class="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">Calling</span>'
+            : '<span class="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">Ordination</span>';
+          return `
+            <label class="flex items-start gap-2.5 cursor-pointer select-none p-3 rounded-xl glass border border-slate-800 hover:border-amber-500/30 transition-colors">
+              <input type="checkbox" class="remote-approval-cb w-4 h-4 mt-0.5 rounded text-amber-500 focus:ring-amber-500 bg-slate-800 border-slate-700"
+                data-index="${idx}"
+                data-name="${rec.name.replace(/"/g, '&quot;')}"
+                data-unit="${rec.unit.replace(/"/g, '&quot;')}"
+                data-detail="${rec.callingOrPriesthood.replace(/"/g, '&quot;')}"
+                data-type="${rec.type}">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-sm font-semibold text-slate-100">${rec.name}</span>
+                  ${typeBadge}
+                </div>
+                <p class="text-xs text-slate-400 mt-0.5">${rec.callingOrPriesthood} &middot; ${rec.unit}</p>
+              </div>
+            </label>
+          `;
+        }).join('');
+      }
+
+      // Show modal with animation
+      const modal = document.getElementById('remote-approval-modal');
+      modal.classList.remove('hidden');
+      requestAnimationFrame(() => {
+        modal.classList.add('opacity-100');
+        modal.classList.remove('opacity-0');
+        modal.querySelector(':scope > div').classList.remove('translate-y-full');
+      });
+      lucide.createIcons();
+    }
+
+    function closeRemoteApprovalModal() {
+      const modal = document.getElementById('remote-approval-modal');
+      modal.classList.remove('opacity-100');
+      modal.classList.add('opacity-0');
+      modal.querySelector(':scope > div').classList.add('translate-y-full');
+      setTimeout(() => modal.classList.add('hidden'), 300);
+    }
+
+    function toggleRemoteApprovalSelectAll(checked) {
+      document.querySelectorAll('.remote-approval-cb').forEach(cb => { cb.checked = checked; });
+    }
+
+    function sendRemoteApprovalRequest() {
+      const checkboxes = document.querySelectorAll('.remote-approval-cb:checked');
+      if (checkboxes.length === 0) {
+        showToast('Please select at least one record to send for approval.', 'warning');
+        return;
+      }
+
+      const selectedRecords = Array.from(checkboxes).map(cb => ({
+        name: cb.dataset.name,
+        unit: cb.dataset.unit,
+        callingOrPriesthood: cb.dataset.detail,
+        type: cb.dataset.type
+      }));
+
+      const btn = document.getElementById('btn-send-remote-approval');
+      btn.disabled = true;
+      btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Sending...';
+      lucide.createIcons();
+
+      const appUrl = new URL(window.location.href);
+      appUrl.searchParams.set('api', state.apiUrl);
+      const appUrlString = appUrl.toString();
+
+      if (state.isDemo) {
+        // Demo mode simulation
+        setTimeout(() => {
+          btn.disabled = false;
+          btn.innerHTML = '<i data-lucide="send" class="w-4 h-4"></i> Send Approval Request to High Council';
+          lucide.createIcons();
+          const hcCount = (state.records.highCouncilors || []).filter(Boolean).length || 0;
+          showToast(`[Demo Mode] Simulated approval request sent for ${selectedRecords.length} record(s) to ${hcCount} High Councilor(s).`, 'success', 6000);
+          closeRemoteApprovalModal();
+        }, 1500);
+        return;
+      }
+
+      apiCall('sendApprovalRequest', { selectedRecords: selectedRecords, appUrl: appUrlString })
+        .then(res => {
+          btn.disabled = false;
+          btn.innerHTML = '<i data-lucide="send" class="w-4 h-4"></i> Send Approval Request to High Council';
+          lucide.createIcons();
+          if (res.success) {
+            showToast(`Approval request sent to ${res.sentCount} High Councilor(s) for ${selectedRecords.length} record(s)!`, 'success', 6000);
+            closeRemoteApprovalModal();
+          } else {
+            showToast(res.error || 'Failed to send approval request.', 'error');
+          }
+        })
+        .catch(err => {
+          btn.disabled = false;
+          btn.innerHTML = '<i data-lucide="send" class="w-4 h-4"></i> Send Approval Request to High Council';
+          lucide.createIcons();
+          showToast('Network error sending approval request.', 'error');
+        });
     }
   </script>
 </body>
