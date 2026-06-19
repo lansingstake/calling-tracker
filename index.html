@@ -5195,10 +5195,11 @@
         let hcUnits = state.isDemo ? (state.records.highCouncilorUnits || mockData.highCouncilorUnits) : (state.highCouncilorUnits || []);
         let hcEmails = state.isDemo ? (state.records.highCouncilorEmails || mockData.highCouncilorEmails || []) : (state.highCouncilorEmails || []);
         
-        // Pad to 12
-        while (hcRoster.length < 12) hcRoster.push("");
-        while (hcUnits.length < 12) hcUnits.push("");
-        while (hcEmails.length < 12) hcEmails.push("");
+        // Pad to at least 12, or the maximum length of the retrieved roster to keep alignment
+        const targetLen = Math.max(12, hcRoster.length, hcUnits.length, hcEmails.length);
+        while (hcRoster.length < targetLen) hcRoster.push("");
+        while (hcUnits.length < targetLen) hcUnits.push("");
+        while (hcEmails.length < targetLen) hcEmails.push("");
         
         rosterContainer.innerHTML = hcRoster.map((name, i) => {
           const isFailing = state.auditFails && state.auditFails.includes(name);
@@ -5401,13 +5402,15 @@
       const names = [];
       const units = [];
       const emails = [];
-      for (let i = 0; i < 12; i++) {
+      let i = 0;
+      while (document.getElementById(`hc-input-${i}`)) {
         const val = document.getElementById(`hc-input-${i}`).value.trim();
         names.push(val);
         const unitVal = val ? document.getElementById(`hc-unit-${i}`).value : "";
         units.push(unitVal);
         const emailVal = val ? document.getElementById(`hc-email-${i}`).value.trim() : "";
         emails.push(emailVal);
+        i++;
       }
 
       const btn = document.getElementById('btn-save-roster');
