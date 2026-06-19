@@ -228,6 +228,15 @@
 
     <!-- 2. DASHBOARD VIEW -->
     <section id="view-dashboard" class="hidden space-y-4">
+      <!-- Loading Indicator -->
+      <div id="dashboard-loading" class="hidden flex flex-col items-center justify-center py-20 space-y-4 glass rounded-2xl border border-slate-800/60">
+        <svg class="animate-spin h-8 w-8 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span class="text-sm font-semibold text-slate-300 tracking-wide">Loading Tracker Data...</span>
+      </div>
+
       <!-- Admin Tracker Toggle (Only for Admin) -->
       <div id="db-tracker-toggle-card" class="hidden">
         <div class="flex flex-col gap-2">
@@ -1808,6 +1817,19 @@
     }
 
     function fetchDashboardData() {
+      // Show loading indicator, hide panels
+      const loader = document.getElementById('dashboard-loading');
+      const activePanel = document.getElementById('db-active-panel');
+      const stakeconfPanel = document.getElementById('db-stakeconf-panel');
+      const actionsPanel = document.getElementById('db-actions-panel');
+      const hcTasksContainer = document.getElementById('hc-dashboard-tasks-container');
+      
+      if (loader) loader.classList.remove('hidden');
+      if (activePanel) activePanel.classList.add('hidden');
+      if (stakeconfPanel) stakeconfPanel.classList.add('hidden');
+      if (actionsPanel) actionsPanel.classList.add('hidden');
+      if (hcTasksContainer) hcTasksContainer.classList.add('hidden');
+
       apiCall('getData')
         .then(res => {
           if (res.success) {
@@ -1832,6 +1854,11 @@
         })
         .catch(err => {
           showToast('Failed to connect to spreadsheet API', 'error');
+        })
+        .finally(() => {
+          if (loader) loader.classList.add('hidden');
+          // Re-show the correct active panel based on state
+          setDashboardViewType(state.dashboardViewType);
         });
     }
 
