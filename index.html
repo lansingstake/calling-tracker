@@ -617,9 +617,14 @@
           Email Digests
         </h2>
         <p class="text-[11px] text-slate-400">Trigger a summary email to all High Councilors, Presidency, and Admins who have email addresses listed in the roster. The email contains their active assignments and action items.</p>
-        <button onclick="triggerEmailDigests()" id="btn-trigger-emails" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl text-sm transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/10">
-          <i data-lucide="send" class="w-4 h-4"></i> Send Email Digests
-        </button>
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="triggerEmailDigests()" id="btn-trigger-emails" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl text-xs transition-all active:scale-95 flex items-center justify-center gap-1.5 shadow-lg shadow-indigo-500/10">
+            <i data-lucide="send" class="w-3.5 h-3.5"></i> Send Digests
+          </button>
+          <button onclick="triggerTestEmail()" id="btn-trigger-test-email" class="w-full bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-200 font-semibold py-2.5 rounded-xl text-xs transition-all active:scale-95 flex items-center justify-center gap-1.5 shadow-lg">
+            <i data-lucide="eye" class="w-3.5 h-3.5"></i> Send Test
+          </button>
+        </div>
       </div>
 
       <!-- 6c. API Connection -->
@@ -5575,6 +5580,50 @@
           if (btn2) btn2.disabled = false;
           dismissToast(load);
           showToast('Connection error sending email digests', 'error');
+        });
+    }
+
+    function triggerTestEmail() {
+      const email = prompt("Enter an email address to send the test digest to:", state.username ? (state.highCouncilorEmails[state.highCouncilors.indexOf(state.username)] || "") : "");
+      if (email === null) return; // Cancelled
+      
+      const cleanEmail = email.trim();
+      if (!cleanEmail) {
+        showToast("Please enter a valid email address.", "error");
+        return;
+      }
+      
+      const btn = document.getElementById('btn-trigger-test-email');
+      if (btn) btn.disabled = true;
+      const load = showToast('Sending test email...', 'info', 0);
+      
+      const appUrl = new URL(window.location.href);
+      appUrl.searchParams.set('api', state.apiUrl);
+      const appUrlString = appUrl.toString();
+      
+      if (state.isDemo) {
+        setTimeout(() => {
+          dismissToast(load);
+          if (btn) btn.disabled = false;
+          showToast(`[Demo Mode] Simulated test email successfully sent to ${cleanEmail}!`, 'success');
+        }, 1200);
+        return;
+      }
+      
+      apiCall('sendTestEmail', { appUrl: appUrlString, recipientEmail: cleanEmail })
+        .then(res => {
+          if (btn) btn.disabled = false;
+          dismissToast(load);
+          if (res.success) {
+            showToast(`Test email successfully sent to ${res.recipient}!`, 'success');
+          } else {
+            showToast(res.error || 'Failed to send test email', 'error');
+          }
+        })
+        .catch(err => {
+          if (btn) btn.disabled = false;
+          dismissToast(load);
+          showToast('Connection error sending test email', 'error');
         });
     }
 
