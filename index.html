@@ -1948,6 +1948,16 @@
         }
       });
 
+      // Only show My Tasks on the Active Tracker view
+      const hcTasksContainer = document.getElementById('hc-dashboard-tasks-container');
+      if (hcTasksContainer) {
+        if (viewType === 'active') {
+          hcTasksContainer.classList.remove('hidden');
+        } else {
+          hcTasksContainer.classList.add('hidden');
+        }
+      }
+
       renderDashboard();
     }
 
@@ -2058,13 +2068,7 @@
               releasesContainer.classList.remove('hidden');
             }
           }
-          if (hcTasksContainer) {
-            if (state.dashboardViewType === 'active') {
-              hcTasksContainer.classList.remove('hidden');
-            } else {
-              hcTasksContainer.classList.add('hidden');
-            }
-          }
+          if (hcTasksContainer) hcTasksContainer.classList.remove('hidden');
 
           // Dynamically update the header for My Assigned Tasks with username
           const dbTasksHeader = document.querySelector('#hc-dashboard-tasks-container h3');
