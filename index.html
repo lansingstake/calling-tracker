@@ -2058,7 +2058,13 @@
               releasesContainer.classList.remove('hidden');
             }
           }
-          if (hcTasksContainer) hcTasksContainer.classList.remove('hidden');
+          if (hcTasksContainer) {
+            if (state.dashboardViewType === 'active') {
+              hcTasksContainer.classList.remove('hidden');
+            } else {
+              hcTasksContainer.classList.add('hidden');
+            }
+          }
 
           // Dynamically update the header for My Assigned Tasks with username
           const dbTasksHeader = document.querySelector('#hc-dashboard-tasks-container h3');
