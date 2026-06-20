@@ -1948,13 +1948,21 @@
         }
       });
 
-      // Only show My Tasks on the Active Tracker view
+      // Only show My Tasks and Remote Approval on the Active Tracker view
       const hcTasksContainer = document.getElementById('hc-dashboard-tasks-container');
+      const remoteApprovalBtn = document.getElementById('btn-remote-approval');
       if (hcTasksContainer) {
         if (viewType === 'active') {
           hcTasksContainer.classList.remove('hidden');
         } else {
           hcTasksContainer.classList.add('hidden');
+        }
+      }
+      if (remoteApprovalBtn) {
+        if (viewType === 'active') {
+          remoteApprovalBtn.parentElement.classList.remove('hidden');
+        } else {
+          remoteApprovalBtn.parentElement.classList.add('hidden');
         }
       }
 
