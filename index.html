@@ -2586,6 +2586,7 @@
       const drawer = modal.querySelector('div');
       
       modal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
       
       // Reset scroll position to top (must be done after removing 'hidden')
       const scrollContainer = document.getElementById('modal-content');
@@ -2608,6 +2609,7 @@
       
       setTimeout(() => {
         modal.classList.add('hidden');
+        document.body.style.overflow = '';
         if (state.activeRecord && state.activeRecord.type === 'Actions') renderDashboard();
         state.activeRecord = null;
       }, 300);
@@ -2648,6 +2650,7 @@
       const drawer = modal.querySelector('div');
       
       modal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
       
       // Reset scroll position to top (must be done after removing 'hidden')
       const scrollContainer = modal.querySelector('.overflow-y-auto');
@@ -2670,6 +2673,7 @@
       
       setTimeout(() => {
         modal.classList.add('hidden');
+        document.body.style.overflow = '';
       }, 300);
     }
 
@@ -5977,6 +5981,7 @@
       // Show modal with animation
       const modal = document.getElementById('remote-approval-modal');
       modal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
       requestAnimationFrame(() => {
         modal.classList.add('opacity-100');
         modal.classList.remove('opacity-0');
@@ -5990,7 +5995,10 @@
       modal.classList.remove('opacity-100');
       modal.classList.add('opacity-0');
       modal.querySelector(':scope > div').classList.add('translate-y-full');
-      setTimeout(() => modal.classList.add('hidden'), 300);
+      setTimeout(() => {
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+      }, 300);
     }
 
     function toggleRemoteApprovalSelectAll(checked) {
