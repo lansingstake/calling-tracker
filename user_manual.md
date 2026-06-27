@@ -23,7 +23,7 @@ The app features main navigation tabs at the bottom of the screen. Their visibil
   2. **Release & Thank** — Members being released from their callings.
   3. **Callings** — Members being sustained for new callings.
 - A **unit selector** dropdown lets you filter by a specific unit or view all units at once.
-- Non-admin users see pre-formatted **script text** (in italics) that can be read directly from the pulpit, along with checkboxes to mark items as completed.
+- High Councilors and Presidency members see a **preset script** that can be read directly from the pulpit, along with checkboxes to mark items as completed.
 - Admins see all pending items across all units with "Mark Complete" buttons and remaining unit counts.
 
 ### Create Tab *(Admin Only)*
@@ -41,7 +41,7 @@ The app features main navigation tabs at the bottom of the screen. Their visibil
 
 ## 2. Admin Role: Creating and Managing Records
 
-Admins have full read/write access to the entire application. Your primary job is to shepherd records through their lifecycle by keeping the "Current Step" updated and ensuring assignments are made.
+Admins have full read/write access to the entire application. Your primary job is to shepherd records through their lifecycle by keeping the "Current Step" updated and ensuring assignments are made and dates are updated.
 
 ### The "Current Step" Field
 
@@ -64,7 +64,7 @@ The "Current Step" dropdown is the engine of the app. Changing this field dictat
 | Step | Assigned To |
 |------|-------------|
 | Admin Review | The **Clerk** (first admin in the roster) |
-| Stake Interview | The **Executive Secretary** (second admin in the roster) — task: "Set Up Priesthood Interview" |
+| Interview | The **Executive Secretary** (second admin in the roster) — task: "Set Up Priesthood Interview" |
 | HC Approval | Pushes the record to all High Councilors' dashboards for voting |
 | Sustaining | The person in the "Assigned to Oversee Sustaining/Ordination" field |
 | Ordination | The person in the "Assigned to Oversee Sustaining/Ordination" field |
@@ -171,11 +171,12 @@ Admins can tap **"Email Actions / Tasks"** to send a summary email to all Presid
 
 ---
 
-## 6. Email Digests
+## 6. Action / Task Email Notifications
 
 Admins can send personalized email summaries to all leadership members.
+Admins can also set the system to automatically send emails using Google App Script triggers.
 
-### Sending Email Digests
+### Sending Action / Task Email Notifications
 1. Go to **Settings** and find the **"Email Digests"** card, or tap **"Email Actions / Tasks"** in the Actions view.
 2. Tap **"Email Actions / Tasks"** to send a digest to all members with email addresses listed in the roster.
 3. Each recipient receives a personalized email listing:
@@ -256,9 +257,6 @@ A: Change the "Current Step" to Complete, Declined, or Cancelled. The app automa
 
 **Q: Why are some fields greyed out for me?**
 A: High Councilors have restricted views to prevent accidental overwrites of clerical data. Only Admins and the Stake Presidency can change structural fields like the "Current Step" or Assignment names.
-
-**Q: What is the "Pulpit Release" step?**
-A: When a Release Only record's step is changed to "Pulpit Release," the app automatically creates an entry on the "Over the Pulpit" tab so it can be read during a ward meeting. This streamlines the process of announcing releases without requiring manual data entry on the Pulpit tab.
 
 **Q: How does the app decide when to automatically advance the Current Step?**
 A: For both callings and ordinations, the app watches key date and assignment fields. When you enter a sustaining date, it automatically moves the step forward. Once all required fields for that phase are complete (sustaining date, set apart/ordination date, and who performed it), the app prompts you to advance to the next stage. This reduces the need for admins to manually update steps.
