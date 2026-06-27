@@ -2126,7 +2126,7 @@
             if (step === 'Admin Review' && admin1 === usernameLower && usernameLower.length > 0) {
                 personalTasks.push({ record: o, name: o["Member Name"], task: "Admin Review", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination' });
             } else if (step === 'Stake Interview' && admin2 === usernameLower && usernameLower.length > 0) {
-                personalTasks.push({ record: o, name: o["Member Name"], task: "Conduct HP Interview", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination' });
+                personalTasks.push({ record: o, name: o["Member Name"], task: "Set Up Priesthood Interview", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination' });
             } else if (step === 'Sustaining' && overseer.includes(usernameLower) && usernameLower.length > 0) {
                 personalTasks.push({ record: o, name: o["Member Name"], task: "Sustain", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination' });
             } else if (step === 'Ordination' && overseer.includes(usernameLower) && usernameLower.length > 0) {
@@ -5481,7 +5481,7 @@
         while (adminsRoster.length < 2) adminsRoster.push("");
         while (adminEmails.length < 2) adminEmails.push("");
         
-        const adminsLabels = ["Admin 1", "Admin 2"];
+        const adminsLabels = ["Clerk", "Executive Secretary"];
         adminsContainer.innerHTML = [0, 1].map(i => {
           const name = adminsRoster[i] || "";
           const isFailing = state.auditFails && state.auditFails.includes(name);
