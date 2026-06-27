@@ -131,6 +131,15 @@
     .light-theme .text-amber-300 {
       color: #000000 !important;
     }
+    /* Step info label theming */
+    .step-admin-info { color: #10b981; }
+    .step-admin-info .step-label-bold { color: #34d399; }
+    .step-next-info { color: rgba(255,255,255,0.85); }
+    .step-next-info .step-label-bold { color: #ffffff; }
+    .light-theme .step-admin-info { color: #6366f1; }
+    .light-theme .step-admin-info .step-label-bold { color: #4f46e5; }
+    .light-theme .step-next-info { color: rgba(0,0,0,0.75); }
+    .light-theme .step-next-info .step-label-bold { color: #000000; }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col pb-24 overflow-x-hidden">
@@ -3696,9 +3705,9 @@
 
       let html = '';
       if (isAdmin && info.admin) {
-        html += `<p class="text-xs text-slate-400 text-center mt-2 mb-1"><span class="font-bold text-slate-300">Admin Info:</span> ${info.admin}</p>`;
+        html += `<p class="step-admin-info text-xs text-center mt-2 mb-1"><span class="step-label-bold font-bold">Admin Info:</span> ${info.admin}</p>`;
       }
-      html += `<p class="text-xs text-emerald-400/80 text-center ${isAdmin ? '' : 'mt-2'}"><span class="font-bold text-emerald-400">Next Step:</span> ${info.next}</p>`;
+      html += `<p class="step-next-info text-xs text-center ${isAdmin ? '' : 'mt-2'}"><span class="step-label-bold font-bold">Next Step:</span> ${info.next}</p>`;
       return html;
     }
 
