@@ -259,4 +259,12 @@ A: Change the "Current Step" to Complete, Declined, or Cancelled. The app automa
 A: High Councilors have restricted views to prevent accidental overwrites of clerical data. Only Admins and the Stake Presidency can change structural fields like the "Current Step" or Assignment names.
 
 **Q: How does the app decide when to automatically advance the Current Step?**
-A: For both callings and ordinations, the app watches key date and assignment fields. When you enter a sustaining date, it automatically moves the step forward. Once all required fields for that phase are complete (sustaining date, set apart/ordination date, and who performed it), the app prompts you to advance to the next stage. This reduces the need for admins to manually update steps.
+A: The app auto-advances the Current Step when specific fields are filled in:
+
+- **Callings:**
+  - *Sustain → Set Apart:* Triggered when **Date Sustained** is entered.
+  - *Set Apart → Admin Review:* Triggered when **Date Sustained**, **Date Set Apart**, and **Assigned to Set Apart** are all populated.
+
+- **Ordinations:**
+  - *Sustaining → Ordination:* Triggered when **Date Sustained** is entered.
+  - *Ordination → Certificate:* Triggered when **Date Sustained**, **Ordained Date**, and **Ordained By** are all populated.
