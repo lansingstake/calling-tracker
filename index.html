@@ -3019,7 +3019,7 @@
               })()}
               ${isAdmin ? renderSelectField('LCR Updated?', 'LCR Updated?', ['Yes', 'No'], record) : ''}
             </div>
-            ${isAdmin ? renderSelectField('Stake Conference Sustaining', 'Conference Sustaining Needed?', ['Pending', 'Complete'], record) : ''}
+            ${isAdmin ? renderSelectField('Stake Conference Sustaining', 'Conference Sustaining', ['Pending', 'Not Needed', 'Complete'], record) : ''}
             ` : ''}
           </div>
 
@@ -3220,7 +3220,7 @@
             </div>
             ${renderNameInputField('Ordained By', 'Ordained By', record)}
             <div>
-              <label class="block text-sm text-slate-400 font-medium mb-1">Out of Unit Member Info<br><span class="text-[10px] opacity-75 font-normal">If Person Ordaining is from another Stake then gather this info: Name, Birthdate, Home Ward / Stake, and Member ID</span></label>
+              <label class="block text-sm text-slate-400 font-medium mb-1">Out of Unit Member Info<br><span class="text-[14px] opacity-75 font-normal">If Person Ordaining is from another Stake then gather this info:<br>Name, Birthdate, Home Ward / Stake, and Member ID</span></label>
               ${isFieldEditable('Out of Unit Member Info') ? `
                 <textarea onchange="updateRecordField('Out of Unit Member Info', this.value)" rows="2" class="w-full glass rounded-lg p-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Out of Unit Member Info'] || ''}</textarea>
               ` : `
@@ -3230,7 +3230,7 @@
             
             <!-- Stake Conference Section (Ordination only) -->
             ${isAdmin ? `
-            ${renderSelectField('Stake Conference Sustaining', 'Conference Sustaining Needed?', ['Pending', 'Complete'], record)}
+            ${renderSelectField('Stake Conference Sustaining', 'Conference Sustaining', ['Pending', 'Not Needed', 'Complete'], record)}
             ${record['Current Step'] === 'Complete' ? `
             <div>
               <label class="block text-sm text-slate-400 font-medium mb-1">Conference Sustain Date</label>
@@ -3669,25 +3669,25 @@
 
       const labels = {
         'Callings Releasings': {
-          'Admin Review': { admin: 'Review this record and advance when ready', next: 'Waiting for Admin to process this record' },
-          'HC Approval': { admin: 'Record is pending High Council vote', next: 'Waiting for High Council approval vote' },
-          'Call / Release': { admin: 'Task has been set for the person assigned to extend the calling / release', next: 'Extend the calling and release to the member' },
-          'Sustain': { admin: 'Task has been set for the person assigned to complete the Sustaining', next: "Add the 'Date Sustained' below" },
-          'Set Apart': { admin: 'Task has been set for the person assigned to complete the Setting Apart', next: "Add the 'Date Set Apart' and select 'Assigned to Set Apart' below" },
-          'Training': { admin: 'Task has been set for the person assigned to provide Training', next: "Provide training and mark 'Training Provided' as Yes" },
+          'Admin Review': { admin: 'Review this record and advance when ready', next: 'Admin to move to HC Approval when ready.' },
+          'HC Approval': { admin: 'Each High Councilor sees this record in their Dashboard and can now vote.', next: 'Vote below by clicking the voting tile with your name.' },
+          'Call / Release': { admin: 'Task has been set for the person assigned to extend the calling / release', next: "Extend Calling first. If member doesn't accept, counsel with the presidency before extending release (if applicable). Update the 'Calling Accepted?' and 'Notified of Release?' fields below (and key returned if applicable)." },
+          'Sustain': { admin: 'Task has been set for the person assigned to complete the Sustaining', next: "Sustain the person over the pulpit in their unit and update the 'Date Sustained' below." },
+          'Set Apart': { admin: 'Task has been set for the person assigned to complete the Setting Apart', next: "Update the 'Date Set Apart' field below." },
+          'Training': { admin: 'Task has been set for the person assigned to provide Training', next: 'Provide training and update training fields below.' },
         },
         'Ordinations': {
-          'Admin Review': { admin: 'Review this record and advance when ready', next: 'Waiting for Admin to process this record' },
-          'Stake Interview': { admin: 'Task has been set for the Executive Secretary to set up the interview', next: 'Waiting for the Priesthood Interview to be set up' },
-          'HC Approval': { admin: 'Record is pending High Council vote', next: 'Waiting for High Council approval vote' },
-          'Sustaining': { admin: 'Task has been set for the person assigned to complete the Sustaining', next: "Add the 'Date Sustained' below" },
-          'Ordination': { admin: 'Task has been set for the person assigned to complete the Ordination', next: "Add the 'Ordained Date', 'Ordained By', and if necessary the 'Out of Unit Member Info' below" },
-          'Certificate': { admin: 'Complete the Ordination Certificate and update LCR', next: 'Waiting for Admin to complete the Certificate and LCR update' },
+          'Admin Review': { admin: 'Review this record and advance when ready', next: 'Prepare for High Council Approval and update the Current Step when ready.' },
+          'Stake Interview': { admin: 'Task has been set for the Executive Secretary to set up the interview', next: "Set up a meeting between the member and the presidency, and then change 'Interview Status' to Pending." },
+          'HC Approval': { admin: 'Each High Councilor sees this record in their Dashboard and can now vote.', next: 'Vote below by clicking the voting tile with your name.' },
+          'Sustaining': { admin: 'Task has been set for the person assigned to complete the Sustaining', next: "Sustain the person over the pulpit in their unit and update the 'Date Sustained' below." },
+          'Ordination': { admin: 'Task has been set for the person assigned to complete the Ordination', next: "Oversee the ordination of the person, then update the 'Ordained Date', 'Ordained By', and if necessary the 'Out of Unit Member Info' below." },
+          'Certificate': { admin: 'Complete the Ordination Certificate and update LCR', next: 'Print and Deliver the Certificate, then update the Certificate and LCR fields below.' },
         },
         'Release Only': {
-          'Admin Review': { admin: 'Review this record and advance when ready', next: 'Waiting for Admin to process this record' },
-          'Extend Release': { admin: 'Task has been set for the person assigned to extend the release', next: 'Extend the release to the member' },
-          'Pulpit Release': { admin: 'Release has been added to the Over the Pulpit tab', next: 'Announce the release over the pulpit' },
+          'Admin Review': { admin: 'Review this record and advance when ready', next: 'Prepare any remaining details of this record and update the Current Step when ready.' },
+          'Extend Release': { admin: 'Task has been set for the person assigned to extend the release', next: 'Extend a release and thank you to the person and update the Release Status and Updates fields below.' },
+          'Pulpit Release': { admin: 'Release has been added to the Over the Pulpit tab', next: 'Announce the release over the pulpit, then mark complete on the Over the Pulpit view of your Calling Tracker.' },
         }
       };
 
@@ -5122,10 +5122,11 @@
               </select>
             </div>
             <div>
-              <label class="block text-sm font-medium text-slate-400 mb-1">Conference Sustaining Needed?</label>
+              <label class="block text-sm font-medium text-slate-400 mb-1">Conference Sustaining</label>
               <select id="form-conference-sustaining" required class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
                 <option value="" selected>-- Select --</option>
                 <option value="Pending">Pending</option>
+                <option value="Not Needed">Not Needed</option>
                 <option value="Complete">Complete</option>
               </select>
             </div>
