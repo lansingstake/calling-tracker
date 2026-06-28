@@ -147,6 +147,12 @@
     .light-theme .text-red-400 { color: #b91c1c !important; }
     .light-theme .bg-red-500\/20 { background-color: rgba(220, 38, 38, 0.15) !important; }
     .light-theme .border-red-500\/30 { border-color: rgba(185, 28, 28, 0.4) !important; }
+    /* Training amber/yellow overrides for Light Theme */
+    .light-theme .bg-amber-950\/30 { background-color: rgba(180, 120, 0, 0.10) !important; }
+    .light-theme .border-amber-700\/60 { border-color: rgba(161, 98, 7, 0.55) !important; }
+    .light-theme .text-amber-400 { color: #92400e !important; }
+    .light-theme .bg-amber-500\/20 { background-color: rgba(180, 120, 0, 0.12) !important; }
+    .light-theme .border-amber-500\/30 { border-color: rgba(161, 98, 7, 0.4) !important; }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col pb-24 overflow-x-hidden">
@@ -2210,9 +2216,10 @@
             personalContainer.innerHTML = personalTasks.map(t => {
               const createdDate = t.record["Timestamp"] ? new Date(t.record["Timestamp"]).toLocaleDateString('en-US', {month: 'numeric', day: 'numeric', year: '2-digit'}) : '';
               const modifiedDate = t.record["Modified Date"] ? new Date(t.record["Modified Date"]).toLocaleDateString('en-US', {month: 'numeric', day: 'numeric', year: '2-digit'}) : '';
-              const pBorder = t.priority === 'High' ? 'border-red-700/60' : t.priority === 'Low' ? 'border-slate-800/40' : 'border-slate-800';
-              const pBg = t.priority === 'High' ? 'bg-red-950/30' : '';
-              const pBadge = t.priority === 'High' ? '<span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/30 ml-2">High</span>' : t.priority === 'Low' ? '<span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-slate-700/40 text-slate-500 border border-slate-700/30 ml-2">Low</span>' : '';
+              const isTraining = t.task === 'Provide Training';
+              const pBorder = isTraining ? 'border-amber-700/60' : t.priority === 'High' ? 'border-red-700/60' : t.priority === 'Low' ? 'border-slate-800/40' : 'border-slate-800';
+              const pBg = isTraining ? 'bg-amber-950/30' : t.priority === 'High' ? 'bg-red-950/30' : '';
+              const pBadge = isTraining ? '<span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 ml-2">Training</span>' : t.priority === 'High' ? '<span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/30 ml-2">High</span>' : t.priority === 'Low' ? '<span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-slate-700/40 text-slate-500 border border-slate-700/30 ml-2">Low</span>' : '';
               
               return `
               <div class="glass p-3.5 rounded-xl border ${pBorder} ${pBg} flex flex-col gap-2 shadow-md">
