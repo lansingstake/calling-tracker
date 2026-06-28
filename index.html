@@ -2183,9 +2183,23 @@
             }
           });
 
-          // Sort by priority: High first, Normal middle, Low last
+          // Sort by priority: High first, Normal middle, Low last; then by step order within each priority
           const _pOrder = { 'High': 0, 'Normal': 1, 'Low': 2 };
-          personalTasks.sort((a, b) => (_pOrder[a.priority] ?? 1) - (_pOrder[b.priority] ?? 1));
+          const _callingSteps = ['Admin Review', 'HC Approval', 'Call / Release', 'Sustain', 'Set Apart', 'Training'];
+          const _ordinationSteps = ['Admin Review', 'Stake Interview', 'HC Approval', 'Sustaining', 'Ordination', 'Certificate'];
+          const _releaseSteps = ['Admin Review', 'Extend Release', 'Pulpit Release', 'Complete', 'Cancelled'];
+          const _getStepIdx = (t) => {
+            const step = (t.record && t.record["Current Step"]) || '';
+            if (t.type === 'calling') return _callingSteps.indexOf(step);
+            if (t.type === 'ordination') return _ordinationSteps.indexOf(step);
+            if (t.type === 'release') return _releaseSteps.indexOf(step);
+            return 99;
+          };
+          personalTasks.sort((a, b) => {
+            const pDiff = (_pOrder[a.priority] ?? 1) - (_pOrder[b.priority] ?? 1);
+            if (pDiff !== 0) return pDiff;
+            return _getStepIdx(a) - _getStepIdx(b);
+          });
 
           document.getElementById('count-hc-tasks').innerText = personalTasks.length;
           
