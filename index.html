@@ -2137,7 +2137,7 @@
             } else if (step === 'Set Apart' && setApart.includes(usernameLower) && usernameLower.length > 0) {
                 personalTasks.push({ record: c, name: c["Member Name"], task: "Set Apart", details: `${c["Calling"]} (${c["Unit"]})`, type: 'calling', priority: 'High' });
             } else if (step === 'Training' && tr.includes(usernameLower) && usernameLower.length > 0) {
-                personalTasks.push({ record: c, name: c["Member Name"], task: "Provide Training", details: `${c["Calling"]} (${c["Unit"]})`, type: 'calling', priority: 'High' });
+                personalTasks.push({ record: c, name: c["Member Name"], task: "Provide Training", details: `${c["Calling"]} (${c["Unit"]})`, type: 'calling', priority: 'Normal' });
             }
           });
           
