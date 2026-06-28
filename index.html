@@ -2131,7 +2131,7 @@
             if (step === 'Admin Review' && admin1 === usernameLower && usernameLower.length > 0) {
                 personalTasks.push({ record: c, name: c["Member Name"], task: "Admin Review", details: `${c["Calling"]} (${c["Unit"]})`, type: 'calling', priority: 'High' });
             } else if (step === 'Call / Release' && ext.includes(usernameLower) && usernameLower.length > 0) {
-                personalTasks.push({ record: c, name: c["Member Name"], task: "Extend Calling & Release", details: `${c["Calling"]} (${c["Unit"]})`, type: 'calling', priority: 'High' });
+                personalTasks.push({ record: c, name: c["Member Name"], releaseName: c["Member to Release"] || '', task: "Extend Calling & Release", details: `${c["Calling"]} (${c["Unit"]})`, type: 'calling', priority: 'High' });
             } else if (step === 'Sustain' && overseer.includes(usernameLower) && usernameLower.length > 0) {
                 personalTasks.push({ record: c, name: c["Member Name"], task: "Sustain", details: `${c["Calling"]} (${c["Unit"]})`, type: 'calling', priority: 'High' });
             } else if (step === 'Set Apart' && setApart.includes(usernameLower) && usernameLower.length > 0) {
@@ -2155,7 +2155,7 @@
             } else if (step === 'Sustaining' && overseer.includes(usernameLower) && usernameLower.length > 0) {
                 personalTasks.push({ record: o, name: o["Member Name"], task: "Sustain", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination', priority: 'High' });
             } else if (step === 'Ordination' && overseer.includes(usernameLower) && usernameLower.length > 0) {
-                personalTasks.push({ record: o, name: o["Member Name"], task: "HP Ordination", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination', priority: 'High' });
+                personalTasks.push({ record: o, name: o["Member Name"], task: "Ordination", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination', priority: 'High' });
             } else if (step === 'Certificate' && admin1 === usernameLower && usernameLower.length > 0) {
                 personalTasks.push({ record: o, name: o["Member Name"], task: "Certificate & LCR", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination', priority: 'High' });
             }
@@ -2218,7 +2218,12 @@
               <div class="glass p-3.5 rounded-xl border ${pBorder} ${pBg} flex flex-col gap-2 shadow-md">
                 <div class="flex justify-between items-start">
                   <div>
+                    ${t.task === 'Extend Calling & Release' ? `
+                    <p class="text-sm font-bold text-slate-100">Extend Calling: ${t.name}${pBadge}</p>
+                    ${t.releaseName ? `<p class="text-sm font-bold text-slate-100">Release: ${t.releaseName}</p>` : ''}
+                    ` : `
                     <p class="text-sm font-bold text-slate-100">${t.task}: ${t.name}${pBadge}</p>
+                    `}
                     <p class="text-[11px] text-slate-400 font-medium">${t.details}</p>
                   </div>
                   <div class="text-right shrink-0 ml-2">
