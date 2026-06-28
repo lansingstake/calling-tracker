@@ -772,6 +772,15 @@
             </select>
           </div>
           <div>
+            <label class="block text-sm text-slate-400 font-medium mb-1">Priority <span class="text-red-400">*</span></label>
+            <select id="new-action-priority" class="w-full glass rounded-lg px-3 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+              <option value="">-- Select Priority --</option>
+              <option value="High">High</option>
+              <option value="Normal">Normal</option>
+              <option value="Low">Low</option>
+            </select>
+          </div>
+          <div>
             <label class="block text-sm text-slate-400 font-medium mb-1">Notes</label>
             <textarea id="new-action-notes" rows="2" placeholder="Optional notes..." class="w-full glass rounded-lg px-3 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500 resize-y"></textarea>
           </div>
@@ -2113,15 +2122,15 @@
             if (!usernameLower) return;
             
             if (step === 'Admin Review' && admin1 === usernameLower && usernameLower.length > 0) {
-                personalTasks.push({ record: c, name: c["Member Name"], task: "Admin Review", details: `${c["Calling"]} (${c["Unit"]})`, type: 'calling' });
+                personalTasks.push({ record: c, name: c["Member Name"], task: "Admin Review", details: `${c["Calling"]} (${c["Unit"]})`, type: 'calling', priority: 'High' });
             } else if (step === 'Call / Release' && ext.includes(usernameLower) && usernameLower.length > 0) {
-                personalTasks.push({ record: c, name: c["Member Name"], task: "Extend Calling & Release", details: `${c["Calling"]} (${c["Unit"]})`, type: 'calling' });
+                personalTasks.push({ record: c, name: c["Member Name"], task: "Extend Calling & Release", details: `${c["Calling"]} (${c["Unit"]})`, type: 'calling', priority: 'High' });
             } else if (step === 'Sustain' && overseer.includes(usernameLower) && usernameLower.length > 0) {
-                personalTasks.push({ record: c, name: c["Member Name"], task: "Sustain", details: `${c["Calling"]} (${c["Unit"]})`, type: 'calling' });
+                personalTasks.push({ record: c, name: c["Member Name"], task: "Sustain", details: `${c["Calling"]} (${c["Unit"]})`, type: 'calling', priority: 'High' });
             } else if (step === 'Set Apart' && setApart.includes(usernameLower) && usernameLower.length > 0) {
-                personalTasks.push({ record: c, name: c["Member Name"], task: "Set Apart", details: `${c["Calling"]} (${c["Unit"]})`, type: 'calling' });
+                personalTasks.push({ record: c, name: c["Member Name"], task: "Set Apart", details: `${c["Calling"]} (${c["Unit"]})`, type: 'calling', priority: 'High' });
             } else if (step === 'Training' && tr.includes(usernameLower) && usernameLower.length > 0) {
-                personalTasks.push({ record: c, name: c["Member Name"], task: "Provide Training", details: `${c["Calling"]} (${c["Unit"]})`, type: 'calling' });
+                personalTasks.push({ record: c, name: c["Member Name"], task: "Provide Training", details: `${c["Calling"]} (${c["Unit"]})`, type: 'calling', priority: 'High' });
             }
           });
           
@@ -2133,15 +2142,15 @@
             if (!usernameLower) return;
 
             if (step === 'Admin Review' && admin1 === usernameLower && usernameLower.length > 0) {
-                personalTasks.push({ record: o, name: o["Member Name"], task: "Admin Review", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination' });
+                personalTasks.push({ record: o, name: o["Member Name"], task: "Admin Review", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination', priority: 'High' });
             } else if (step === 'Stake Interview' && admin2 === usernameLower && usernameLower.length > 0) {
-                personalTasks.push({ record: o, name: o["Member Name"], task: "Set Up Priesthood Interview", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination' });
+                personalTasks.push({ record: o, name: o["Member Name"], task: "Set Up Priesthood Interview", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination', priority: 'High' });
             } else if (step === 'Sustaining' && overseer.includes(usernameLower) && usernameLower.length > 0) {
-                personalTasks.push({ record: o, name: o["Member Name"], task: "Sustain", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination' });
+                personalTasks.push({ record: o, name: o["Member Name"], task: "Sustain", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination', priority: 'High' });
             } else if (step === 'Ordination' && overseer.includes(usernameLower) && usernameLower.length > 0) {
-                personalTasks.push({ record: o, name: o["Member Name"], task: "HP Ordination", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination' });
+                personalTasks.push({ record: o, name: o["Member Name"], task: "HP Ordination", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination', priority: 'High' });
             } else if (step === 'Certificate' && admin1 === usernameLower && usernameLower.length > 0) {
-                personalTasks.push({ record: o, name: o["Member Name"], task: "Certificate & LCR", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination' });
+                personalTasks.push({ record: o, name: o["Member Name"], task: "Certificate & LCR", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination', priority: 'High' });
             }
           });
           
@@ -2153,9 +2162,9 @@
             if (!usernameLower) return;
             
             if (step === 'Admin Review' && admin1 === usernameLower && usernameLower.length > 0) {
-                personalTasks.push({ record: r, name: r["Member Name"], task: "Admin Review", details: `${r["Calling to be Released From"]} (${r["Unit"]})`, type: 'release' });
+                personalTasks.push({ record: r, name: r["Member Name"], task: "Admin Review", details: `${r["Calling to be Released From"]} (${r["Unit"]})`, type: 'release', priority: 'High' });
             } else if ((step === 'Extend Release' || step === 'Release' || step === 'Assigned') && assignee.includes(usernameLower) && usernameLower.length > 0) {
-                personalTasks.push({ record: r, name: r["Member Name"], task: "Extend Release", details: `${r["Calling to be Released From"]} (${r["Unit"]})`, type: 'release' });
+                personalTasks.push({ record: r, name: r["Member Name"], task: "Extend Release", details: `${r["Calling to be Released From"]} (${r["Unit"]})`, type: 'release', priority: 'High' });
             }
           });
 
@@ -2163,9 +2172,13 @@
           state.records.actions.forEach(a => {
             const approval = String(a["Approval [" + state.username + "]"] || "").toUpperCase();
             if (approval === "FALSE") {
-              personalTasks.push({ record: a, name: a["Topic"] || "No Topic", task: "Action Item", details: a["Action"] || "", type: 'Actions' });
+              personalTasks.push({ record: a, name: a["Topic"] || "No Topic", task: "Action Item", details: a["Action"] || "", type: 'Actions', priority: a["Priority"] || 'Normal' });
             }
           });
+
+          // Sort by priority: High first, Normal middle, Low last
+          const _pOrder = { 'High': 0, 'Normal': 1, 'Low': 2 };
+          personalTasks.sort((a, b) => (_pOrder[a.priority] ?? 1) - (_pOrder[b.priority] ?? 1));
 
           document.getElementById('count-hc-tasks').innerText = personalTasks.length;
           
@@ -2176,12 +2189,15 @@
             personalContainer.innerHTML = personalTasks.map(t => {
               const createdDate = t.record["Timestamp"] ? new Date(t.record["Timestamp"]).toLocaleDateString('en-US', {month: 'numeric', day: 'numeric', year: '2-digit'}) : '';
               const modifiedDate = t.record["Modified Date"] ? new Date(t.record["Modified Date"]).toLocaleDateString('en-US', {month: 'numeric', day: 'numeric', year: '2-digit'}) : '';
+              const pBorder = t.priority === 'High' ? 'border-red-700/60' : t.priority === 'Low' ? 'border-slate-800/40' : 'border-slate-800';
+              const pBg = t.priority === 'High' ? 'bg-red-950/30' : '';
+              const pBadge = t.priority === 'High' ? '<span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/30 ml-2">High</span>' : t.priority === 'Low' ? '<span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-slate-700/40 text-slate-500 border border-slate-700/30 ml-2">Low</span>' : '';
               
               return `
-              <div class="glass p-3.5 rounded-xl border border-slate-800 flex flex-col gap-2 shadow-md">
+              <div class="glass p-3.5 rounded-xl border ${pBorder} ${pBg} flex flex-col gap-2 shadow-md">
                 <div class="flex justify-between items-start">
                   <div>
-                    <p class="text-sm font-bold text-slate-100">${t.task}: ${t.name}</p>
+                    <p class="text-sm font-bold text-slate-100">${t.task}: ${t.name}${pBadge}</p>
                     <p class="text-[11px] text-slate-400 font-medium">${t.details}</p>
                   </div>
                   <div class="text-right shrink-0 ml-2">
@@ -2254,31 +2270,46 @@
         if (filteredActions.length === 0) {
           container.innerHTML = `<div class="glass p-6 rounded-xl text-center"><p class="text-sm text-slate-400">No actions found matching filters.</p></div>`;
         } else {
-          container.innerHTML = filteredActions.map(a => {
+          const priorityOrder = { 'High': 0, 'Normal': 1, 'Low': 2 };
+          const sorted = [...filteredActions].sort((a, b) => (priorityOrder[a["Priority"]] ?? 1) - (priorityOrder[b["Priority"]] ?? 1));
+          
+          const groups = [
+            { key: 'High', label: '🔴 High Priority', items: sorted.filter(a => a["Priority"] === 'High'), borderClass: 'border-red-700/60', bgClass: 'bg-red-950/40', headerClass: 'text-red-400', badgeClass: 'bg-red-500/20 text-red-400 border-red-500/30' },
+            { key: 'Normal', label: 'Normal Priority', items: sorted.filter(a => a["Priority"] === 'Normal' || (!a["Priority"] && a["Priority"] !== 'Low')), borderClass: 'border-slate-700/60', bgClass: '', headerClass: 'text-slate-300', badgeClass: 'bg-slate-700/40 text-slate-300 border-slate-600/30' },
+            { key: 'Low', label: 'Low Priority', items: sorted.filter(a => a["Priority"] === 'Low'), borderClass: 'border-slate-800/60', bgClass: 'bg-slate-900/30', headerClass: 'text-slate-500', badgeClass: 'bg-slate-800/40 text-slate-500 border-slate-700/30' }
+          ];
+          
+          const renderCard = (a, borderExtra) => {
             const createdDate = a["Timestamp"] ? new Date(a["Timestamp"]).toLocaleDateString('en-US', {month: 'numeric', day: 'numeric', year: '2-digit'}) : '';
             const modifiedDate = a["Modified Date"] ? new Date(a["Modified Date"]).toLocaleDateString('en-US', {month: 'numeric', day: 'numeric', year: '2-digit'}) : '';
-            
             let displayOwner = a["Owner"] || '';
             if (displayOwner === 'Custom') {
                const parsedNames = Object.keys(a).filter(k => k.startsWith('Approval [') && ['TRUE', 'FALSE'].includes(String(a[k]).toUpperCase())).map(k => k.replace('Approval [', '').replace(']', ''));
                if (parsedNames.length > 0) displayOwner = parsedNames.join(', ');
             }
-            
             return `
-            <div class="glass p-4 rounded-xl border border-slate-800 space-y-2 relative" onclick="openRecordDetails('Actions', '${a["Timestamp"]}', '')">
+            <div class="glass p-4 rounded-xl border ${borderExtra} space-y-2 relative" onclick="openRecordDetails('Actions', '${a["Timestamp"]}', '')">
               <div class="flex justify-between items-start">
                 <h4 class="font-bold text-slate-100 text-sm">${a["Topic"] || "No Topic"}</h4>
                 <span class="text-[10px] text-slate-500 whitespace-nowrap">Created: ${createdDate}</span>
               </div>
               <p class="text-xs text-slate-400">${a["Action"] || ""}</p>
-              
               <div class="flex justify-between items-end mt-2">
                 ${displayOwner ? `<p class="text-[14px] font-bold text-emerald-400 max-w-[70%]">Owner: ${displayOwner}</p>` : '<div></div>'}
                 ${modifiedDate ? `<span class="text-[10px] text-slate-500 whitespace-nowrap">Modified: ${modifiedDate}</span>` : ''}
               </div>
+            </div>`;
+          };
+          
+          container.innerHTML = groups.filter(g => g.items.length > 0).map(g => `
+            <div class="rounded-xl ${g.bgClass} ${g.borderClass ? 'border ' + g.borderClass : ''} p-3 space-y-3 mb-4">
+              <div class="flex items-center gap-2 pb-2 border-b ${g.borderClass}">
+                <span class="text-xs font-bold uppercase tracking-wider ${g.headerClass}">${g.label}</span>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border ${g.badgeClass}">${g.items.length}</span>
+              </div>
+              ${g.items.map(a => renderCard(a, g.borderClass)).join('')}
             </div>
-            `;
-          }).join('');
+          `).join('');
         }
       } else {
         // Stake Conference View rendering
@@ -2629,6 +2660,7 @@
       document.getElementById('new-action-topic').value = '';
       document.getElementById('new-action-desc').value = '';
       document.getElementById('new-action-notes').value = '';
+      document.getElementById('new-action-priority').value = '';
       
       const ownerSelect = document.getElementById('new-action-owner');
       const spRoster = state.isDemo ? (state.stakePresidency || mockData.stakePresidency) : state.stakePresidency || [];
@@ -2690,10 +2722,11 @@
       const topic = document.getElementById('new-action-topic').value.trim();
       const action = document.getElementById('new-action-desc').value.trim();
       const owner = document.getElementById('new-action-owner').value.trim();
+      const priority = document.getElementById('new-action-priority').value.trim();
       const notes = document.getElementById('new-action-notes').value.trim();
       
-      if (!topic || !action || !owner) {
-        showToast('Topic, Action, and Owner are required.', 'error');
+      if (!topic || !action || !owner || !priority) {
+        showToast('Topic, Action, Owner, and Priority are required.', 'error');
         return;
       }
       
@@ -2708,6 +2741,7 @@
         Topic: topic,
         Action: action,
         Owner: owner,
+        Priority: priority,
         Notes: notes
       };
       
@@ -3510,6 +3544,8 @@
               <input type="text" value="${displayOwner}" readonly disabled class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-400 focus:outline-none">
             </div>
             `}
+
+            ${renderSelectField('Priority', 'Priority', ['High', 'Normal', 'Low'], record)}
 
             <div class="w-full">
               <label class="block text-sm text-slate-400 font-medium mb-1">Action</label>
