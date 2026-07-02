@@ -294,18 +294,9 @@
       <div id="db-active-panel" class="space-y-4">
         <!-- Search & Filters -->
         <div id="db-search-filter-container" class="space-y-2">
-          <!-- Filter Tabs Wrapping Grid/Flex Layout (All 9 Units) -->
+          <!-- Filter Tabs Wrapping Grid/Flex Layout (populated dynamically from Settings units, see renderFilterBar()) -->
           <div id="db-filter-bar" class="flex flex-wrap justify-center gap-2 pb-1">
             <button onclick="setFilter('all')" id="filter-all" class="px-3.5 py-1.5 text-sm font-semibold rounded-lg bg-indigo-600 text-white transition-all whitespace-nowrap">All Units</button>
-            <button onclick="setFilter('Charlotte')" id="filter-Charlotte" class="px-3.5 py-1.5 text-sm font-semibold rounded-lg glass text-slate-300 transition-all whitespace-nowrap">Charlotte</button>
-            <button onclick="setFilter('Holt')" id="filter-Holt" class="px-3.5 py-1.5 text-sm font-semibold rounded-lg glass text-slate-300 transition-all whitespace-nowrap">Holt</button>
-            <button onclick="setFilter('Jackson')" id="filter-Jackson" class="px-3.5 py-1.5 text-sm font-semibold rounded-lg glass text-slate-300 transition-all whitespace-nowrap">Jackson</button>
-            <button onclick="setFilter('Lansing')" id="filter-Lansing" class="px-3.5 py-1.5 text-sm font-semibold rounded-lg glass text-slate-300 transition-all whitespace-nowrap">Lansing</button>
-            <button onclick="setFilter('Portland')" id="filter-Portland" class="px-3.5 py-1.5 text-sm font-semibold rounded-lg glass text-slate-300 transition-all whitespace-nowrap">Portland</button>
-            <button onclick="setFilter('Owosso')" id="filter-Owosso" class="px-3.5 py-1.5 text-sm font-semibold rounded-lg glass text-slate-300 transition-all whitespace-nowrap">Owosso</button>
-            <button onclick="setFilter('St Johns')" id="filter-StJohns" class="px-3.5 py-1.5 text-sm font-semibold rounded-lg glass text-slate-300 transition-all whitespace-nowrap">St Johns</button>
-            <button onclick="setFilter('Williamston')" id="filter-Williamston" class="px-3.5 py-1.5 text-sm font-semibold rounded-lg glass text-slate-300 transition-all whitespace-nowrap">Williamston</button>
-            <button onclick="setFilter('YSA')" id="filter-YSA" class="px-3.5 py-1.5 text-sm font-semibold rounded-lg glass text-slate-300 transition-all whitespace-nowrap">YSA</button>
           </div>
           
           <div id="db-search-container" class="relative">
@@ -421,16 +412,8 @@
       <div class="glass rounded-2xl p-4 shadow-xl space-y-3">
         <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Pulpit Unit Selector</label>
         <select id="sunday-unit-select" onchange="renderSundayView()" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200">
+          <!-- Populated dynamically from Settings units, see renderPulpitUnitSelector() -->
           <option value="all" id="pulpit-all-units-option">All Units</option>
-          <option value="Charlotte">Charlotte</option>
-          <option value="Holt">Holt</option>
-          <option value="Jackson">Jackson</option>
-          <option value="Lansing" selected>Lansing</option>
-          <option value="Portland">Portland</option>
-          <option value="Owosso">Owosso</option>
-          <option value="St Johns">St Johns</option>
-          <option value="Williamston">Williamston</option>
-          <option value="YSA">YSA</option>
         </select>
       </div>
 
@@ -555,16 +538,8 @@
         <!-- Unit Filter Dropdown -->
         <div>
           <select id="history-unit-filter" onchange="state.historyPage = 0; renderHistoryResults()" class="w-full glass rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200 font-semibold">
+            <!-- Populated dynamically from Settings units, see renderHistoryUnitFilter() -->
             <option value="all">All Units</option>
-            <option value="Charlotte">Charlotte</option>
-            <option value="Holt">Holt</option>
-            <option value="Jackson">Jackson</option>
-            <option value="Lansing">Lansing</option>
-            <option value="Owosso">Owosso</option>
-            <option value="Portland">Portland</option>
-            <option value="St Johns">St Johns</option>
-            <option value="Williamston">Williamston</option>
-            <option value="YSA">YSA</option>
           </select>
         </div>
 
@@ -904,7 +879,16 @@
     };
 
     // Constants
+    // Demo-mode fallback list only. Live sessions must use getStakeUnits(), which reads
+    // the units configured on the Settings tab (state.stakeUnits) so multi-instance
+    // deployments with different units render correctly everywhere.
     const STAKE_UNITS = ["Charlotte", "Holt", "Jackson", "Lansing", "Portland", "Owosso", "St Johns", "Williamston", "YSA"];
+
+    function getStakeUnits() {
+      if (state.isDemo) return STAKE_UNITS;
+      const configured = (state.stakeUnits || []).filter(u => u && u.trim() !== "");
+      return configured.length > 0 ? configured : STAKE_UNITS;
+    }
 
     // Mock Data for Demo Mode (empty - connect to live API for real data)
     const mockData = {
@@ -1351,6 +1335,12 @@
     }
 
     function showMainUI() {
+      // Rebuild unit-driven dropdowns/filters from the Settings tab before any
+      // role-specific logic below reads or sets their values.
+      renderFilterBar();
+      renderPulpitUnitSelector();
+      renderHistoryUnitFilter();
+
       // Configure elements based on role
       document.getElementById('user-profile').classList.remove('hidden');
       if (state.role === 'admin') {
@@ -1445,7 +1435,7 @@
         if (allUnitsOptP) allUnitsOptP.style.display = 'none';
         // Default pulpit to first unit if currently on "all"
         const pulpitSelect = document.getElementById('sunday-unit-select');
-        if (pulpitSelect && pulpitSelect.value === 'all') pulpitSelect.value = 'Charlotte';
+        if (pulpitSelect && pulpitSelect.value === 'all') pulpitSelect.value = getStakeUnits()[0] || '';
         setFilter('all');
       } else {
         // Admin: show filter bar and search
@@ -1601,7 +1591,7 @@
                 // Calculate percentage
                 let trueCount = 0;
                 let totalCount = 0;
-                STAKE_UNITS.forEach(u => {
+                getStakeUnits().forEach(u => {
                   if (item[u] === 'True' || item[u] === 'False') {
                     totalCount++;
                     if (item[u] === 'True') trueCount++;
@@ -1756,7 +1746,7 @@
       };
       
       const isAllUnits = (pulpitSustaining === "All Units");
-      STAKE_UNITS.forEach(u => {
+      getStakeUnits().forEach(u => {
         if (isAllUnits) {
           row[u] = "False";
         } else {
@@ -1918,13 +1908,16 @@
               if (titleEl) titleEl.textContent = state.stakeName;
               document.title = state.stakeName + " Tracker";
             }
+            state.stakeUnits = res.stakeUnits || [];
             state.records.callings = sortRecordsByStoredOrder('Callings Releasings', res.callings || []);
             state.records.ordinations = sortRecordsByStoredOrder('Ordinations', res.ordinations || []);
             state.records.releases = sortRecordsByStoredOrder('Release Only', res.releases || []);
             state.records.sustainings = normalizeSustainings(res.sustainings || []);
             state.records.actions = res.actions || [];
-            state.stakeUnits = res.stakeUnits || [];
             updateRosterDatalist();
+            renderFilterBar();
+            renderPulpitUnitSelector();
+            renderHistoryUnitFilter();
             runHeaderAudit();
             renderDashboard();
           } else {
@@ -1996,6 +1989,52 @@
       }
 
       renderDashboard();
+    }
+
+    // Rebuild the dashboard filter bar from the units configured on the Settings tab.
+    // Called after login and after every dashboard data refresh, so a mid-session
+    // change to Settings > Units is reflected without requiring a logout.
+    function renderFilterBar() {
+      const container = document.getElementById('db-filter-bar');
+      if (!container) return;
+      const activeUnit = state.activeFilter || 'all';
+      let html = `<button onclick="setFilter('all')" id="filter-all" class="px-3.5 py-1.5 text-sm font-semibold rounded-lg ${activeUnit === 'all' ? 'bg-indigo-600 text-white' : 'glass text-slate-300'} transition-all whitespace-nowrap">All Units</button>`;
+      html += getStakeUnits().map(u => {
+        const safeId = u.replace(/\s+/g, '');
+        const isActive = activeUnit === u;
+        return `<button onclick="setFilter('${u.replace(/'/g, "\\'")}')" id="filter-${safeId}" class="px-3.5 py-1.5 text-sm font-semibold rounded-lg ${isActive ? 'bg-indigo-600 text-white' : 'glass text-slate-300'} transition-all whitespace-nowrap">${u}</button>`;
+      }).join('');
+      container.innerHTML = html;
+    }
+
+    // Rebuild the Over the Pulpit unit selector from the units configured on the Settings tab.
+    function renderPulpitUnitSelector() {
+      const select = document.getElementById('sunday-unit-select');
+      if (!select) return;
+      const currentVal = select.value;
+      const units = getStakeUnits();
+      let html = `<option value="all" id="pulpit-all-units-option">All Units</option>`;
+      html += units.map(u => `<option value="${u}">${u}</option>`).join('');
+      select.innerHTML = html;
+      if (currentVal && (currentVal === 'all' || units.includes(currentVal))) {
+        select.value = currentVal;
+      } else if (units.length > 0) {
+        select.value = units[0];
+      }
+    }
+
+    // Rebuild the History Search unit filter from the units configured on the Settings tab.
+    function renderHistoryUnitFilter() {
+      const select = document.getElementById('history-unit-filter');
+      if (!select) return;
+      const currentVal = select.value;
+      const units = getStakeUnits();
+      let html = `<option value="all">All Units</option>`;
+      html += units.map(u => `<option value="${u}">${u}</option>`).join('');
+      select.innerHTML = html;
+      if (currentVal && (currentVal === 'all' || units.includes(currentVal))) {
+        select.value = currentVal;
+      }
     }
 
     function setFilter(unit) {
@@ -2961,7 +3000,7 @@
               ${isFieldEditable('Unit') ? `
                 <select onchange="updateRecordField('Unit', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
                   <option value=""></option>
-                  ${['Charlotte', 'YSA', 'Holt', 'Jackson', 'Lansing', 'Owosso', 'Portland', 'St Johns', 'Williamston'].map(u => `<option value="${u}" ${record['Unit'] === u ? 'selected' : ''}>${u}</option>`).join('')}
+                  ${getStakeUnits().map(u => `<option value="${u}" ${record['Unit'] === u ? 'selected' : ''}>${u}</option>`).join('')}
                 </select>
               ` : `
                 <div class="text-slate-300 text-base font-semibold py-1.5">${record['Unit'] || 'None'}</div>
@@ -3241,7 +3280,7 @@
               ${isFieldEditable('Unit') ? `
                 <select onchange="updateRecordField('Unit', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
                   <option value=""></option>
-                  ${['Charlotte', 'YSA', 'Holt', 'Jackson', 'Lansing', 'Owosso', 'Portland', 'St Johns', 'Williamston'].map(u => `<option value="${u}" ${record['Unit'] === u ? 'selected' : ''}>${u}</option>`).join('')}
+                  ${getStakeUnits().map(u => `<option value="${u}" ${record['Unit'] === u ? 'selected' : ''}>${u}</option>`).join('')}
                 </select>
               ` : `
                 <div class="text-slate-300 text-base font-semibold py-1.5">${record['Unit'] || 'None'}</div>
@@ -3390,7 +3429,7 @@
                 ${isFieldEditable('Unit') ? `
                   <select onchange="updateRecordField('Unit', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
                     <option value=""></option>
-                    ${['Charlotte', 'YSA', 'Holt', 'Jackson', 'Lansing', 'Owosso', 'Portland', 'St Johns', 'Williamston'].map(u => `<option value="${u}" ${record['Unit'] === u ? 'selected' : ''}>${u}</option>`).join('')}
+                    ${getStakeUnits().map(u => `<option value="${u}" ${record['Unit'] === u ? 'selected' : ''}>${u}</option>`).join('')}
                   </select>
                 ` : `
                   <div class="text-slate-300 text-base font-semibold py-1.5">${record['Unit'] || 'None'}</div>
@@ -4329,7 +4368,7 @@
           s["Calling"] = s["Calling / Office"];
         }
         // Normalize unit column booleans to strings
-        STAKE_UNITS.forEach(u => {
+        getStakeUnits().forEach(u => {
           if (s[u] === true) s[u] = 'True';
           if (s[u] === false) s[u] = 'False';
         });
@@ -4388,7 +4427,7 @@
         // Determine if item has sustaining data for this unit
         let hasSustainingData = false;
         if (selectedUnit === 'all') {
-          hasSustainingData = STAKE_UNITS.some(u => hasData(s[u]));
+          hasSustainingData = getStakeUnits().some(u => hasData(s[u]));
         } else {
           hasSustainingData = hasData(s[selectedUnit]);
         }
@@ -4411,7 +4450,7 @@
           const s = state.sessionSustainings[key];
           let hasSustainingData = false;
           if (selectedUnit === 'all') {
-            hasSustainingData = STAKE_UNITS.some(u => s[u] === 'Complete' || s[u] === 'True' || s[u] === 'False');
+            hasSustainingData = getStakeUnits().some(u => s[u] === 'Complete' || s[u] === 'True' || s[u] === 'False');
           } else {
             hasSustainingData = s[selectedUnit] === 'Complete' || s[selectedUnit] === 'True' || s[selectedUnit] === 'False';
           }
@@ -4615,10 +4654,10 @@
         // Determine which units are relevant for this item
         // "Home Unit Only" items only have their home unit column set (True/False); others are empty
         const hasData = (val) => val === 'Complete' || val === 'True' || val === 'False' || val === true || val === false;
-        const relevantUnits = STAKE_UNITS.filter(u => hasData(cand[u]));
+        const relevantUnits = getStakeUnits().filter(u => hasData(cand[u]));
         const isHomeUnitOnly = relevantUnits.length <= 1;
-        
-        const unitsToCheck = isHomeUnitOnly ? relevantUnits : STAKE_UNITS;
+
+        const unitsToCheck = isHomeUnitOnly ? relevantUnits : getStakeUnits();
         const incompleteUnits = unitsToCheck.filter(u => {
           const val = cand[u];
           return val === 'False' || val === false || val === '' || val === undefined || val === null;
@@ -4857,7 +4896,7 @@
         if (isChecked && action === 'Sustain' && calling !== 'Elder' && calling !== 'High Priest') {
           const item = (state.records.sustainings || []).find(s => s["Individual"] === individual && s["Action"] === action && s["Calling"] === calling);
           if (item) {
-            const requiredUnits = STAKE_UNITS.filter(u => {
+            const requiredUnits = getStakeUnits().filter(u => {
               const val = item[u];
               return val === 'True' || val === 'False' || val === 'Complete' || val === true || val === false;
             });
@@ -5140,7 +5179,7 @@
       const container = document.getElementById('dynamic-form-fields');
       const lblName = document.getElementById('lbl-member-name');
       
-      const unitOptions = '<option value=""></option>' + STAKE_UNITS.map(u => `<option value="${u}">${u}</option>`).join('');
+      const unitOptions = '<option value=""></option>' + getStakeUnits().map(u => `<option value="${u}">${u}</option>`).join('');
       const spRoster = state.isDemo ? (state.records.stakePresidency || mockData.stakePresidency) : state.stakePresidency;
       const hcRoster = state.isDemo ? (state.records.highCouncilors || mockData.highCouncilors) : state.highCouncilors;
       const rosterOptionsStr = '<option value="" disabled selected>Select an assignment...</option>' + 
@@ -5761,10 +5800,14 @@
       
       const filteredUnits = inputs.filter(Boolean);
       state.stakeUnits = inputs.length > 0 ? inputs : [""];
-      
+
       // Update the HC Dropdowns immediately with the new inputs array
       renderSettings();
-      
+      // Also refresh every other unit-driven dropdown/filter in the app immediately
+      renderFilterBar();
+      renderPulpitUnitSelector();
+      renderHistoryUnitFilter();
+
       clearTimeout(unitSaveTimeout);
       unitSaveTimeout = setTimeout(() => {
         showToast('Saving units...', 'info');
