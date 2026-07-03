@@ -943,6 +943,15 @@
     });
 
     function initUI() {
+      // Self-heal stale demo mode: a saved API URL means this is a real (live) install.
+      // Ignore any leftover demo flag from a past transient failure so users aren't
+      // permanently trapped in demo mode (which also overwrote their saved PIN). This
+      // rescues already-stuck users automatically on their next open — no data clearing.
+      if (state.apiUrl && state.isDemo) {
+        state.isDemo = false;
+        localStorage.setItem('tracker_is_demo', 'false');
+      }
+
       // Setup default configuration URL
       document.getElementById('settings-api-url').value = state.apiUrl;
       
@@ -998,8 +1007,11 @@
             }
           })
           .catch(() => {
-            showToast('Connection failed. Switching to demo mode.', 'warning');
-            toggleDemoMode();
+            // A transient backend failure must NOT trap the user in demo mode (which also
+            // overwrites their saved PIN). Keep them live and let them retry — their saved
+            // PIN auto-retries on the next app open.
+            showToast('Could not reach the server. Please check your connection and try again.', 'error');
+            showView('login');
           })
           .finally(() => {
             if (btnLogin) {
@@ -1317,8 +1329,9 @@
           }
         })
         .catch(err => {
-          showToast('Connection failed. Starting in demo mode.', 'warning');
-          toggleDemoMode();
+          // Don't fall into demo mode on a connection error — show the error and let the
+          // user retry (the Continue button is re-enabled in .finally below).
+          showToast('Could not reach the server. Please check your connection and try again.', 'error');
         })
         .finally(() => {
           if (btnLogin) {
@@ -1479,9 +1492,12 @@
     // Core API Client Fetch Function
     function apiCall(action, payload) {
       if (state.isDemo || !state.apiUrl) {
+        // Route to the offline demo handler when there's genuinely no backend to call.
+        // Do NOT persist the demo flag here — only an explicit demo choice (toggleDemoMode)
+        // or a successful login should decide what mode we boot into next time. Persisting
+        // here is what used to trap live users in demo after a single failed call.
         state.isDemo = true;
         document.getElementById('demo-indicator').classList.remove('hidden');
-        localStorage.setItem('tracker_is_demo', 'true');
         return handleDemoApi(action, payload);
       }
       
