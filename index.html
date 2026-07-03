@@ -1650,7 +1650,7 @@
               const pulpitSustaining = payload.record["Over the Pulpit Sustaining"] || "Home Unit Only";
               addSustainingEntryDemo(payload.record["Member Name"], payload.record["Unit"], "Sustain", payload.record["Calling"], pulpitSustaining);
               if (payload.record["Member to Release"]) {
-                addSustainingEntryDemo(payload.record["Member to Release"], payload.record["Unit"], "Release & Thank", payload.record["Calling"], pulpitSustaining);
+                addSustainingEntryDemo(payload.record["Member to Release"], payload.record["Unit of Member to Release"], "Release & Thank", payload.record["Calling"], pulpitSustaining);
               }
             } else if (payload.type === 'Ordinations') {
               state.records.ordinations.push(recordWithMeta);
@@ -3055,14 +3055,27 @@
           <!-- Section 2: Member to Release -->
           <div class="space-y-4">
             <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400 text-center">Member to Release</h4>
+            ${isAdmin || ['HC Approval', 'Call / Release', 'Sustain'].includes(record['Current Step']) ? `
+            <div>
+              <label class="block text-sm text-slate-400 font-medium mb-1">Member to Release</label>
+              ${isFieldEditable('Member to Release') ? `
+                <input type="text" value="${record['Member to Release'] || ''}" onchange="updateRecordField('Member to Release', this.value)" placeholder="Name" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+              ` : `
+                <div class="text-slate-300 text-base font-semibold py-1.5">${record['Member to Release'] || 'None'}</div>
+              `}
+            </div>
+            ` : ''}
             <div class="grid grid-cols-2 gap-3">
               ${isAdmin || ['HC Approval', 'Call / Release', 'Sustain'].includes(record['Current Step']) ? `
               <div>
-                <label class="block text-sm text-slate-400 font-medium mb-1">Member to Release</label>
-                ${isFieldEditable('Member to Release') ? `
-                  <input type="text" value="${record['Member to Release'] || ''}" onchange="updateRecordField('Member to Release', this.value)" placeholder="Name" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+                <label class="block text-sm text-slate-400 font-medium mb-1">Unit - Released Member</label>
+                ${isFieldEditable('Unit of Member to Release') ? `
+                  <select onchange="updateRecordField('Unit of Member to Release', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                    <option value=""></option>
+                    ${getStakeUnits().map(u => `<option value="${u}" ${record['Unit of Member to Release'] === u ? 'selected' : ''}>${u}</option>`).join('')}
+                  </select>
                 ` : `
-                  <div class="text-slate-300 text-base font-semibold py-1.5">${record['Member to Release'] || 'None'}</div>
+                  <div class="text-slate-300 text-base font-semibold py-1.5">${record['Unit of Member to Release'] || 'None'}</div>
                 `}
               </div>
               ` : '<div></div>'}
@@ -3760,6 +3773,7 @@
       if (isAdmin) return true;
       if (fieldKey === 'Current Step') return false;
       if (fieldKey === 'Set Apart By') return false; // restricted to Admin only
+      if (fieldKey === 'Unit of Member to Release') return false; // restricted to Admin only
       
       const hcWhitelist = [
         "Calling Accepted?", "Calling Accepted",
@@ -5203,6 +5217,12 @@
             <input type="text" id="form-release-member" placeholder="Name of person to be released" class="w-full glass rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200">
           </div>
           <div>
+            <label class="block text-sm font-medium text-slate-400 mb-1">Unit - Released Member</label>
+            <select id="form-release-unit" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200 font-semibold">
+              ${unitOptions}
+            </select>
+          </div>
+          <div>
             <label class="block text-sm font-medium text-slate-400 mb-1">Current Calling</label>
             <input type="text" id="form-current-calling" placeholder="Current calling (if any)" class="w-full glass rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200">
           </div>
@@ -5353,6 +5373,7 @@
         record["Calling"] = document.getElementById('form-calling').value;
         record["Unit"] = document.getElementById('form-unit').value;
         record["Member to Release"] = document.getElementById('form-release-member').value;
+        record["Unit of Member to Release"] = document.getElementById('form-release-unit').value;
         record["Notes"] = document.getElementById('form-notes').value;
         record["Need to be Released"] = record["Member to Release"] ? 'Yes' : 'No';
         record["Current Step"] = document.getElementById('form-current-step').value;
