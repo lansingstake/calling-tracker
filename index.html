@@ -4433,8 +4433,11 @@
         const status = (s["Status"] || "Pending").trim();
         if (status === 'Complete') return; // Complete items don't belong on Pulpit screen
         
-        // Admin: show all pending sustaining items (ordinations, callings, releases)
-        if (state.role === 'admin') {
+        // Admin viewing "All Units": show every pending item (full stake-wide overview).
+        // When the admin selects a specific unit, fall through to the same unit-based
+        // filtering below so the view simulates exactly what an HC / Presidency member
+        // of that unit would see.
+        if (state.role === 'admin' && selectedUnit === 'all') {
           if (status === 'Pending') {
             activeSustainings.push(s);
             keysSeen.add(key);
@@ -4530,9 +4533,13 @@
       // Filter list of releases (Action === "Release & Thank")
       const releases = filteredSustainings.filter(s => s["Action"] === "Release & Thank");
 
-      // Inject Release Only records at "Pulpit Release" step into the pulpit releases list
+      // Inject Release Only records at "Pulpit Release" step into the pulpit releases list.
+      // When a specific unit is selected (including an admin simulating a unit), only inject
+      // releases for that unit — unless the release is stake-wide, which shows for every unit.
       (state.records.releases || []).forEach(r => {
         if (r["Current Step"] === 'Pulpit Release') {
+          const isStakeWide = (r["Stake-Wide Unit Release Required?"] || '') === 'Yes';
+          if (selectedUnit !== 'all' && !isStakeWide && (r["Unit"] || '') !== selectedUnit) return;
           releases.push({
             "Individual": r["Member Name"] || "",
             "Calling": r["Calling to be Released From"] || "",
