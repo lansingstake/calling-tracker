@@ -18,6 +18,11 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   
   <style>
+    html, body {
+      /* Disable the browser's native pull-to-refresh (which used to full-reload the app
+         and dump users back at the login/home screen). We handle pull-to-refresh in-app. */
+      overscroll-behavior-y: contain;
+    }
     body {
       font-family: 'Outfit', sans-serif;
       -webkit-tap-highlight-color: transparent;
@@ -205,6 +210,16 @@
 
   <!-- Notification Toast Container -->
   <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- Pull-to-refresh indicator (shown while pulling down / refreshing the current view) -->
+  <div id="ptr-indicator" class="hidden fixed top-0 left-0 right-0 flex justify-center z-[55] pointer-events-none" style="opacity:0;">
+    <div class="mt-2 bg-slate-800 border border-slate-700 rounded-full p-2 shadow-lg shadow-black/30">
+      <svg id="ptr-spinner" class="h-5 w-5 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+    </div>
+  </div>
 
   <!-- Main Content Container -->
   <main class="flex-grow w-full max-w-md mx-auto px-4 py-4">
@@ -415,6 +430,15 @@
           <!-- Populated dynamically from Settings units, see renderPulpitUnitSelector() -->
           <option value="all" id="pulpit-all-units-option">All Units</option>
         </select>
+      </div>
+
+      <!-- Loading indicator (shown while Over the Pulpit data is being fetched) -->
+      <div id="sunday-loading" class="hidden flex flex-col items-center justify-center py-20 space-y-4 glass rounded-2xl border border-slate-800/60">
+        <svg class="animate-spin h-8 w-8 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span class="text-sm font-semibold text-slate-300 tracking-wide">Loading Over the Pulpit...</span>
       </div>
 
       <!-- Pulpit Announcements Container -->
@@ -2084,6 +2108,85 @@
     function refreshData() {
       fetchDashboardData();
     }
+
+    // Refresh the data for whatever screen the user is currently on, in place — used by
+    // the custom pull-to-refresh gesture so the app no longer full-reloads back to login.
+    function refreshCurrentView() {
+      switch (state.activeTab) {
+        case 'dashboard':
+          fetchDashboardData();
+          break;
+        case 'sunday':
+          fetchSundayData();
+          break;
+        case 'history': {
+          const q = document.getElementById('history-query');
+          performHistorySearch(q ? q.value : '');
+          break;
+        }
+        case 'settings':
+          renderSettings();
+          break;
+        default:
+          break; // login / create — nothing to refresh
+      }
+    }
+
+    // Custom pull-to-refresh: pulling down at the top of a screen refreshes that screen's
+    // data in place (native pull-to-refresh is disabled via overscroll-behavior in CSS).
+    (function setupPullToRefresh() {
+      let startY = 0, pulling = false, pulled = 0, refreshing = false;
+      const THRESHOLD = 70;
+      const el = () => document.getElementById('ptr-indicator');
+      const atTop = () => (window.scrollY || document.documentElement.scrollTop || 0) <= 0;
+      const isRefreshable = () => ['dashboard', 'sunday', 'history', 'settings'].includes(state.activeTab);
+
+      document.addEventListener('touchstart', (e) => {
+        if (refreshing || !atTop() || !isRefreshable()) { pulling = false; return; }
+        startY = e.touches[0].clientY;
+        pulling = true;
+        pulled = 0;
+      }, { passive: true });
+
+      document.addEventListener('touchmove', (e) => {
+        if (!pulling) return;
+        pulled = e.touches[0].clientY - startY;
+        if (pulled > 0 && atTop()) {
+          const node = el();
+          if (node) {
+            node.classList.remove('hidden');
+            node.style.opacity = Math.min(pulled / THRESHOLD, 1);
+            node.style.transform = 'translateY(' + Math.min(pulled, THRESHOLD) + 'px)';
+          }
+        } else {
+          pulling = false; // moved up or scrolled away — cancel
+        }
+      }, { passive: true });
+
+      document.addEventListener('touchend', () => {
+        if (!pulling) return;
+        const node = el();
+        const triggered = pulled >= THRESHOLD;
+        pulling = false;
+        if (triggered) {
+          refreshing = true;
+          const spinner = document.getElementById('ptr-spinner');
+          if (spinner) spinner.classList.add('animate-spin');
+          if (node) { node.style.opacity = 1; node.style.transform = 'translateY(' + THRESHOLD + 'px)'; }
+          refreshCurrentView();
+          setTimeout(() => {
+            refreshing = false;
+            if (spinner) spinner.classList.remove('animate-spin');
+            if (node) { node.classList.add('hidden'); node.style.opacity = 0; node.style.transform = ''; }
+          }, 1000);
+        } else if (node) {
+          node.classList.add('hidden');
+          node.style.opacity = 0;
+          node.style.transform = '';
+        }
+        pulled = 0;
+      });
+    })();
 
     // Clear Demo Data (Go Live)
     function clearDemoData() {
@@ -4372,6 +4475,11 @@
 
     // Fetch active records for Sunday Unit View
     function fetchSundayData() {
+      const loader = document.getElementById('sunday-loading');
+      const container = document.getElementById('sunday-script-container');
+      if (loader) loader.classList.remove('hidden');
+      if (container) container.classList.add('hidden');
+
       apiCall('getData')
         .then(res => {
           if (res.success) {
@@ -4379,7 +4487,7 @@
             state.records.ordinations = res.ordinations || [];
             state.records.releases = res.releases || [];
             state.records.sustainings = normalizeSustainings(res.sustainings || []);
-            
+
             // Re-initialize Sunday ordering cache if it's empty
             initializeSundayOrders();
             renderSundayView();
@@ -4387,7 +4495,11 @@
             showToast('Failed to retrieve Sunday checklist data', 'error');
           }
         })
-        .catch(() => showToast('API connection error', 'error'));
+        .catch(() => showToast('API connection error', 'error'))
+        .finally(() => {
+          if (loader) loader.classList.add('hidden');
+          if (container) container.classList.remove('hidden');
+        });
     }
 
     // Normalize Pulpit Tracker records: map alternate column names to expected ones
