@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- This file is auto-synced from a private source repository. Edit it there, not directly in the deploy repo. -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Calling Tracker</title>
@@ -330,7 +329,12 @@
                 <i data-lucide="award" class="w-5 h-5 text-purple-400"></i>
                 Ordinations
               </h3>
-              <span id="count-ordinations" class="text-sm bg-slate-800 px-3 py-1 rounded-full text-slate-300 font-bold">0</span>
+              <div class="flex items-center gap-2">
+                <span id="count-ordinations" class="text-sm bg-slate-800 px-3 py-1 rounded-full text-slate-300 font-bold">0</span>
+                <button onclick="toggleSection('ordinations')" class="p-1.5 rounded-lg hover:bg-slate-800 transition-all" aria-label="Collapse Ordinations section">
+                  <i data-lucide="chevron-down" class="section-toggle-icon w-4 h-4 text-slate-400 transition-transform" id="section-toggle-icon-ordinations"></i>
+                </button>
+              </div>
             </div>
             <div id="list-ordinations" class="space-y-3"></div>
           </div>
@@ -342,7 +346,12 @@
                 <i data-lucide="user-minus" class="w-5 h-5 text-amber-400"></i>
                 Release Only
               </h3>
-              <span id="count-releases" class="text-sm bg-slate-800 px-3 py-1 rounded-full text-slate-300 font-bold">0</span>
+              <div class="flex items-center gap-2">
+                <span id="count-releases" class="text-sm bg-slate-800 px-3 py-1 rounded-full text-slate-300 font-bold">0</span>
+                <button onclick="toggleSection('releases')" class="p-1.5 rounded-lg hover:bg-slate-800 transition-all" aria-label="Collapse Release Only section">
+                  <i data-lucide="chevron-down" class="section-toggle-icon w-4 h-4 text-slate-400 transition-transform" id="section-toggle-icon-releases"></i>
+                </button>
+              </div>
             </div>
             <div id="list-releases" class="space-y-3"></div>
           </div>
@@ -354,7 +363,12 @@
                 <i data-lucide="user-plus" class="w-5 h-5 text-emerald-400"></i>
                 Callings & Releases
               </h3>
-              <span id="count-callings" class="text-sm bg-slate-800 px-3 py-1 rounded-full text-slate-300 font-bold">0</span>
+              <div class="flex items-center gap-2">
+                <span id="count-callings" class="text-sm bg-slate-800 px-3 py-1 rounded-full text-slate-300 font-bold">0</span>
+                <button onclick="toggleSection('callings')" class="p-1.5 rounded-lg hover:bg-slate-800 transition-all" aria-label="Collapse Callings & Releases section">
+                  <i data-lucide="chevron-down" class="section-toggle-icon w-4 h-4 text-slate-400 transition-transform" id="section-toggle-icon-callings"></i>
+                </button>
+              </div>
             </div>
             <div id="list-callings" class="space-y-3"></div>
           </div>
@@ -2600,14 +2614,14 @@
       }
 
       const isGrouped = (state.role === 'admin' || state.role === 'presidency');
-      
+
       if (isGrouped) {
         // Determine step order based on record type
         let stepOrder;
         if (type === 'Callings Releasings') stepOrder = CALLING_STEP_ORDER;
         else if (type === 'Ordinations') stepOrder = ORDINATION_STEP_ORDER;
         else stepOrder = RELEASE_STEP_ORDER;
-        
+
         // Group records by current step
         const groups = {};
         activeList.forEach(r => {
@@ -2615,25 +2629,28 @@
           if (!groups[step]) groups[step] = [];
           groups[step].push(r);
         });
-        
+
         // Build ordered list of steps (known order first, then any extras)
         const orderedSteps = [];
         stepOrder.forEach(s => { if (groups[s]) orderedSteps.push(s); });
         Object.keys(groups).forEach(s => { if (orderedSteps.indexOf(s) === -1) orderedSteps.push(s); });
-        
+
+        const sectionKey = SECTION_CONTAINER_KEYS[containerId];
+        const sectionIsCollapsed = sectionKey ? !!sectionCollapsed[sectionKey] : false;
+
         container.innerHTML = orderedSteps.map(step => {
           const groupId = `group-${containerId}-${step.replace(/[^a-zA-Z0-9]/g, '_')}`;
           const count = groups[step].length;
           const cardsHtml = groups[step].map(r => renderSingleCard(r, type, borderColorClass)).join('');
-          
+
           return `
             <div class="mb-3">
               <button onclick="toggleStepGroup('${groupId}')" class="step-group-header w-full relative flex items-center justify-between px-3 py-2 rounded-lg bg-slate-700/40 border border-slate-600/40 hover:bg-slate-700/60 transition-all cursor-pointer">
-                <i data-lucide="chevron-down" class="step-group-icon w-4 h-4 text-slate-400 transition-transform" id="${groupId}-icon"></i>
+                <i data-lucide="chevron-down" class="step-group-icon w-4 h-4 text-slate-400 transition-transform" id="${groupId}-icon" style="${sectionIsCollapsed ? 'transform: rotate(-90deg)' : ''}"></i>
                 <span class="absolute left-1/2 -translate-x-1/2 text-xs font-bold uppercase tracking-wider text-slate-300">${step}</span>
                 <span class="step-group-count text-[11px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded-full">${count}</span>
               </button>
-              <div id="${groupId}" class="space-y-2 mt-2">
+              <div id="${groupId}" class="step-group-content space-y-2 mt-2 ${sectionIsCollapsed ? 'hidden' : ''}">
                 ${cardsHtml}
               </div>
             </div>
@@ -2653,6 +2670,29 @@
       if (icon) {
         icon.style.transform = isHidden ? 'rotate(-90deg)' : '';
       }
+    }
+
+    // Maps each dashboard list container to its section-collapse key
+    const SECTION_CONTAINER_KEYS = {
+      'list-ordinations': 'ordinations',
+      'list-releases': 'releases',
+      'list-callings': 'callings'
+    };
+    const sectionCollapsed = { ordinations: false, releases: false, callings: false };
+
+    // Collapses/expands all current-step groups within one dashboard section at once
+    function toggleSection(key) {
+      const collapsed = !sectionCollapsed[key];
+      sectionCollapsed[key] = collapsed;
+
+      const toggleIcon = document.getElementById(`section-toggle-icon-${key}`);
+      if (toggleIcon) toggleIcon.style.transform = collapsed ? 'rotate(-90deg)' : '';
+
+      const containerId = Object.keys(SECTION_CONTAINER_KEYS).find(id => SECTION_CONTAINER_KEYS[id] === key);
+      const container = containerId && document.getElementById(containerId);
+      if (!container) return;
+      container.querySelectorAll('.step-group-content').forEach(el => el.classList.toggle('hidden', collapsed));
+      container.querySelectorAll('.step-group-icon').forEach(el => { el.style.transform = collapsed ? 'rotate(-90deg)' : ''; });
     }
 
     function toggleTheme() {
