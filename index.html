@@ -2769,7 +2769,11 @@
       let assignedBadgeHtml = '';
       if (state.role === 'admin' || state.role === 'presidency') {
         let assignedPerson = '';
-        if (step.includes('Call') || step.includes('Release')) {
+        if (type === 'Release Only') {
+          // The assignee's task is extending the release — only show them at that step
+          // (e.g. not on Pulpit Release, where the units handle the announcement).
+          if (step === 'Extend Release') assignedPerson = r['Assigned to Extend Release'] || '';
+        } else if (step.includes('Call') || step.includes('Release')) {
           assignedPerson = r['Assigned to Extend Calling / Release'] || r['Assigned to Extend Release'] || '';
         } else if (step.includes('Sustain') || step.includes('Ordination')) {
           assignedPerson = r['Assigned to Oversee Sustaining / Ordination'] || '';
@@ -3599,26 +3603,24 @@
           <!-- Section 1: Workflow & Key Info -->
           <div class="space-y-4">
             <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400 text-center">Release Info</h4>
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-sm text-slate-400 font-medium mb-1">Calling to be Released From</label>
-                ${isFieldEditable('Calling to be Released From') ? `
-                  <input type="text" value="${record['Calling to be Released From'] || ''}" onchange="updateRecordField('Calling to be Released From', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
-                ` : `
-                  <div class="text-slate-300 text-base font-semibold py-1.5">${record['Calling to be Released From'] || 'None'}</div>
-                `}
-              </div>
-              <div>
-                <label class="block text-sm text-slate-400 font-medium mb-1">Unit</label>
-                ${isFieldEditable('Unit') ? `
-                  <select onchange="updateRecordField('Unit', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
-                    <option value=""></option>
-                    ${getStakeUnits().map(u => `<option value="${u}" ${record['Unit'] === u ? 'selected' : ''}>${u}</option>`).join('')}
-                  </select>
-                ` : `
-                  <div class="text-slate-300 text-base font-semibold py-1.5">${record['Unit'] || 'None'}</div>
-                `}
-              </div>
+            <div>
+              <label class="block text-sm text-slate-400 font-medium mb-1">Calling to be Released From</label>
+              ${isFieldEditable('Calling to be Released From') ? `
+                <input type="text" value="${record['Calling to be Released From'] || ''}" onchange="updateRecordField('Calling to be Released From', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+              ` : `
+                <div class="text-slate-300 text-base font-semibold py-1.5">${record['Calling to be Released From'] || 'None'}</div>
+              `}
+            </div>
+            <div>
+              <label class="block text-sm text-slate-400 font-medium mb-1">Unit</label>
+              ${isFieldEditable('Unit') ? `
+                <select onchange="updateRecordField('Unit', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                  <option value=""></option>
+                  ${getStakeUnits().map(u => `<option value="${u}" ${record['Unit'] === u ? 'selected' : ''}>${u}</option>`).join('')}
+                </select>
+              ` : `
+                <div class="text-slate-300 text-base font-semibold py-1.5">${record['Unit'] || 'None'}</div>
+              `}
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div>
