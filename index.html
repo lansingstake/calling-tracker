@@ -1637,8 +1637,16 @@
               
               if (item) {
                 // Apply checkbox updates
+                const demoUnitNames = getStakeUnits();
                 for (var key in payload.updates) {
                   if (!key.startsWith('_')) {
+                    // Mirror the backend guard: never create data in a unit column that
+                    // isn't part of this release/sustaining (empty = not participating).
+                    if (demoUnitNames.includes(key)) {
+                      const cur = item[key];
+                      const hasData = cur === 'True' || cur === 'False' || cur === 'Complete' || cur === true || cur === false;
+                      if (!hasData) continue;
+                    }
                     item[key] = String(payload.updates[key]);
                   }
                 }
@@ -1701,11 +1709,14 @@
             if (payload.type === 'Callings Releasings') {
               state.records.callings.push(recordWithMeta);
               
-              // Append to sustainings demo
+              // Append to sustainings demo — "None" means no pulpit announcement at all,
+              // so create no Sustain / Release & Thank tracker rows (mirrors backend).
               const pulpitSustaining = payload.record["Over the Pulpit Sustaining"] || "Home Unit Only";
-              addSustainingEntryDemo(payload.record["Member Name"], payload.record["Unit"], "Sustain", payload.record["Calling"], pulpitSustaining);
-              if (payload.record["Member to Release"]) {
-                addSustainingEntryDemo(payload.record["Member to Release"], payload.record["Unit of Member to Release"], "Release & Thank", payload.record["Calling"], pulpitSustaining);
+              if (pulpitSustaining !== "None") {
+                addSustainingEntryDemo(payload.record["Member Name"], payload.record["Unit"], "Sustain", payload.record["Calling"], pulpitSustaining);
+                if (payload.record["Member to Release"]) {
+                  addSustainingEntryDemo(payload.record["Member to Release"], payload.record["Unit of Member to Release"], "Release & Thank", payload.record["Calling"], pulpitSustaining);
+                }
               }
             } else if (payload.type === 'Ordinations') {
               state.records.ordinations.push(recordWithMeta);
@@ -1832,7 +1843,7 @@
         var rel = state.records.releases.find(r => r["Member Name"].toLowerCase() === memberName.toLowerCase());
         if (rel) {
           rel["Date Released"] = todayStr;
-          rel["Current Step"] = "Release Complete";
+          rel["Current Step"] = "Complete";
         }
       }
     }
@@ -4689,8 +4700,23 @@
       // Inject Release Only records at "Pulpit Release" step into the pulpit releases list.
       // When a specific unit is selected (including an admin simulating a unit), only inject
       // releases for that unit — unless the release is stake-wide, which shows for every unit.
+      // IMPORTANT: this injection is a FALLBACK for records whose Pulpit Tracker row hasn't
+      // been created/fetched yet. If a tracker row already exists for this person+calling,
+      // skip injection entirely — the tracker row carries the real per-unit checkbox data
+      // and the filtering above already decides visibility from it. Injecting a duplicate
+      // "ghost" (with no unit data) used to keep records visible in units that had already
+      // completed them, and check-offs on those ghosts corrupted empty unit columns.
       (state.records.releases || []).forEach(r => {
         if (r["Current Step"] === 'Pulpit Release') {
+          const relName = (r["Member Name"] || "").trim().toLowerCase();
+          const relCalling = (r["Calling to be Released From"] || "").trim().toLowerCase();
+          const trackerRowExists = (state.records.sustainings || []).some(s =>
+            (s["Individual"] || "").trim().toLowerCase() === relName &&
+            (s["Action"] || "") === "Release & Thank" &&
+            ((s["Calling"] || "").trim().toLowerCase() === relCalling ||
+             (s["Calling / Office"] || "").trim().toLowerCase() === relCalling)
+          );
+          if (trackerRowExists) return;
           const isStakeWide = (r["Stake-Wide Unit Release Required?"] || '') === 'Yes';
           if (selectedUnit !== 'all' && !isStakeWide && (r["Unit"] || '') !== selectedUnit) return;
           releases.push({
@@ -4852,9 +4878,12 @@
           const val = cand[u];
           return val === 'False' || val === false || val === '' || val === undefined || val === null;
         });
+        // When a specific unit is filtered, that unit isn't necessarily the home unit,
+        // so the green label just says "Complete" there.
+        const completeLabel = selectedUnit !== 'all' ? 'Complete' : (isHomeUnitOnly ? 'Home unit complete' : 'All units complete');
         const incompleteHtml = incompleteUnits.length > 0
           ? `<p class="text-[11px] text-amber-400 font-medium mt-0.5">Remaining: ${incompleteUnits.join(', ')}</p>`
-          : `<p class="text-[11px] text-emerald-400 font-medium mt-0.5">${isHomeUnitOnly ? 'Home unit complete' : 'All units complete'}</p>`;
+          : `<p class="text-[11px] text-emerald-400 font-medium mt-0.5">${completeLabel}</p>`;
         
         const adminActionHtml = status === 'Complete'
           ? `<span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-bold flex items-center gap-1"><i data-lucide="check-circle" class="w-3 h-3 text-emerald-400"></i> Complete</span>`
@@ -4974,12 +5003,29 @@
           targetType = 'Release Only';
           targetTimestamp = relRecord["Timestamp"];
           targetMemberName = relRecord["Member Name"];
-          recordUpdates = isChecked ? {
-            "Current Step": "Update System + LCR",
+          // Only mark the Release Only record Complete when this check-off finishes ALL
+          // units that are part of the release (home-unit-only completes immediately;
+          // stake-wide completes on the last unit). Mirrors the backend's percent-based
+          // auto-complete in updatePulpitTrackerRecord.
+          const hasVal = (v) => v === 'True' || v === 'False' || v === 'Complete' || v === true || v === false;
+          const isDoneVal = (v) => v === 'True' || v === 'Complete' || v === true;
+          const relRow = (state.records.sustainings || []).find(s =>
+            s["Individual"] === individual && s["Action"] === action &&
+            (s["Calling"] === calling || s["Calling / Office"] === calling)
+          );
+          let relAllDone = isChecked; // no tracker row (fallback ghost) → treat as single-unit
+          if (relRow) {
+            const unitsWithData = getStakeUnits().filter(u => hasVal(relRow[u]));
+            relAllDone = isChecked && unitsWithData.length > 0 && unitsWithData.every(u =>
+              u === targetUnit ? true : isDoneVal(relRow[u])
+            );
+          }
+          recordUpdates = isChecked ? (relAllDone ? {
+            "Current Step": "Complete",
             "Date Released": todayStr,
             "Release Complete?": "Yes"
-          } : {
-            "Current Step": "Release Pending",
+          } : {}) : {
+            "Current Step": "Pulpit Release",
             "Date Released": "",
             "Release Complete?": "No"
           };
@@ -5044,7 +5090,7 @@
         }
       }
       
-      if (targetType) {
+      if (targetType && Object.keys(recordUpdates).length > 0) {
         promises.push(
           apiCall('updateRecord', {
             type: targetType,
@@ -5061,8 +5107,13 @@
       
       let candItem = state.records.sustainings.find(s => s["Individual"] === individual && s["Action"] === action && s["Calling"] === calling);
       if (candItem) {
-        candItem[targetUnit] = isChecked ? "True" : "False";
-        state.sessionSustainings[key] = candItem;
+        // Mirror the backend guard: only units already holding True/False participate.
+        const curVal = candItem[targetUnit];
+        const unitParticipates = curVal === 'True' || curVal === 'False' || curVal === 'Complete' || curVal === true || curVal === false;
+        if (unitParticipates) {
+          candItem[targetUnit] = isChecked ? "True" : "False";
+          state.sessionSustainings[key] = candItem;
+        }
       }
       
       Promise.all(promises)
@@ -5413,6 +5464,7 @@
                 <option value="Admin Review" selected>Admin Review</option>
                 <option value="HC Approval">HC Approval</option>
                 <option value="Call / Release">Call / Release</option>
+                <option value="Sustain">Sustain</option>
                 <option value="Set Apart">Set Apart</option>
                 <option value="Training">Training</option>
               </select>
@@ -5429,9 +5481,11 @@
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="block text-sm font-medium text-slate-400 mb-1">Pulpit Sustaining</label>
-              <select id="form-pulpit-sustaining" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
-                <option value="All Units" selected>All Units</option>
+              <select id="form-pulpit-sustaining" required class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
+                <option value="" selected>-- Select --</option>
+                <option value="All Units">All Units</option>
                 <option value="Home Unit Only">Home Unit Only</option>
+                <option value="None">None</option>
               </select>
             </div>
             <div>
@@ -5508,12 +5562,21 @@
             </select>
           </div>
           <div>
+            <label class="block text-sm font-medium text-slate-400 mb-1">Stake-Wide Release Required?</label>
+            <select id="form-stake-wide" required class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
+              <option value="" selected>-- Select --</option>
+              <option value="Yes">Yes — announce in all units</option>
+              <option value="No">No — home unit only</option>
+            </select>
+          </div>
+          <div>
             <label class="block text-sm font-medium text-slate-400 mb-1">Current Step</label>
             <select id="form-current-step" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
-              <option value="Admin Review">Admin Review</option>
-              <option value="Pending Approval" selected>Pending Approval</option>
-              <option value="Assigned">Assigned</option>
-              <option value="Update System + LCR">Update System + LCR</option>
+              <option value="Admin Review" selected>Admin Review</option>
+              <option value="Extend Release">Extend Release</option>
+              <option value="Pulpit Release">Pulpit Release</option>
+              <option value="Complete">Complete</option>
+              <option value="Cancelled">Cancelled</option>
             </select>
           </div>
           <div>
@@ -5576,6 +5639,7 @@
         record["Record Type"] = "Release";
         record["Calling to be Released From"] = document.getElementById('form-release-calling').value;
         record["Unit"] = document.getElementById('form-unit').value;
+        record["Stake-Wide Unit Release Required?"] = document.getElementById('form-stake-wide').value;
         record["Current Step"] = document.getElementById('form-current-step').value;
         record["Reason for Release"] = document.getElementById('form-release-reason').value;
         record["Assigned to Extend Release"] = document.getElementById('form-release-assigned').value;
