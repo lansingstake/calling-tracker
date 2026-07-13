@@ -445,6 +445,8 @@
           <!-- Populated dynamically from Settings units, see renderPulpitUnitSelector() -->
           <option value="all" id="pulpit-all-units-option">All Units</option>
         </select>
+        <!-- Shown to HC/Presidency when "All Units" is selected (read-only overview) -->
+        <p id="pulpit-unit-note" class="hidden text-[11px] text-amber-400 font-medium">A Unit must be selected to see the "Mark Complete" buttons and show the pulpit script below.</p>
       </div>
 
       <!-- Loading indicator (shown while Over the Pulpit data is being fetched) -->
@@ -1469,23 +1471,19 @@
           assignedUnit = hcUnits[hcIdx] || '';
         }
         
-        // Set the Sunday unit dropdown to the HC's assigned unit
+        // Set the Sunday unit dropdown to the HC's assigned unit. "All Units" stays
+        // selectable as a read-only overview (no check-off controls, no script).
         if (assignedUnit) {
           document.getElementById('sunday-unit-select').value = assignedUnit;
         }
-        // Hide "All Units" from pulpit selector for HC
-        const allUnitsOpt = document.getElementById('pulpit-all-units-option');
-        if (allUnitsOpt) allUnitsOpt.style.display = 'none';
         state.activeFilter = 'all';
       } else if (state.role === 'presidency') {
         // Presidency: hide settings, show filter bar (like admin), show tasks (like HC)
         document.getElementById('nav-settings').classList.add('hidden');
         document.getElementById('db-search-filter-container').classList.remove('hidden');
         document.getElementById('filter-all').classList.remove('hidden');
-        // Hide "All Units" from pulpit selector for Presidency
-        const allUnitsOptP = document.getElementById('pulpit-all-units-option');
-        if (allUnitsOptP) allUnitsOptP.style.display = 'none';
-        // Default pulpit to first unit if currently on "all"
+        // Default pulpit to first unit if currently on "all". "All Units" stays
+        // selectable as a read-only overview (no check-off controls, no script).
         const pulpitSelect = document.getElementById('sunday-unit-select');
         if (pulpitSelect && pulpitSelect.value === 'all') pulpitSelect.value = getStakeUnits()[0] || '';
         setFilter('all');
@@ -4770,31 +4768,42 @@
     // Sunday View Section A: Pulpit Scripts & Up/Down Candidate Reorder
     function renderSundayPulpitAnnouncements(unit) {
       const isAdmin = state.role === 'admin';
+      // HC/Presidency browsing "All Units" get a read-only overview: no pulpit script
+      // (scripts are unit-specific) and no check-off controls (handled per row).
+      const readOnlyAllView = !isAdmin && unit === 'all';
+      const SCRIPT_PLACEHOLDER = 'Select a specific unit to view the pulpit script.';
       const ordinations = state.sundayOrdinationsOrder || [];
       const releases = state.sundayReleasesOrder || [];
       const sustains = state.sundaySustainingsOrder || [];
-      
+
       // Hide script text boxes for admin
       const scriptBoxes = ['sunday-ordination-script-text', 'sunday-release-script-text', 'sunday-sustain-script-text'];
       scriptBoxes.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.toggle('hidden', isAdmin);
       });
-      
+
+      // Gold note under the unit selector, only for the HC/Presidency all-units overview
+      const unitNote = document.getElementById('pulpit-unit-note');
+      if (unitNote) unitNote.classList.toggle('hidden', !readOnlyAllView);
+
       // 1. Render Priesthood Ordinations
       const ordContainer = document.getElementById('sunday-ordination-list');
       const ordScriptBox = document.getElementById('sunday-ordination-script-text');
-      
+
       if (ordinations.length === 0) {
         ordContainer.innerHTML = `<p class="text-sm text-slate-500 italic text-center py-4">No active ordinations</p>`;
-        if (!isAdmin) ordScriptBox.innerHTML = `No ordinations scheduled for this unit.`;
+        if (!isAdmin) ordScriptBox.innerHTML = readOnlyAllView ? SCRIPT_PLACEHOLDER : `No ordinations scheduled for this unit.`;
       } else {
         if (!isAdmin) {
+          if (readOnlyAllView) {
+            ordScriptBox.innerHTML = SCRIPT_PLACEHOLDER;
+          } else {
           const ordString = ordinations.map(o => {
             const officeWord = (o["Calling"] || "").toLowerCase().includes("high priest") ? "a High Priest" : "an Elder";
             return `<span class="text-indigo-400 font-bold">${o["Individual"]}</span> of <span class="text-slate-200 font-semibold">${o["Unit"]}</span> to the office of <span class="text-slate-200 font-semibold">${officeWord}</span>.`;
           }).join('<br>');
-          
+
           ordScriptBox.innerHTML = `
             "The following have been found worthy to advance in the priesthood and we propose they be sustained:<br><br>
             ${ordString}<br><br>
@@ -4802,6 +4811,7 @@
             [Pause for Vote]<br>
             Those opposed, if any, may manifest it."
           `;
+          }
         }
         ordContainer.innerHTML = ordinations.map((o, i) => renderSundayCandidateRow(o, i, 'ordination')).join('');
       }
@@ -4809,18 +4819,22 @@
       // 2. Render Release Announcements
       const relContainer = document.getElementById('sunday-release-list');
       const relScriptBox = document.getElementById('sunday-release-script-text');
-      
+
       if (releases.length === 0) {
         relContainer.innerHTML = `<p class="text-sm text-slate-500 italic text-center py-4">No active releases</p>`;
-        if (!isAdmin) relScriptBox.innerHTML = `No releases scheduled for this unit.`;
+        if (!isAdmin) relScriptBox.innerHTML = readOnlyAllView ? SCRIPT_PLACEHOLDER : `No releases scheduled for this unit.`;
       } else {
         if (!isAdmin) {
+          if (readOnlyAllView) {
+            relScriptBox.innerHTML = SCRIPT_PLACEHOLDER;
+          } else {
           const namesString = releases.map(r => `<span class="text-indigo-400 font-bold">${r["Individual"]}</span> of <span class="text-slate-200 font-semibold">${r["Unit"]}</span> as <span class="text-slate-200 font-semibold">${r["Calling"]}</span>.`).join('<br>');
           relScriptBox.innerHTML = `
             "The following have been released, and we propose that they be given a vote of thanks for their service:<br><br>
             ${namesString}<br><br>
             Those who wish to express their appreciation may manifest it by the uplifted hand."
           `;
+          }
         }
         relContainer.innerHTML = releases.map((r, i) => renderSundayCandidateRow(r, i, 'release')).join('');
       }
@@ -4831,13 +4845,16 @@
       
       if (sustains.length === 0) {
         susContainer.innerHTML = `<p class="text-sm text-slate-500 italic text-center py-4">No active sustainings</p>`;
-        if (!isAdmin) susScriptBox.innerHTML = `No sustainings scheduled for this unit.`;
+        if (!isAdmin) susScriptBox.innerHTML = readOnlyAllView ? SCRIPT_PLACEHOLDER : `No sustainings scheduled for this unit.`;
       } else {
         if (!isAdmin) {
+          if (readOnlyAllView) {
+            susScriptBox.innerHTML = SCRIPT_PLACEHOLDER;
+          } else {
           const susWording = sustains.map(s => {
             return `<span class="text-indigo-400 font-bold">${s["Individual"]}</span> of <span class="text-slate-200 font-semibold">${s["Unit"]}</span> as <span class="text-slate-200 font-semibold">${s["Calling"]}</span>.`;
           }).join('<br>');
-          
+
           susScriptBox.innerHTML = `
             "The following have been extended callings, and we propose that they be sustained:<br><br>
             ${susWording}<br><br>
@@ -4845,6 +4862,7 @@
             [Pause for Vote]<br>
             Those opposed, if any, may manifest it."
           `;
+          }
         }
         susContainer.innerHTML = sustains.map((s, i) => renderSundayCandidateRow(s, i, 'sustain')).join('');
       }
@@ -4866,27 +4884,29 @@
       const upDisabled = idx === 0 ? 'opacity-20 pointer-events-none' : '';
       const downDisabled = idx === listLen - 1 ? 'opacity-20 pointer-events-none' : '';
       
-      if (isAdmin) {
-        const status = (cand["Status"] || "Pending").trim();
-        
-        // Determine which units are relevant for this item
-        // "Home Unit Only" items only have their home unit column set (True/False); others are empty
+      // Per-unit progress label: which units still need to sustain/release this person.
+      // "Home Unit Only" items only have their home unit column set (True/False); others are empty.
+      // When a specific unit is filtered, that unit isn't necessarily the home unit,
+      // so the green label just says "Complete" there.
+      const buildUnitProgressHtml = () => {
         const hasData = (val) => val === 'Complete' || val === 'True' || val === 'False' || val === true || val === false;
         const relevantUnits = getStakeUnits().filter(u => hasData(cand[u]));
         const isHomeUnitOnly = relevantUnits.length <= 1;
-
         const unitsToCheck = isHomeUnitOnly ? relevantUnits : getStakeUnits();
         const incompleteUnits = unitsToCheck.filter(u => {
           const val = cand[u];
           return val === 'False' || val === false || val === '' || val === undefined || val === null;
         });
-        // When a specific unit is filtered, that unit isn't necessarily the home unit,
-        // so the green label just says "Complete" there.
         const completeLabel = selectedUnit !== 'all' ? 'Complete' : (isHomeUnitOnly ? 'Home unit complete' : 'All units complete');
-        const incompleteHtml = incompleteUnits.length > 0
+        return incompleteUnits.length > 0
           ? `<p class="text-[11px] text-amber-400 font-medium mt-0.5">Remaining: ${incompleteUnits.join(', ')}</p>`
           : `<p class="text-[11px] text-emerald-400 font-medium mt-0.5">${completeLabel}</p>`;
-        
+      };
+
+      if (isAdmin) {
+        const status = (cand["Status"] || "Pending").trim();
+        const incompleteHtml = buildUnitProgressHtml();
+
         const adminActionHtml = status === 'Complete'
           ? `<span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-bold flex items-center gap-1"><i data-lucide="check-circle" class="w-3 h-3 text-emerald-400"></i> Complete</span>`
           : `<button onclick="markSustainingComplete('${individualVal.replace(/'/g, "\\'")}', '${cand["Action"]}', '${callingVal.replace(/'/g, "\\'")}')" class="px-2.5 py-1 text-[11px] font-bold bg-emerald-600 hover:bg-emerald-500 active:scale-95 transition-all text-white rounded flex items-center gap-1 whitespace-nowrap">
@@ -4911,8 +4931,22 @@
         `;
       }
       
+      // HC / Presidency on "All Units": read-only overview — no check-off controls and
+      // no reordering; shows the same remaining-units progress the admin sees.
+      if (selectedUnit === 'all') {
+        return `
+          <div class="glass p-3 rounded-xl flex items-center justify-between gap-3 border border-slate-800">
+            <div class="min-w-0">
+              <p class="text-sm font-bold text-slate-100">${individualVal} <span class="text-slate-400 font-medium">(${cand["Unit"] || ''})</span></p>
+              <p class="text-[11px] text-slate-400 font-medium break-words">${callingVal}</p>
+              ${buildUnitProgressHtml()}
+            </div>
+          </div>
+        `;
+      }
+
       // HC / Presidency view (existing behavior)
-      const actionButtonHtml = isChecked 
+      const actionButtonHtml = isChecked
         ? `<span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-bold flex items-center gap-1"><i data-lucide="check-circle" class="w-3 h-3 text-emerald-400"></i> Done</span>`
         : `<button onclick="toggleSustaining('${individualVal.replace(/'/g, "\\'")}', '${cand["Action"]}', '${callingVal.replace(/'/g, "\\'")}', true)" class="px-2.5 py-1 text-[11px] font-bold bg-emerald-600 hover:bg-emerald-500 active:scale-95 transition-all text-white rounded flex items-center gap-1">
             <i data-lucide="check" class="w-3 h-3"></i> Check Off
