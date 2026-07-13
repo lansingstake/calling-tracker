@@ -234,9 +234,16 @@
         </div>
         
         <div class="space-y-4">
+          <!-- Off-screen username field so browser password managers can save/fill the PIN
+               keyed to the selected name (the visible name picker is a <select>, which
+               password managers ignore). Kept off-screen rather than display:none because
+               most managers skip truly hidden fields. Synced in handleLogin(). -->
+          <div style="position:absolute; width:1px; height:1px; overflow:hidden; left:-9999px;" aria-hidden="true">
+            <input type="text" id="login-username-shadow" name="username" autocomplete="username" tabindex="-1">
+          </div>
           <div>
             <label class="block text-sm font-medium text-slate-400 mb-1">Enter Shared PIN</label>
-            <input type="password" id="login-pin" oninput="document.getElementById('hc-name-selector').classList.add('hidden')" onkeydown="if(event.key === 'Enter') { event.preventDefault(); handleLogin(); }" placeholder="********" maxlength="8" class="w-full glass rounded-xl px-4 py-3 text-center text-lg font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder-slate-600">
+            <input type="password" id="login-pin" name="pin" autocomplete="current-password" oninput="document.getElementById('hc-name-selector').classList.add('hidden')" onkeydown="if(event.key === 'Enter') { event.preventDefault(); handleLogin(); }" placeholder="********" maxlength="8" class="w-full glass rounded-xl px-4 py-3 text-center text-lg font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder-slate-600">
           </div>
 
           <!-- API URL (shown only if not yet configured) -->
@@ -995,7 +1002,14 @@
 
       // Setup default configuration URL
       document.getElementById('settings-api-url').value = state.apiUrl;
-      
+
+      // Prefill the off-screen username field so browser password managers associate
+      // any saved PIN with the right name when autofilling the login form.
+      const loginUsernameShadow = document.getElementById('login-username-shadow');
+      if (loginUsernameShadow && !loginUsernameShadow.value) {
+        loginUsernameShadow.value = localStorage.getItem('tracker_username') || '';
+      }
+
       // Show API URL field on login screen if not configured
       const loginApiSection = document.getElementById('login-api-section');
       if (loginApiSection) {
@@ -1232,7 +1246,12 @@
     function handleLogin() {
       const pin = document.getElementById('login-pin').value;
       const hcName = document.getElementById('login-hc-name').value;
-      
+
+      // Sync the off-screen username field at submit time so the browser's password
+      // manager saves the PIN keyed to the selected name (see login form markup).
+      const usernameShadow = document.getElementById('login-username-shadow');
+      if (usernameShadow) usernameShadow.value = hcName || localStorage.getItem('tracker_username') || 'Admin';
+
       if (!pin) {
         showToast('Please enter a PIN', 'error');
         return;
@@ -1345,6 +1364,18 @@
               localStorage.setItem('tracker_pin', pin);
               localStorage.setItem('tracker_username', res.username || '');
               localStorage.setItem('tracker_is_demo', isDemoSession ? 'true' : 'false');
+
+              // Nudge the browser's password manager to offer saving the PIN.
+              // Chrome/Edge support the Credential Management API; Safari/Firefox
+              // fall back to the form heuristics (autocomplete attributes above).
+              try {
+                if (window.PasswordCredential && navigator.credentials && navigator.credentials.store) {
+                  navigator.credentials.store(new PasswordCredential({
+                    id: res.username || 'Admin',
+                    password: pin
+                  })).catch(() => {});
+                }
+              } catch (e) { /* non-fatal — saving credentials is best-effort */ }
               if (isDemoSession) {
                 document.getElementById('demo-indicator').classList.remove('hidden');
                 loadDemoData();
