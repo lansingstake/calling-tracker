@@ -635,8 +635,11 @@
         <div id="content-roster" class="hidden space-y-4 mt-4">
           <p class="text-[11px] text-slate-400">Renaming a high councilor here renames their approval column header in Google Sheets dynamically, preserving historical counts.</p>
           <div class="grid grid-cols-1 gap-2" id="roster-inputs">
-            <!-- 12 Councilor name inputs and unit selects -->
+            <!-- Councilor name inputs and unit selects (at least 12 slots; Add button for more) -->
           </div>
+          <button onclick="addHCField()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold py-2.5 rounded-xl text-sm transition-all active:scale-95 flex items-center justify-center gap-2 mt-2 shadow-lg">
+            <i data-lucide="plus" class="w-4 h-4"></i> Add High Councilor Slot
+          </button>
           <button onclick="saveRoster()" id="btn-save-roster" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl text-sm transition-all active:scale-95 flex items-center justify-center gap-2 mt-4 shadow-lg shadow-emerald-500/10">
             <i data-lucide="save" class="w-4 h-4"></i> Save Changes
           </button>
@@ -938,6 +941,20 @@
       if (state.isDemo) return STAKE_UNITS;
       const configured = (state.stakeUnits || []).filter(u => u && u.trim() !== "");
       return configured.length > 0 ? configured : STAKE_UNITS;
+    }
+
+    // Rosters may legitimately repeat a name (one high councilor covering two units —
+    // one Settings slot per unit). Anywhere the roster represents PEOPLE (vote tiles,
+    // vote counts, owner checkboxes, dropdowns, emails), collapse to unique names so
+    // one person is never listed or counted twice.
+    function uniqueNames(list) {
+      const seen = new Set();
+      return (list || []).filter(n => {
+        const key = (n || '').trim().toLowerCase();
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
     }
 
     // Mock Data for Demo Mode (empty - connect to live API for real data)
@@ -1337,7 +1354,7 @@
               let selectHtml = '<option value="">-- Select your Name --</option>';
               
               const hcRoster = state.isDemo ? (state.records.highCouncilors || mockData.highCouncilors) : state.highCouncilors;
-              selectHtml += hcRoster.map(name => `<option value="${name}">${name}</option>`).join('');
+              selectHtml += uniqueNames(hcRoster).map(name => `<option value="${name}">${name}</option>`).join('');
               
               selector.innerHTML = selectHtml;
               document.getElementById('login-selector-label').innerText = 'Select your Name';
@@ -1957,12 +1974,12 @@
       const headers = Object.keys(state.records.actions[0]);
       state.auditFails = [];
       
-      const allNames = [
+      const allNames = uniqueNames([
         ...(state.stakePresidency || []),
         ...(state.highCouncilors || []),
         ...(state.admins || [])
-      ];
-      
+      ]);
+
       allNames.forEach(name => {
         if (!name) return;
         const expected = "Approval [" + name + "]";
@@ -2776,7 +2793,7 @@
       if (type !== 'Release Only' && step === 'HC Approval') {
         let approves = 0;
         if (state.highCouncilors) {
-          state.highCouncilors.forEach(hcName => {
+          uniqueNames(state.highCouncilors).forEach(hcName => {
             if (r[`Approval [${hcName}]`] === 'Yes') approves++;
           });
         }
@@ -2950,17 +2967,17 @@
       
       if (adminRoster.length > 0) {
         ownerHtml += '<optgroup label="Admins">';
-        ownerHtml += adminRoster.map(name => `<option value="${name}">${name}</option>`).join('');
+        ownerHtml += uniqueNames(adminRoster).map(name => `<option value="${name}">${name}</option>`).join('');
         ownerHtml += '</optgroup>';
       }
       if (spRoster.length > 0) {
         ownerHtml += '<optgroup label="Presidency">';
-        ownerHtml += spRoster.map(name => `<option value="${name}">${name}</option>`).join('');
+        ownerHtml += uniqueNames(spRoster).map(name => `<option value="${name}">${name}</option>`).join('');
         ownerHtml += '</optgroup>';
       }
       if (hcRoster.length > 0) {
         ownerHtml += '<optgroup label="High Council">';
-        ownerHtml += hcRoster.map(name => `<option value="${name}">${name}</option>`).join('');
+        ownerHtml += uniqueNames(hcRoster).map(name => `<option value="${name}">${name}</option>`).join('');
         ownerHtml += '</optgroup>';
       }
       ownerSelect.innerHTML = ownerHtml;
@@ -3092,7 +3109,7 @@
         let yesVotes = 0;
         let noVotes = 0;
         if (state.highCouncilors) {
-          state.highCouncilors.forEach(name => {
+          uniqueNames(state.highCouncilors).forEach(name => {
             if (record[`Approval [${name}]`] === 'Yes') yesVotes++;
             if (record[`Approval [${name}]`] === 'No') noVotes++;
           });
@@ -3108,7 +3125,7 @@
           </div>
         ` : '<div id="approval-banner"></div>';
 
-        const approvalsList = state.highCouncilors.map(name => {
+        const approvalsList = uniqueNames(state.highCouncilors).map(name => {
           const colHeader = `Approval [${name}]`;
           const vote = record[colHeader] || '';
           
@@ -3395,7 +3412,7 @@
         let yesVotes = 0;
         let noVotes = 0;
         if (state.highCouncilors) {
-          state.highCouncilors.forEach(name => {
+          uniqueNames(state.highCouncilors).forEach(name => {
             if (record[`Approval [${name}]`] === 'Yes') yesVotes++;
             if (record[`Approval [${name}]`] === 'No') noVotes++;
           });
@@ -3411,7 +3428,7 @@
           </div>
         `;
 
-        const approvalsList = state.highCouncilors.map(name => {
+        const approvalsList = uniqueNames(state.highCouncilors).map(name => {
           const colHeader = `Approval [${name}]`;
           const vote = record[colHeader] || '';
           
@@ -3776,7 +3793,7 @@
           ownerHtml += `
             <div class="mb-3">
               <h5 class="text-[10px] uppercase font-bold text-slate-400 mb-1.5">Admins</h5>
-              ${adminRoster.map(name => `
+              ${uniqueNames(adminRoster).map(name => `
                 <label class="flex items-center gap-2 text-sm text-slate-300 mb-1 cursor-pointer hover:bg-slate-800/50 p-1 rounded">
                   <input type="checkbox" data-name="${name}" ${hasApproval(name) ? 'checked' : ''} onchange="updateGroupCheckboxStates()" class="owner-checkbox rounded bg-slate-800 border-slate-600 text-emerald-500 w-3.5 h-3.5"> <span class="select-none">${name}</span>
                 </label>
@@ -3788,7 +3805,7 @@
           ownerHtml += `
             <div class="mb-3">
               <h5 class="text-[10px] uppercase font-bold text-slate-400 mb-1.5">Presidency</h5>
-              ${spRoster.map(name => `
+              ${uniqueNames(spRoster).map(name => `
                 <label class="flex items-center gap-2 text-sm text-slate-300 mb-1 cursor-pointer hover:bg-slate-800/50 p-1 rounded">
                   <input type="checkbox" data-name="${name}" data-group="Presidency" ${hasApproval(name) ? 'checked' : ''} onchange="updateGroupCheckboxStates()" class="owner-checkbox rounded bg-slate-800 border-slate-600 text-emerald-500 w-3.5 h-3.5"> <span class="select-none">${name}</span>
                 </label>
@@ -3800,7 +3817,7 @@
           ownerHtml += `
             <div class="mb-3">
               <h5 class="text-[10px] uppercase font-bold text-slate-400 mb-1.5">High Council</h5>
-              ${hcRoster.map(name => `
+              ${uniqueNames(hcRoster).map(name => `
                 <label class="flex items-center gap-2 text-sm text-slate-300 mb-1 cursor-pointer hover:bg-slate-800/50 p-1 rounded">
                   <input type="checkbox" data-name="${name}" data-group="High Council" ${hasApproval(name) ? 'checked' : ''} onchange="updateGroupCheckboxStates()" class="owner-checkbox rounded bg-slate-800 border-slate-600 text-emerald-500 w-3.5 h-3.5"> <span class="select-none">${name}</span>
                 </label>
@@ -4092,8 +4109,8 @@
     function updateRosterDatalist() {
       const spRoster = state.isDemo ? (state.records.stakePresidency || mockData.stakePresidency) : state.stakePresidency;
       const hcRoster = state.isDemo ? (state.records.highCouncilors || mockData.highCouncilors) : state.highCouncilors;
-      const allNames = [...(spRoster || []), ...(hcRoster || [])];
-      
+      const allNames = uniqueNames([...(spRoster || []), ...(hcRoster || [])]);
+
       let datalist = document.getElementById('stake-presidency-hc-list');
       if (!datalist) {
         datalist = document.createElement('datalist');
@@ -5492,8 +5509,8 @@
       const unitOptions = '<option value=""></option>' + getStakeUnits().map(u => `<option value="${u}">${u}</option>`).join('');
       const spRoster = state.isDemo ? (state.records.stakePresidency || mockData.stakePresidency) : state.stakePresidency;
       const hcRoster = state.isDemo ? (state.records.highCouncilors || mockData.highCouncilors) : state.highCouncilors;
-      const rosterOptionsStr = '<option value="" disabled selected>Select an assignment...</option>' + 
-        [...(spRoster || []), ...(hcRoster || [])].filter(Boolean).map(n => `<option value="${n}">${n}</option>`).join('');
+      const rosterOptionsStr = '<option value="" disabled selected>Select an assignment...</option>' +
+        uniqueNames([...(spRoster || []), ...(hcRoster || [])]).map(n => `<option value="${n}">${n}</option>`).join('');
 
       if (state.formType === 'calling') {
         lblName.innerText = "Member Name (Person being called)";
@@ -6104,6 +6121,30 @@
           dismissToast(load);
           showToast('Connection error', 'error');
         });
+    }
+
+    // Add another High Councilor slot beyond the standard 12 — for stakes/districts
+    // where slots track unit coverage (one slot per unit, a councilor may fill several)
+    // or that simply have more than 12 units. The view always pads to at least 12 rows,
+    // so extend one past the currently displayed count to actually add a visible row.
+    function addHCField() {
+      if (state.isDemo) {
+        state.records.highCouncilors = state.records.highCouncilors || [];
+        state.records.highCouncilorUnits = state.records.highCouncilorUnits || [];
+        state.records.highCouncilorEmails = state.records.highCouncilorEmails || [];
+      } else {
+        state.highCouncilors = state.highCouncilors || [];
+        state.highCouncilorUnits = state.highCouncilorUnits || [];
+        state.highCouncilorEmails = state.highCouncilorEmails || [];
+      }
+      const roster = state.isDemo ? state.records.highCouncilors : state.highCouncilors;
+      const units = state.isDemo ? state.records.highCouncilorUnits : state.highCouncilorUnits;
+      const emails = state.isDemo ? state.records.highCouncilorEmails : state.highCouncilorEmails;
+      const target = Math.max(12, roster.length, units.length, emails.length) + 1;
+      while (roster.length < target) roster.push('');
+      while (units.length < target) units.push('');
+      while (emails.length < target) emails.push('');
+      renderSettings();
     }
 
     function addUnitField() {
