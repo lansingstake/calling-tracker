@@ -943,6 +943,22 @@
       return configured.length > 0 ? configured : STAKE_UNITS;
     }
 
+    // Each unit is a Ward or a Branch ("Unit Types" row on the Settings tab, aligned
+    // positionally with "Stake Units"). Data/dropdowns keep the plain unit name; the
+    // pulpit scripts append the type: "Williamston" -> "Williamston Ward".
+    function unitTypeFor(unit) {
+      const units = state.stakeUnits || [];
+      const types = state.stakeUnitTypes || [];
+      const idx = units.findIndex(u => (u || '').trim().toLowerCase() === (unit || '').trim().toLowerCase());
+      return (idx !== -1 && types[idx] === 'Branch') ? 'Branch' : 'Ward';
+    }
+
+    function unitDisplayName(unit) {
+      const name = (unit || '').trim();
+      if (!name) return '';
+      return name + ' ' + unitTypeFor(name);
+    }
+
     // Rosters may legitimately repeat a name (one high councilor covering two units —
     // one Settings slot per unit). Anywhere the roster represents PEOPLE (vote tiles,
     // vote counts, owner checkboxes, dropdowns, emails), collapse to unique names so
@@ -1067,6 +1083,7 @@
               state.stakePresidency = res.stakePresidency || [];
               state.stakePresidencyEmails = res.stakePresidencyEmails || [];
               state.stakeUnits = res.stakeUnits || [];
+              state.stakeUnitTypes = res.stakeUnitTypes || [];
               state.admins = res.admins || [];
               state.adminEmails = res.adminEmails || [];
               if (res.adminPin) state.adminPin = res.adminPin;
@@ -1321,6 +1338,7 @@
               state.highCouncilorUnits = res.highCouncilorUnits || [];
               state.stakePresidency = res.stakePresidency || [];
               state.stakeUnits = res.stakeUnits || [];
+              state.stakeUnitTypes = res.stakeUnitTypes || [];
               state.admins = res.admins || [];
               
               const selector = document.getElementById('login-hc-name');
@@ -1349,6 +1367,7 @@
               state.highCouncilorUnits = res.highCouncilorUnits || [];
               state.stakePresidency = res.stakePresidency || [];
               state.stakeUnits = res.stakeUnits || [];
+              state.stakeUnitTypes = res.stakeUnitTypes || [];
               
               const selector = document.getElementById('login-hc-name');
               let selectHtml = '<option value="">-- Select your Name --</option>';
@@ -1373,6 +1392,7 @@
               state.stakePresidency = res.stakePresidency || [];
               state.stakePresidencyEmails = res.stakePresidencyEmails || [];
               state.stakeUnits = res.stakeUnits || [];
+              state.stakeUnitTypes = res.stakeUnitTypes || [];
               state.admins = res.admins || [];
               state.adminEmails = res.adminEmails || [];
               if (res.adminPin) state.adminPin = res.adminPin;
@@ -2023,6 +2043,7 @@
               document.title = state.stakeName + " Tracker";
             }
             state.stakeUnits = res.stakeUnits || [];
+            state.stakeUnitTypes = res.stakeUnitTypes || [];
             state.records.callings = sortRecordsByStoredOrder('Callings Releasings', res.callings || []);
             state.records.ordinations = sortRecordsByStoredOrder('Ordinations', res.ordinations || []);
             state.records.releases = sortRecordsByStoredOrder('Release Only', res.releases || []);
@@ -4585,6 +4606,8 @@
       apiCall('getData')
         .then(res => {
           if (res.success) {
+            if (res.stakeUnits) state.stakeUnits = res.stakeUnits;
+            if (res.stakeUnitTypes) state.stakeUnitTypes = res.stakeUnitTypes;
             state.records.callings = res.callings || [];
             state.records.ordinations = res.ordinations || [];
             state.records.releases = res.releases || [];
@@ -4849,18 +4872,29 @@
           if (readOnlyAllView) {
             ordScriptBox.innerHTML = SCRIPT_PLACEHOLDER;
           } else {
-          const ordString = ordinations.map(o => {
-            const officeWord = (o["Calling"] || "").toLowerCase().includes("high priest") ? "a High Priest" : "an Elder";
-            return `<span class="text-indigo-400 font-bold">${o["Individual"]}</span> of <span class="text-slate-200 font-semibold">${o["Unit"]}</span> to the office of <span class="text-slate-200 font-semibold">${officeWord}</span>.`;
-          }).join('<br>');
-
-          ordScriptBox.innerHTML = `
-            "The following have been found worthy to advance in the priesthood and we propose they be sustained:<br><br>
-            ${ordString}<br><br>
-            Those in favor may manifest it by the uplifted hand.<br>
+          // Separate subsections: Elders first, then High Priests, each with its own
+          // lead wording and vote. Name lines carry no office (the subsection says it).
+          const fmtOrd = (o) => `<span class="text-indigo-400 font-bold">${o["Individual"]}</span> of <span class="text-slate-200 font-semibold">the ${unitDisplayName(o["Unit"])}</span>.`;
+          const voteLines = `Those in favor may manifest it by the uplifted hand.<br>
             [Pause for Vote]<br>
-            Those opposed, if any, may manifest it."
-          `;
+            Those opposed, if any, may manifest it."`;
+          const elders = ordinations.filter(o => !(o["Calling"] || "").toLowerCase().includes("high priest"));
+          const highPriests = ordinations.filter(o => (o["Calling"] || "").toLowerCase().includes("high priest"));
+          let ordHtml = '';
+          if (elders.length > 0) {
+            ordHtml += `<p class="text-center font-bold not-italic text-slate-200 mb-2">Elder Sustaining</p>
+            "The following have been found worthy to receive the Melchizedek Priesthood and be ordained to the office of Elder and we propose they be sustained:<br><br>
+            ${elders.map(fmtOrd).join('<br>')}<br><br>
+            ${voteLines}`;
+          }
+          if (highPriests.length > 0) {
+            if (ordHtml) ordHtml += '<br><br>';
+            ordHtml += `<p class="text-center font-bold not-italic text-slate-200 mb-2">High Priest Sustaining</p>
+            "The following have been found worthy to be ordained to the office of High Priest and we propose they be sustained:<br><br>
+            ${highPriests.map(fmtOrd).join('<br>')}<br><br>
+            ${voteLines}`;
+          }
+          ordScriptBox.innerHTML = ordHtml;
           }
         }
         ordContainer.innerHTML = ordinations.map((o, i) => renderSundayCandidateRow(o, i, 'ordination')).join('');
@@ -4878,7 +4912,7 @@
           if (readOnlyAllView) {
             relScriptBox.innerHTML = SCRIPT_PLACEHOLDER;
           } else {
-          const namesString = releases.map(r => `<span class="text-indigo-400 font-bold">${r["Individual"]}</span> of <span class="text-slate-200 font-semibold">${r["Unit"]}</span> as <span class="text-slate-200 font-semibold">${r["Calling"]}</span>.`).join('<br>');
+          const namesString = releases.map(r => `<span class="text-indigo-400 font-bold">${r["Individual"]}</span> of <span class="text-slate-200 font-semibold">the ${unitDisplayName(r["Unit"])}</span> as <span class="text-slate-200 font-semibold">${r["Calling"]}</span>.`).join('<br>');
           relScriptBox.innerHTML = `
             "The following have been released, and we propose that they be given a vote of thanks for their service:<br><br>
             ${namesString}<br><br>
@@ -4902,7 +4936,7 @@
             susScriptBox.innerHTML = SCRIPT_PLACEHOLDER;
           } else {
           const susWording = sustains.map(s => {
-            return `<span class="text-indigo-400 font-bold">${s["Individual"]}</span> of <span class="text-slate-200 font-semibold">${s["Unit"]}</span> as <span class="text-slate-200 font-semibold">${s["Calling"]}</span>.`;
+            return `<span class="text-indigo-400 font-bold">${s["Individual"]}</span> of <span class="text-slate-200 font-semibold">the ${unitDisplayName(s["Unit"])}</span> as <span class="text-slate-200 font-semibold">${s["Calling"]}</span>.`;
           }).join('<br>');
 
           susScriptBox.innerHTML = `
@@ -5937,15 +5971,25 @@
         
         const unitsContainer = document.getElementById('units-inputs');
         let stakeUnits = state.isDemo ? (state.records.stakeUnits || mockData.stakeUnits || []) : (state.stakeUnits || []);
+        const stakeUnitTypes = state.isDemo ? (state.records.stakeUnitTypes || []) : (state.stakeUnitTypes || []);
         if (!stakeUnits || stakeUnits.length === 0) stakeUnits = [""]; // Ensure at least 1 unit field exists
-        
+
         unitsContainer.innerHTML = stakeUnits.map((u, i) => {
           const isFirst = i === 0;
+          const unitType = stakeUnitTypes[i] === 'Branch' ? 'Branch' : 'Ward';
           return `
             <div class="flex items-center gap-2 p-2 bg-slate-900/40 rounded-xl border border-slate-800/60">
               <div class="flex-1 min-w-0">
                 <label class="block text-sm font-medium text-slate-400 mb-1 flex items-center justify-center">Unit ${i+1}</label>
                 <input type="text" id="unit-input-${i}" value="${u}" onblur="saveUnits()" class="w-full glass rounded-lg px-2.5 py-1.5 text-center text-sm focus:ring-1 focus:ring-amber-500 text-slate-300">
+                <div class="flex items-center justify-center gap-4 mt-1.5">
+                  <label class="flex items-center gap-1.5 text-xs text-slate-300 cursor-pointer select-none">
+                    <input type="radio" name="unit-type-${i}" value="Ward" ${unitType !== 'Branch' ? 'checked' : ''} onchange="saveUnits()" class="w-3.5 h-3.5 text-amber-500 focus:ring-amber-500 bg-slate-800 border-slate-600"> Ward
+                  </label>
+                  <label class="flex items-center gap-1.5 text-xs text-slate-300 cursor-pointer select-none">
+                    <input type="radio" name="unit-type-${i}" value="Branch" ${unitType === 'Branch' ? 'checked' : ''} onchange="saveUnits()" class="w-3.5 h-3.5 text-amber-500 focus:ring-amber-500 bg-slate-800 border-slate-600"> Branch
+                  </label>
+                </div>
               </div>
               ${!isFirst ? `
               <div class="w-10 flex items-end justify-center pb-1.5">
@@ -6149,13 +6193,16 @@
 
     function addUnitField() {
       if (!state.stakeUnits) state.stakeUnits = [];
+      if (!state.stakeUnitTypes) state.stakeUnitTypes = [];
       state.stakeUnits.push("");
+      state.stakeUnitTypes.push("Ward");
       renderSettings();
     }
 
     function removeUnitField(index) {
       if (!state.stakeUnits) return;
       state.stakeUnits.splice(index, 1);
+      if (state.stakeUnitTypes) state.stakeUnitTypes.splice(index, 1);
       renderSettings();
       saveUnits(); // Auto-save after removing
     }
@@ -6163,14 +6210,23 @@
     let unitSaveTimeout = null;
     function saveUnits() {
       const inputs = [];
+      const types = [];
       let i = 0;
       while (document.getElementById(`unit-input-${i}`)) {
         inputs.push(document.getElementById(`unit-input-${i}`).value.trim());
+        const checkedType = document.querySelector(`input[name="unit-type-${i}"]:checked`);
+        types.push(checkedType && checkedType.value === 'Branch' ? 'Branch' : 'Ward');
         i++;
       }
-      
-      const filteredUnits = inputs.filter(Boolean);
+
+      // Keep unit/type PAIRS aligned when dropping blank unit names
+      const filteredUnits = [];
+      const filteredTypes = [];
+      inputs.forEach((u, idx) => {
+        if (u) { filteredUnits.push(u); filteredTypes.push(types[idx]); }
+      });
       state.stakeUnits = inputs.length > 0 ? inputs : [""];
+      state.stakeUnitTypes = inputs.length > 0 ? types : ["Ward"];
 
       // Update the HC Dropdowns immediately with the new inputs array
       renderSettings();
@@ -6182,7 +6238,7 @@
       clearTimeout(unitSaveTimeout);
       unitSaveTimeout = setTimeout(() => {
         showToast('Saving units...', 'info');
-        apiCall('updateStakeUnits', { pin: state.pin, username: state.username, units: filteredUnits })
+        apiCall('updateStakeUnits', { pin: state.pin, username: state.username, units: filteredUnits, unitTypes: filteredTypes })
           .then(res => {
             if (res.success) {
               showToast('Units saved successfully!', 'success');
