@@ -2049,7 +2049,7 @@
             state.stakeUnits = res.stakeUnits || [];
             state.stakeUnitTypes = res.stakeUnitTypes || [];
             state.records.callings = sortRecordsByStoredOrder('Callings Releasings', res.callings || []);
-            state.records.ordinations = sortRecordsByStoredOrder('Ordinations', res.ordinations || []);
+            state.records.ordinations = normalizeOrdinationSteps(sortRecordsByStoredOrder('Ordinations', res.ordinations || []));
             state.records.releases = sortRecordsByStoredOrder('Release Only', res.releases || []);
             state.records.sustainings = normalizeSustainings(res.sustainings || []);
             state.records.actions = res.actions || [];
@@ -2415,7 +2415,7 @@
                 personalTasks.push({ record: o, name: o["Member Name"], task: "Admin Review", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination', priority: 'High' });
             } else if (step === 'Stake Interview' && admin2 === usernameLower && usernameLower.length > 0) {
                 personalTasks.push({ record: o, name: o["Member Name"], task: "Set Up Priesthood Interview", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination', priority: 'High' });
-            } else if (step === 'Sustaining' && overseer.includes(usernameLower) && usernameLower.length > 0) {
+            } else if (step === 'Sustain' && overseer.includes(usernameLower) && usernameLower.length > 0) {
                 personalTasks.push({ record: o, name: o["Member Name"], task: "Sustain", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination', priority: 'High' });
             } else if (step === 'Ordination' && overseer.includes(usernameLower) && usernameLower.length > 0) {
                 personalTasks.push({ record: o, name: o["Member Name"], task: "Ordination", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination', priority: 'High' });
@@ -2449,7 +2449,7 @@
           // Sort by priority: High first, Normal middle, Low last; then by step order within each priority
           const _pOrder = { 'High': 0, 'Normal': 1, 'Low': 2 };
           const _callingSteps = ['Admin Review', 'HC Approval', 'Call / Release', 'Sustain', 'Set Apart', 'Training'];
-          const _ordinationSteps = ['Admin Review', 'Stake Interview', 'HC Approval', 'Sustaining', 'Ordination', 'Certificate'];
+          const _ordinationSteps = ['Admin Review', 'Stake Interview', 'HC Approval', 'Sustain', 'Ordination', 'Certificate'];
           const _releaseSteps = ['Admin Review', 'Extend Release', 'Pulpit Release', 'Complete', 'Cancelled'];
           const _getStepIdx = (t) => {
             const step = (t.record && t.record["Current Step"]) || '';
@@ -2679,7 +2679,7 @@
 
     // Step order for grouping on admin/presidency dashboard
     const CALLING_STEP_ORDER = ['Admin Review', 'HC Approval', 'Call / Release', 'Sustain', 'Set Apart', 'Training'];
-    const ORDINATION_STEP_ORDER = ['Admin Review', 'Stake Interview', 'HC Approval', 'Sustaining', 'Ordination', 'Certificate'];
+    const ORDINATION_STEP_ORDER = ['Admin Review', 'Stake Interview', 'HC Approval', 'Sustain', 'Ordination', 'Certificate'];
     const RELEASE_STEP_ORDER = ['Admin Review', 'Extend Release', 'Pulpit Release', 'Complete', 'Cancelled'];
     const FINISHED_STEPS = ['Complete', 'Declined', 'Cancelled', 'Release Complete', 'Release Completed'];
 
@@ -3484,7 +3484,7 @@
               <option value="Admin Review" ${record['Current Step'] === 'Admin Review' ? 'selected' : ''}>Admin Review</option>
               <option value="Stake Interview" ${record['Current Step'] === 'Stake Interview' ? 'selected' : ''}>Interview</option>
               <option value="HC Approval" ${record['Current Step'] === 'HC Approval' ? 'selected' : ''}>HC Approval</option>
-              <option value="Sustaining" ${record['Current Step'] === 'Sustaining' ? 'selected' : ''}>Sustaining</option>
+              <option value="Sustain" ${record['Current Step'] === 'Sustain' ? 'selected' : ''}>Sustain</option>
               <option value="Ordination" ${record['Current Step'] === 'Ordination' ? 'selected' : ''}>Ordination</option>
               <option value="Certificate" ${record['Current Step'] === 'Certificate' ? 'selected' : ''}>Certificate</option>
               <option value="Cancelled" ${record['Current Step'] === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
@@ -3563,19 +3563,19 @@
             </div>
             ` : ''}
             
-            ${isAdmin || ['Sustaining', 'Ordination'].includes(record['Current Step']) ? `
+            ${isAdmin || ['Sustain', 'Ordination'].includes(record['Current Step']) ? `
             ${renderSelectField('Assigned to Oversee Sustaining / Ordination', 'Assigned to Oversee Sustaining / Ordination', [''].concat([...(state.isDemo ? (state.records.stakePresidency || mockData.stakePresidency) : state.stakePresidency || []), ...(state.isDemo ? (state.records.highCouncilors || mockData.highCouncilors) : state.highCouncilors || [])].filter(Boolean)), record)}
             ` : ''}
           </div>
 
-          ${isAdmin || ['Sustaining', 'Ordination'].includes(record['Current Step']) ? `<hr class="border-slate-800">` : ''}
+          ${isAdmin || ['Sustain', 'Ordination'].includes(record['Current Step']) ? `<hr class="border-slate-800">` : ''}
 
-          ${isAdmin || ['Sustaining', 'Ordination'].includes(record['Current Step']) ? `
+          ${isAdmin || ['Sustain', 'Ordination'].includes(record['Current Step']) ? `
           <!-- Section 2: Sustaining & Ordination -->
           <div id="ord-sustain" class="space-y-4">
             <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400 text-center">Sustain & Ordain</h4>
             <div class="grid grid-cols-2 gap-3">
-              ${isAdmin || ['Sustaining', 'Ordination'].includes(record['Current Step']) ? `
+              ${isAdmin || ['Sustain', 'Ordination'].includes(record['Current Step']) ? `
               <div>
                 <label class="block text-sm text-slate-400 font-medium mb-1">Date Sustained</label>
                 ${isFieldEditable('Date Sustained') ? `
@@ -4057,7 +4057,7 @@
           'Admin Review': { admin: 'Review this record and advance when ready', next: 'Prepare for High Council Approval and update the Current Step when ready.' },
           'Stake Interview': { admin: 'Task has been set for the Executive Secretary to set up the interview', next: "Set up a meeting between the member and the presidency, and then change 'Interview Status' to Scheduled." },
           'HC Approval': { admin: 'Each High Councilor sees this record in their Dashboard and can now vote.', next: 'Vote below by clicking the voting tile with your name.' },
-          'Sustaining': { admin: 'Task has been set for the person assigned to complete the Sustaining', next: "Sustain the person over the pulpit in their unit and update the 'Date Sustained' below." },
+          'Sustain': { admin: 'Task has been set for the person assigned to complete the Sustaining', next: "Sustain the person over the pulpit in their unit and update the 'Date Sustained' below." },
           'Ordination': { admin: 'Task has been set for the person assigned to complete the Ordination', next: "Oversee the ordination of the person, then update the 'Ordained Date', 'Ordained By', and if necessary the 'Out of Unit Member Info' below." },
           'Certificate': { admin: 'Complete the Ordination Certificate and update LCR', next: 'Print and Deliver the Certificate, then update the Certificate and LCR fields below.' },
         },
@@ -4473,8 +4473,8 @@
             const ordainedDate = rec['Ordained Date'] || '';
             const ordainedBy = rec['Ordained By'] || '';
             
-            // Step 1: If at Sustaining and Date Sustained is entered, move to Ordination
-            if (currentStep === 'Sustaining' && dateSustained) {
+            // Step 1: If at Sustain and Date Sustained is entered, move to Ordination
+            if (currentStep === 'Sustain' && dateSustained) {
               updateRecordField('Current Step', 'Ordination');
               showToast('Date Sustained recorded. Current Step moved to Ordination.', 'info', 4000);
             }
@@ -4515,8 +4515,10 @@
             const dateSetApart = rec['Date Set Apart'] || '';
             const setApartBy = rec['Set Apart By'] || '';
             
-            // Step 1: If at Sustaining and Date Sustained is entered, move to Set Apart
-            if (currentStep === 'Sustaining' && dateSustained) {
+            // Step 1: If at Sustain and Date Sustained is entered, move to Set Apart
+            // (previously compared against 'Sustaining', a step Callings never have,
+            // so this auto-advance was dead code)
+            if (currentStep === 'Sustain' && dateSustained) {
               updateRecordField('Current Step', 'Set Apart');
               showToast('Date Sustained recorded. Current Step moved to Set Apart.', 'info', 4000);
             }
@@ -4613,7 +4615,7 @@
             if (res.stakeUnits) state.stakeUnits = res.stakeUnits;
             if (res.stakeUnitTypes) state.stakeUnitTypes = res.stakeUnitTypes;
             state.records.callings = res.callings || [];
-            state.records.ordinations = res.ordinations || [];
+            state.records.ordinations = normalizeOrdinationSteps(res.ordinations || []);
             state.records.releases = res.releases || [];
             state.records.sustainings = normalizeSustainings(res.sustainings || []);
 
@@ -4629,6 +4631,16 @@
           if (loader) loader.classList.add('hidden');
           if (container) container.classList.remove('hidden');
         });
+    }
+
+    // Legacy step name: Ordination records used the step "Sustaining" before it was
+    // renamed to "Sustain" to match Callings. Normalize on load so existing rows keep
+    // working; the sheet self-migrates whenever such a record's step is next saved.
+    function normalizeOrdinationSteps(list) {
+      (list || []).forEach(o => {
+        if ((o['Current Step'] || '').trim() === 'Sustaining') o['Current Step'] = 'Sustain';
+      });
+      return list;
     }
 
     // Normalize Pulpit Tracker records: map alternate column names to expected ones
@@ -5187,7 +5199,7 @@
               "Date Sustained": todayStr,
               "Ready for Sustaining?": "Yes"
             } : {
-              "Current Step": "Sustaining",
+              "Current Step": "Sustain",
               "Date Sustained": "",
               "Ready for Sustaining?": "Yes"
             };
@@ -5658,7 +5670,7 @@
               <option value="Admin Review">Admin Review</option>
               <option value="Stake Interview" selected>Interview</option>
               <option value="HC Approval">HC Approval</option>
-              <option value="Sustaining">Sustaining</option>
+              <option value="Sustain">Sustain</option>
               <option value="Ordination">Ordination</option>
               <option value="Certificate">Certificate</option>
             </select>
