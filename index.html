@@ -1731,13 +1731,17 @@
                 
                 const percent = totalCount > 0 ? (trueCount / totalCount) : 0;
                 item["Percent"] = String(percent);
-                
-                if (percent === 1.0) {
-                  item["Status"] = "Complete";
-                  // Trigger main sheet update logic in demo too!
-                  updateMainSheetSustainDateDemo(payload.memberName, payload.updates._action);
-                } else {
-                  item["Status"] = "Pending";
+
+                // Mirror the backend: an explicitly-set Status (admin Complete/Pending
+                // toggle) wins over the percent-based auto-status.
+                if (!payload.updates.hasOwnProperty('Status')) {
+                  if (percent === 1.0) {
+                    item["Status"] = "Complete";
+                    // Trigger main sheet update logic in demo too!
+                    updateMainSheetSustainDateDemo(payload.memberName, payload.updates._action);
+                  } else {
+                    item["Status"] = "Pending";
+                  }
                 }
                 
                 saveDemoDatabase();
@@ -5000,7 +5004,7 @@
         return `
           <div class="glass p-3 rounded-xl flex items-center justify-between gap-3 border border-slate-800">
             <div class="flex items-center gap-3 min-w-0 flex-1">
-              <input type="checkbox" ${status === 'Complete' ? 'checked' : ''} onchange="markSustainingComplete('${individualVal.replace(/'/g, "\\'")}', '${cand["Action"]}', '${callingVal.replace(/'/g, "\\'")}')" class="w-4.5 h-4.5 rounded text-indigo-600 bg-slate-800 border-slate-700 flex-shrink-0">
+              <input type="checkbox" ${status === 'Complete' ? 'checked' : ''} onchange="markSustainingComplete('${individualVal.replace(/'/g, "\\'")}', '${cand["Action"]}', '${callingVal.replace(/'/g, "\\'")}', this.checked)" class="w-4.5 h-4.5 rounded text-indigo-600 bg-slate-800 border-slate-700 flex-shrink-0">
               <div class="min-w-0">
                 <p class="text-sm font-bold text-slate-100">${individualVal} <span class="text-slate-400 font-medium">(${cand["Unit"] || ''})</span></p>
                 <p class="text-[11px] text-slate-400 font-medium break-words">${callingVal}</p>
@@ -5272,26 +5276,30 @@
         }
     }
 
-    // Admin: Mark a sustaining as Complete â€” removes from all Over the Pulpit screens
-    function markSustainingComplete(individual, action, calling) {
-      const load = showToast('Marking as Complete...', 'info', 0);
+    // Admin: toggle a sustaining's Complete status. Marking Complete removes it from
+    // all Over the Pulpit screens; un-marking (isComplete=false) restores it to
+    // Pending — previously this was a one-way trap where an accidental click could
+    // never be undone from the UI.
+    function markSustainingComplete(individual, action, calling, isComplete = true) {
+      const newStatus = isComplete ? 'Complete' : 'Pending';
+      const load = showToast(isComplete ? 'Marking as Complete...' : 'Restoring to Pending...', 'info', 0);
       apiCall('updateRecord', {
         type: 'Sustainings',
         memberName: individual,
         updates: {
           _action: action,
           _calling: calling,
-          Status: 'Complete'
+          Status: newStatus
         }
       }).then(res => {
         dismissToast(load);
         if (res.success) {
-          showToast('Marked Complete â€” removed from all pulpit views', 'success');
+          showToast(isComplete ? 'Marked Complete — removed from all pulpit views' : 'Restored to Pending — visible on pulpit views again', 'success');
           // Update local cache
           const item = (state.records.sustainings || []).find(s =>
             s["Individual"] === individual && s["Action"] === action && (s["Calling"] === calling || s["Calling / Office"] === calling)
           );
-          if (item) item["Status"] = "Complete";
+          if (item) item["Status"] = newStatus;
           // Re-initialize orders (filters out Complete) and re-render
           initializeSundayOrders();
           renderSundayView();
