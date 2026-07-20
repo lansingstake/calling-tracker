@@ -809,8 +809,17 @@
           </div>
           <div>
             <label class="block text-sm text-slate-400 font-medium mb-1">Owner <span class="text-red-400">*</span></label>
-            <select id="new-action-owner" class="w-full glass rounded-lg px-3 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500">
-            </select>
+            <!-- Checkbox dropdown matching the edit screen's owner picker (scoped ids/class
+                 so it can't collide with the edit modal's .owner-checkbox machinery) -->
+            <div class="relative">
+              <button type="button" onclick="document.getElementById('new-owner-dropdown-menu').classList.toggle('hidden')" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500 flex justify-between items-center text-left">
+                <span class="truncate" id="new-action-owner-display">-- Select Owner(s) --</span>
+                <i data-lucide="chevron-down" class="w-4 h-4 ml-2 flex-shrink-0"></i>
+              </button>
+              <div id="new-owner-dropdown-menu" class="hidden absolute z-[100] mt-1 w-full bg-slate-950 border border-slate-700 rounded-xl shadow-2xl p-3 max-h-64 overflow-y-auto custom-scrollbar" style="opacity: 1; backdrop-filter: none; -webkit-backdrop-filter: none;">
+                <!-- Populated by openCreateActionModal() -->
+              </div>
+            </div>
           </div>
           <div>
             <label class="block text-sm text-slate-400 font-medium mb-1">Priority <span class="text-red-400">*</span></label>
@@ -1898,6 +1907,10 @@
             } else if (payload.type === 'Ordinations') {
               state.records.ordinations.push(recordWithMeta);
               addSustainingEntryDemo(payload.record["Member Name"], payload.record["Unit"], "Sustain", payload.record["Priesthood Office"], "Home Unit Only");
+            } else if (payload.type === 'Actions') {
+              // Actions previously fell into the Release Only catch-all below
+              if (!state.records.actions) state.records.actions = [];
+              state.records.actions.push(recordWithMeta);
             } else {
               state.records.releases.push(recordWithMeta);
               const isStakeWide = payload.record["Stake-Wide Unit Release Required?"] === "Yes" ? "All Units" : "Home Unit Only";
@@ -3092,30 +3105,45 @@
       document.getElementById('new-action-notes').value = '';
       document.getElementById('new-action-priority').value = '';
       
-      const ownerSelect = document.getElementById('new-action-owner');
       const spRoster = state.isDemo ? (state.stakePresidency || mockData.stakePresidency) : state.stakePresidency || [];
       const adminRoster = state.isDemo ? (state.admins || mockData.admins) : state.admins || [];
       const hcRoster = state.isDemo ? (state.highCouncilors || mockData.highCouncilors) : state.highCouncilors || [];
-      
-      let ownerHtml = '<option value="">-- Select Owner --</option>';
-      ownerHtml += '<optgroup label="Groups"><option value="Everyone">Everyone</option><option value="High Council">High Council</option><option value="Presidency">Presidency</option></optgroup>';
-      
+
+      // Build the same grouped checkbox menu the edit screen uses (all unchecked on open)
+      const cbLabel = (name, group) => `
+        <label class="flex items-center gap-2 text-sm text-slate-300 mb-1 cursor-pointer hover:bg-slate-800/50 p-1 rounded">
+          <input type="checkbox" data-name="${name}" ${group ? `data-group="${group}"` : ''} onchange="updateNewGroupCheckboxStates()" class="new-owner-checkbox rounded bg-slate-800 border-slate-600 text-emerald-500 w-3.5 h-3.5"> <span class="select-none">${name}</span>
+        </label>`;
+      let menuHtml = `
+        <div class="mb-3">
+          <h5 class="text-[10px] uppercase font-bold text-slate-400 mb-1.5">Groups</h5>
+          <label class="flex items-center gap-2 text-sm text-slate-200 mb-1 cursor-pointer hover:bg-slate-800/50 p-1 rounded">
+            <input type="checkbox" id="cb-newgroup-Everyone" onchange="handleNewOwnerGroupSelect('Everyone', this.checked)" class="rounded bg-slate-800 border-slate-600 text-emerald-500 w-4 h-4"> <span class="select-none">Everyone</span>
+          </label>
+          <label class="flex items-center gap-2 text-sm text-slate-200 mb-1 cursor-pointer hover:bg-slate-800/50 p-1 rounded">
+            <input type="checkbox" id="cb-newgroup-High Council" onchange="handleNewOwnerGroupSelect('High Council', this.checked)" class="rounded bg-slate-800 border-slate-600 text-emerald-500 w-4 h-4"> <span class="select-none">High Council</span>
+          </label>
+          <label class="flex items-center gap-2 text-sm text-slate-200 mb-1 cursor-pointer hover:bg-slate-800/50 p-1 rounded">
+            <input type="checkbox" id="cb-newgroup-Presidency" onchange="handleNewOwnerGroupSelect('Presidency', this.checked)" class="rounded bg-slate-800 border-slate-600 text-emerald-500 w-4 h-4"> <span class="select-none">Presidency</span>
+          </label>
+        </div>`;
       if (adminRoster.length > 0) {
-        ownerHtml += '<optgroup label="Admins">';
-        ownerHtml += uniqueNames(adminRoster).map(name => `<option value="${name}">${name}</option>`).join('');
-        ownerHtml += '</optgroup>';
+        menuHtml += `<div class="mb-3"><h5 class="text-[10px] uppercase font-bold text-slate-400 mb-1.5">Admins</h5>${uniqueNames(adminRoster).map(n => cbLabel(n, '')).join('')}</div>`;
       }
       if (spRoster.length > 0) {
-        ownerHtml += '<optgroup label="Presidency">';
-        ownerHtml += uniqueNames(spRoster).map(name => `<option value="${name}">${name}</option>`).join('');
-        ownerHtml += '</optgroup>';
+        menuHtml += `<div class="mb-3"><h5 class="text-[10px] uppercase font-bold text-slate-400 mb-1.5">Presidency</h5>${uniqueNames(spRoster).map(n => cbLabel(n, 'Presidency')).join('')}</div>`;
       }
       if (hcRoster.length > 0) {
-        ownerHtml += '<optgroup label="High Council">';
-        ownerHtml += uniqueNames(hcRoster).map(name => `<option value="${name}">${name}</option>`).join('');
-        ownerHtml += '</optgroup>';
+        menuHtml += `<div class="mb-3"><h5 class="text-[10px] uppercase font-bold text-slate-400 mb-1.5">High Council</h5>${uniqueNames(hcRoster).map(n => cbLabel(n, 'High Council')).join('')}</div>`;
       }
-      ownerSelect.innerHTML = ownerHtml;
+      menuHtml += `
+        <div class="sticky bottom-0 bg-slate-950 pt-2 pb-1 border-t border-slate-800 mt-2">
+          <button type="button" onclick="document.getElementById('new-owner-dropdown-menu').classList.add('hidden')" class="w-full bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold py-2 rounded-lg text-sm transition-all shadow-lg">Apply Selections</button>
+        </div>`;
+      const ownerMenu = document.getElementById('new-owner-dropdown-menu');
+      ownerMenu.innerHTML = menuHtml;
+      ownerMenu.classList.add('hidden');
+      document.getElementById('new-action-owner-display').textContent = '-- Select Owner(s) --';
       
       const modal = document.getElementById('create-action-modal');
       const drawer = modal.querySelector('div');
@@ -3138,20 +3166,51 @@
     function closeCreateActionModal() {
       const modal = document.getElementById('create-action-modal');
       const drawer = modal.querySelector('div');
-      
+
       modal.classList.add('opacity-0');
       drawer.classList.add('translate-y-full');
-      
+
       setTimeout(() => {
         modal.classList.add('hidden');
         document.body.style.overflow = '';
       }, 300);
     }
 
+    // --- Create-action owner picker (mirrors the edit screen's checkbox dropdown, but
+    // scoped to .new-owner-checkbox / cb-newgroup-* so the two modals never collide) ---
+    function getNewOwnerSelection() {
+      const boxes = [...document.querySelectorAll('.new-owner-checkbox')];
+      const checked = boxes.filter(cb => cb.checked).map(cb => cb.dataset.name);
+      if (boxes.length > 0 && checked.length === boxes.length) return 'Everyone';
+      return checked.join(', ');
+    }
+
+    function handleNewOwnerGroupSelect(group, isChecked) {
+      document.querySelectorAll('.new-owner-checkbox').forEach(cb => {
+        if (group === 'Everyone') cb.checked = isChecked;
+        else if (cb.dataset.group === group) cb.checked = isChecked;
+      });
+      updateNewGroupCheckboxStates();
+    }
+
+    function updateNewGroupCheckboxStates() {
+      const boxes = [...document.querySelectorAll('.new-owner-checkbox')];
+      const hcBoxes = boxes.filter(cb => cb.dataset.group === 'High Council');
+      const spBoxes = boxes.filter(cb => cb.dataset.group === 'Presidency');
+      const cbEveryone = document.getElementById('cb-newgroup-Everyone');
+      const cbHC = document.getElementById('cb-newgroup-High Council');
+      const cbPres = document.getElementById('cb-newgroup-Presidency');
+      if (cbEveryone) cbEveryone.checked = boxes.length > 0 && boxes.every(cb => cb.checked);
+      if (cbHC) cbHC.checked = hcBoxes.length > 0 && hcBoxes.every(cb => cb.checked);
+      if (cbPres) cbPres.checked = spBoxes.length > 0 && spBoxes.every(cb => cb.checked);
+      const display = document.getElementById('new-action-owner-display');
+      if (display) display.textContent = getNewOwnerSelection() || '-- Select Owner(s) --';
+    }
+
     function submitNewAction() {
       const topic = document.getElementById('new-action-topic').value.trim();
       const action = document.getElementById('new-action-desc').value.trim();
-      const owner = document.getElementById('new-action-owner').value.trim();
+      const owner = getNewOwnerSelection();
       const priority = document.getElementById('new-action-priority').value.trim();
       const notes = document.getElementById('new-action-notes').value.trim();
       
