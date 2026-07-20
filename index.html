@@ -2626,7 +2626,7 @@
               const isTraining = t.task === 'Provide Training';
               const pBorder = isTraining ? 'border-amber-700/60' : t.priority === 'High' ? 'border-red-700/60' : t.priority === 'Low' ? 'border-slate-800/40' : 'border-slate-800';
               const pBg = isTraining ? 'bg-amber-950/30' : t.priority === 'High' ? 'bg-red-950/30' : '';
-              const pBadge = isTraining ? '<span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">Training</span>' : t.priority === 'High' ? '<span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/30">High</span>' : t.priority === 'Low' ? '<span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-slate-700/40 text-slate-500 border border-slate-700/30">Low</span>' : '';
+              const pBadge = isTraining ? '<span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">Training</span>' : t.priority === 'High' ? '<span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/30">High Priority</span>' : t.priority === 'Low' ? '<span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-slate-700/40 text-slate-500 border border-slate-700/30">Low Priority</span>' : '';
               
               return `
               <div class="glass p-3.5 rounded-xl border ${pBorder} ${pBg} flex flex-col gap-2 shadow-md">
