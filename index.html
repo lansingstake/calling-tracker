@@ -2626,7 +2626,7 @@
               const isTraining = t.task === 'Provide Training';
               const pBorder = isTraining ? 'border-amber-700/60' : t.priority === 'High' ? 'border-red-700/60' : t.priority === 'Low' ? 'border-slate-800/40' : 'border-slate-800';
               const pBg = isTraining ? 'bg-amber-950/30' : t.priority === 'High' ? 'bg-red-950/30' : '';
-              const pBadge = isTraining ? '<span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 ml-2">Training</span>' : t.priority === 'High' ? '<span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/30 ml-2">High</span>' : t.priority === 'Low' ? '<span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-slate-700/40 text-slate-500 border border-slate-700/30 ml-2">Low</span>' : '';
+              const pBadge = isTraining ? '<span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">Training</span>' : t.priority === 'High' ? '<span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/30">High</span>' : t.priority === 'Low' ? '<span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-slate-700/40 text-slate-500 border border-slate-700/30">Low</span>' : '';
               
               return `
               <div class="glass p-3.5 rounded-xl border ${pBorder} ${pBg} flex flex-col gap-2 shadow-md">
@@ -2634,10 +2634,10 @@
                   <!-- min-w-0 lets this flex column shrink; break-words wraps long URLs -->
                   <div class="min-w-0 flex-1">
                     ${t.task === 'Extend Calling & Release' ? `
-                    <p class="text-sm font-bold text-slate-100 break-words">Extend Calling: ${t.name}${pBadge}</p>
+                    <p class="text-sm font-bold text-slate-100 break-words">Extend Calling: ${t.name}</p>
                     ${t.releaseName ? `<p class="text-sm font-bold text-slate-100 break-words">Release: ${t.releaseName}</p>` : ''}
                     ` : `
-                    <p class="text-sm font-bold text-slate-100 break-words">${t.task}: ${t.name}${pBadge}</p>
+                    <p class="text-sm font-bold text-slate-100 break-words">${t.task}: ${t.name}</p>
                     `}
                     <p class="text-[11px] text-slate-400 font-medium break-words">${linkify(t.details)}</p>
                   </div>
@@ -2648,9 +2648,10 @@
                     </button>
                   </div>
                 </div>
-                ${modifiedDate ? `
-                <div class="flex justify-end mt-1">
-                  <span class="text-[10px] text-slate-500">Modified: ${modifiedDate}</span>
+                ${(pBadge || modifiedDate) ? `
+                <div class="flex justify-between items-center mt-1">
+                  <div>${pBadge}</div>
+                  ${modifiedDate ? `<span class="text-[10px] text-slate-500">Modified: ${modifiedDate}</span>` : ''}
                 </div>
                 ` : ''}
               </div>
