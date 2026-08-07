@@ -170,6 +170,18 @@
     .light-theme .text-amber-400 { color: #92400e !important; }
     .light-theme .bg-amber-500\/20 { background-color: rgba(180, 120, 0, 0.12) !important; }
     .light-theme .border-amber-500\/30 { border-color: rgba(161, 98, 7, 0.4) !important; }
+
+    /* Gold border marking modal fields required to advance the record to its next step.
+       Must live AFTER the light-theme overrides: both `.light-theme .glass { border ... !important }`
+       and the light-theme input/select border-color rules would otherwise clobber it
+       (same reason plain Tailwind border utilities don't survive light mode). */
+    .req-field { border: 2px solid #f59e0b !important; }
+    /* Element-qualified so specificity (0,2,1) ties the light theme's blanket
+       `.light-theme input[type=...]` border rules and wins by document order. */
+    .light-theme .req-field,
+    .light-theme select.req-field,
+    .light-theme input.req-field,
+    .light-theme textarea.req-field { border: 2px solid #b45309 !important; }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col pb-24 overflow-x-hidden">
@@ -3677,12 +3689,12 @@
             <div class="grid grid-cols-2 gap-3">
               <div>
                 <label class="block text-sm text-slate-400 font-medium mb-1">Date Sustained</label>
-                <input type="date" value="${record['Date Sustained'] || ''}" onchange="updateRecordField('Date Sustained', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+                <input type="date" value="${record['Date Sustained'] || ''}" onchange="updateRecordField('Date Sustained', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200${reqCls('Date Sustained', record)}">
               </div>
               ${isAdmin || ['Set Apart'].includes(record['Current Step']) ? `
               <div>
                 <label class="block text-sm text-slate-400 font-medium mb-1">Date Set Apart</label>
-                <input type="date" value="${record['Date Set Apart'] || ''}" onchange="updateRecordField('Date Set Apart', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+                <input type="date" value="${record['Date Set Apart'] || ''}" onchange="updateRecordField('Date Set Apart', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200${reqCls('Date Set Apart', record)}">
               </div>
               ` : '<div></div>'}
             </div>
@@ -3699,7 +3711,7 @@
                 return `<div>
                   <label class="block text-sm text-slate-400 font-medium mb-1">Assigned to Set Apart</label>
                   ${canEdit ? `
-                  <select onchange="updateRecordField('Set Apart By', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                  <select onchange="updateRecordField('Set Apart By', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500${reqCls('Set Apart By', record)}">
                     <option value="">Select person</option>
                     ${setApartOptions}
                   </select>
@@ -3866,7 +3878,7 @@
             ${isAdmin ? `
             <div>
               <label class="block text-sm text-slate-400 font-medium mb-1">Interview Status</label>
-              <select onchange="updateRecordField('Interview Status', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+              <select onchange="updateRecordField('Interview Status', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500${reqCls('Interview Status', record)}">
                 <option value="Pending" ${(record['Interview Status'] || 'Pending') === 'Pending' ? 'selected' : ''}>Pending</option>
                 <option value="Scheduled" ${record['Interview Status'] === 'Scheduled' ? 'selected' : ''}>Scheduled</option>
                 <option value="Complete" ${record['Interview Status'] === 'Complete' || record['Interview Status'] === 'Completed' ? 'selected' : ''}>Complete</option>
@@ -3894,7 +3906,7 @@
               <div>
                 <label class="block text-sm text-slate-400 font-medium mb-1">Date Sustained</label>
                 ${isFieldEditable('Date Sustained') ? `
-                  <input type="date" value="${record['Date Sustained'] || ''}" onchange="updateRecordField('Date Sustained', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+                  <input type="date" value="${record['Date Sustained'] || ''}" onchange="updateRecordField('Date Sustained', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200${reqCls('Date Sustained', record)}">
                 ` : `
                   <div class="text-slate-300 text-base font-semibold py-1.5">${record['Date Sustained'] || 'None'}</div>
                 `}
@@ -3903,7 +3915,7 @@
               <div>
                 <label class="block text-sm text-slate-400 font-medium mb-1">Ordained Date</label>
                 ${isFieldEditable('Ordained Date') ? `
-                  <input type="date" value="${record['Ordained Date'] || ''}" onchange="updateRecordField('Ordained Date', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+                  <input type="date" value="${record['Ordained Date'] || ''}" onchange="updateRecordField('Ordained Date', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200${reqCls('Ordained Date', record)}">
                 ` : `
                   <div class="text-slate-300 text-base font-semibold py-1.5">${record['Ordained Date'] || 'None'}</div>
                 `}
@@ -4356,6 +4368,40 @@
       return false;
     }
 
+    // Fields required (at minimum) to move a record from its current step to the next.
+    // Derived from the step auto-advance logic and the step-info instructions. Steps and
+    // record types absent here (Admin Review, HC Approval, finished steps, all of
+    // Release Only) intentionally get no highlighting.
+    const REQUIRED_STEP_FIELDS = {
+      'Callings Releasings': {
+        'Call / Release': ['Calling Accepted?', 'Notified of Release?', 'Key Returned?'],
+        'Sustain': ['Date Sustained'],
+        'Set Apart': ['Date Set Apart', 'Set Apart By'],
+        'Training': ['Training Provided?']
+      },
+      'Ordinations': {
+        'Stake Interview': ['Interview Status'],
+        'Sustain': ['Date Sustained'],
+        'Ordination': ['Ordained Date', 'Ordained By'],
+        'Certificate': ['Certificate Printed?', 'Certificate Signed?', 'Certificate Delivered?', 'LCR Updated?']
+      }
+    };
+
+    // Returns ' req-field' (gold border) when fieldKey is required at the record's
+    // current step. Record type comes from the open modal's state.activeRecord.
+    function reqCls(fieldKey, record) {
+      const type = state.activeRecord && state.activeRecord.type;
+      const stepMap = type && REQUIRED_STEP_FIELDS[type];
+      const required = stepMap && stepMap[(record && record['Current Step'] || '').trim()];
+      if (!required || !required.includes(fieldKey)) return '';
+      // Release-related fields only matter when someone is actually being released
+      if (fieldKey === 'Notified of Release?' || fieldKey === 'Key Returned?') {
+        const rel = (record['Member to Release'] || '').trim();
+        if (!rel || rel.toLowerCase() === 'n/a') return '';
+      }
+      return ' req-field';
+    }
+
     function getStepInfoHtml(recordType, currentStep, isAdmin) {
       const FINISHED = ['Complete', 'Declined', 'Cancelled', 'Release Complete', 'Release Completed', ''];
       if (FINISHED.includes(currentStep)) return '';
@@ -4392,6 +4438,9 @@
         html += `<p class="step-admin-info text-xs text-center mt-2 mb-1"><span class="step-label-bold font-bold">Admin Info:</span> ${info.admin}</p>`;
       }
       html += `<p class="step-next-info text-xs text-center ${isAdmin ? '' : 'mt-2'}"><span class="step-label-bold font-bold">Next Step:</span> ${info.next}</p>`;
+      if (REQUIRED_STEP_FIELDS[recordType] && REQUIRED_STEP_FIELDS[recordType][currentStep]) {
+        html += `<p class="text-[11px] text-center mt-1 text-amber-400 font-semibold">Gold-bordered fields are required to move this record to the next step.</p>`;
+      }
       return html;
     }
 
@@ -4418,7 +4467,7 @@
       return `
         <div>
           <label class="block text-sm text-slate-400 font-medium mb-1">${labelText}</label>
-          <select onchange="updateRecordField('${fieldKey}', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+          <select onchange="updateRecordField('${fieldKey}', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500${reqCls(fieldKey, record)}">
             <option value=""></option>
             ${optionsHtml}
           </select>
@@ -4442,7 +4491,7 @@
       return `
         <div>
           <label class="block text-sm text-slate-400 font-medium mb-1">${labelText}</label>
-          <input type="text" list="stake-presidency-hc-list" value="${currentValue}" onchange="updateRecordField('${fieldKey}', this.value)" placeholder="Select or type name" class="w-full glass rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
+          <input type="text" list="stake-presidency-hc-list" value="${currentValue}" onchange="updateRecordField('${fieldKey}', this.value)" placeholder="Select or type name" class="w-full glass rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200${reqCls(fieldKey, record)}">
         </div>
       `;
     }
