@@ -72,6 +72,18 @@
     .light-theme .bg-slate-800\/50 { background-color: rgba(226,232,240,0.5) !important; }
     .light-theme .bg-slate-800\/60 { background-color: rgba(226,232,240,0.6) !important; }
     .light-theme .bg-slate-700 { background-color: #cbd5e1 !important; }
+
+    /* Tailwind's hover: variants are separate escaped classes, so the .bg-slate-*
+       overrides above never reach them — in light mode a hover would paint the dark
+       default behind text that had been darkened for a light background (unreadable).
+       Map the hover variants too. */
+    .light-theme .hover\:bg-slate-800:hover { background-color: #e2e8f0 !important; }
+    .light-theme .hover\:bg-slate-800\/50:hover { background-color: rgba(226,232,240,0.6) !important; }
+    .light-theme .hover\:bg-slate-700:hover { background-color: #cbd5e1 !important; }
+    .light-theme .hover\:bg-slate-700\/50:hover { background-color: rgba(203,213,225,0.5) !important; }
+    .light-theme .hover\:bg-slate-700\/60:hover { background-color: rgba(203,213,225,0.6) !important; }
+    .light-theme .hover\:bg-slate-700\/70:hover { background-color: rgba(203,213,225,0.7) !important; }
+    .light-theme .hover\:bg-slate-900\/40:hover { background-color: rgba(226,232,240,0.5) !important; }
     /* Text */
     .light-theme .text-slate-100 { color: #1e293b !important; }
     .light-theme .text-slate-200 { color: #334155 !important; }
@@ -1755,20 +1767,44 @@
       const overlay = document.createElement('div');
       overlay.id = 'view-as-overlay';
       overlay.className = 'fixed inset-0 bg-black/60 z-[100] flex items-center justify-center backdrop-blur-sm';
+      // Backdrop click closes (but clicks inside the panel don't bubble out to here)
+      overlay.onclick = (e) => { if (e.target === overlay) closeViewAsDialog(); };
       overlay.innerHTML = `
-        <div class="bg-slate-900 border border-slate-700 p-5 rounded-2xl shadow-2xl max-w-sm w-full mx-4 max-h-[80vh] overflow-y-auto">
-          <h3 class="text-lg font-bold text-slate-100 mb-1">Open Tracker As...</h3>
-          <p class="text-xs text-slate-400 mb-4">See the tracker exactly as this member sees it. Anything you check off or vote is recorded as them.</p>
-          ${spRoster.length ? `<h5 class="text-[10px] uppercase font-bold text-slate-400 mb-1">Presidency</h5><div class="mb-3">${spRoster.map(n => memberBtn(n, 'presidency')).join('')}</div>` : ''}
-          ${hcRoster.length ? `<h5 class="text-[10px] uppercase font-bold text-slate-400 mb-1">High Council</h5><div class="mb-3">${hcRoster.map(n => memberBtn(n, 'hc')).join('')}</div>` : ''}
-          <button onclick="document.getElementById('view-as-overlay').remove()" class="w-full px-4 py-2 rounded-lg bg-slate-700/50 text-slate-300 font-bold hover:bg-slate-700/70 transition-colors border border-slate-600/30 mt-1">Cancel</button>
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl max-w-sm w-full mx-4 max-h-[80vh] flex flex-col">
+          <div class="flex items-start justify-between gap-3 p-5 pb-3 flex-shrink-0">
+            <div>
+              <h3 class="text-lg font-bold text-slate-100 mb-1">Open Tracker As...</h3>
+              <p class="text-xs text-slate-400">See the tracker exactly as this member sees it. Anything you check off or vote is recorded as them.</p>
+            </div>
+            <button onclick="closeViewAsDialog()" aria-label="Close" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors flex-shrink-0">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+          <div class="overflow-y-auto px-5 flex-1">
+            ${spRoster.length ? `<h5 class="text-[10px] uppercase font-bold text-slate-400 mb-1">Presidency</h5><div class="mb-3">${spRoster.map(n => memberBtn(n, 'presidency')).join('')}</div>` : ''}
+            ${hcRoster.length ? `<h5 class="text-[10px] uppercase font-bold text-slate-400 mb-1">High Council</h5><div class="mb-3">${hcRoster.map(n => memberBtn(n, 'hc')).join('')}</div>` : ''}
+          </div>
+          <div class="p-5 pt-3 flex-shrink-0">
+            <button onclick="closeViewAsDialog()" class="w-full px-4 py-2 rounded-lg bg-slate-700/50 text-slate-300 font-bold hover:bg-slate-700/70 transition-colors border border-slate-600/30">Cancel</button>
+          </div>
         </div>`;
       document.body.appendChild(overlay);
+      document.addEventListener('keydown', viewAsEscHandler);
+      lucide.createIcons();
+    }
+
+    function viewAsEscHandler(e) {
+      if (e.key === 'Escape') closeViewAsDialog();
+    }
+
+    function closeViewAsDialog() {
+      const overlay = document.getElementById('view-as-overlay');
+      if (overlay) overlay.remove();
+      document.removeEventListener('keydown', viewAsEscHandler);
     }
 
     function startImpersonation(name, role) {
-      const overlay = document.getElementById('view-as-overlay');
-      if (overlay) overlay.remove();
+      closeViewAsDialog(); // also detaches the Escape handler
       if (role === 'hc' && !state.isDemo && !state.hcPin) {
         showToast('HC PIN unavailable — log out and back in as admin, then try again.', 'error');
         return;
