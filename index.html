@@ -5935,17 +5935,33 @@
         lblName.innerText = "Member Name (Person being called)";
         container.innerHTML = `
           <div>
-            <label class="block text-sm font-medium text-slate-400 mb-1">New Calling</label>
-            <input type="text" id="form-calling" required placeholder="e.g. Elders Quorum President" class="w-full glass rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200">
-          </div>
-          <div>
             <label class="block text-sm font-medium text-slate-400 mb-1">Unit</label>
             <select id="form-unit" required class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200 font-semibold">
               ${unitOptions}
             </select>
           </div>
           <div>
-            <label class="block text-sm font-medium text-slate-400 mb-1">Member to Release (If replacing someone)</label>
+            <label class="block text-sm font-medium text-slate-400 mb-1">New Calling</label>
+            <input type="text" id="form-calling" required placeholder="e.g. Elders Quorum President" class="w-full glass rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-400 mb-1">Recommended By</label>
+            <input type="text" id="form-recommended-by" placeholder="e.g. Bishop Smith" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-400 mb-1">Current Calling</label>
+            <input type="text" id="form-current-calling" placeholder="Current calling (if any)" class="w-full glass rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-400 mb-1">Need to be Released?</label>
+            <select id="form-need-release" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
+              <option value="" selected>-- Select --</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-400 mb-1">Current Member to Release (If replacing someone)</label>
             <input type="text" id="form-release-member" placeholder="Name of person to be released" class="w-full glass rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200">
           </div>
           <div>
@@ -5955,57 +5971,45 @@
             </select>
           </div>
           <div>
-            <label class="block text-sm font-medium text-slate-400 mb-1">Current Calling</label>
-            <input type="text" id="form-current-calling" placeholder="Current calling (if any)" class="w-full glass rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200">
+            <label class="block text-sm font-medium text-slate-400 mb-1">Presidency Date Approved</label>
+            <input type="date" id="form-sp-approved-date" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
           </div>
           <div>
             <label class="block text-sm font-medium text-slate-400 mb-1">Unit Leader Date Contacted</label>
             <input type="date" id="form-unit-leader-date" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
           </div>
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-sm font-medium text-slate-400 mb-1">Current Step</label>
-              <select id="form-current-step" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
-                <option value="Admin Review" selected>Admin Review</option>
-                <option value="HC Approval">HC Approval</option>
-                <option value="Call / Release">Call / Release</option>
-                <option value="Sustain">Sustain</option>
-                <option value="Set Apart">Set Apart</option>
-                <option value="Training">Training</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-400 mb-1">Recommended By</label>
-              <input type="text" id="form-recommended-by" placeholder="e.g. Bishop Smith" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
-            </div>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-slate-400 mb-1">Presidency Date Approved</label>
-            <input type="date" id="form-sp-approved-date" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
-          </div>
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-sm font-medium text-slate-400 mb-1">Pulpit Sustaining</label>
-              <select id="form-pulpit-sustaining" required class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
-                <option value="" selected>-- Select --</option>
-                <option value="All Units">All Units</option>
-                <option value="Home Unit Only">Home Unit Only</option>
-                <option value="None">None</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-400 mb-1">Conference Sustaining</label>
-              <select id="form-conference-sustaining" required class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
-                <option value="" selected>-- Select --</option>
-                <option value="Pending">Pending</option>
-                <option value="Not Needed">Not Needed</option>
-                <option value="Complete">Complete</option>
-              </select>
-            </div>
-          </div>
           <div>
             <label class="block text-sm font-medium text-slate-400 mb-1">Assigned to Call / Release</label>
             <input type="text" list="stake-presidency-hc-list" id="form-extend-assigned" placeholder="Select or type name" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-400 mb-1">Pulpit Sustaining</label>
+            <select id="form-pulpit-sustaining" required class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
+              <option value="" selected>-- Select --</option>
+              <option value="All Units">All Units</option>
+              <option value="Home Unit Only">Home Unit Only</option>
+              <option value="None">None</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-400 mb-1">Conference Sustaining</label>
+            <select id="form-conference-sustaining" required class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
+              <option value="" selected>-- Select --</option>
+              <option value="Pending">Pending</option>
+              <option value="Not Needed">Not Needed</option>
+              <option value="Complete">Complete</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-400 mb-1">Current Step</label>
+            <select id="form-current-step" class="current-step-select w-full glass rounded-xl px-3 py-2.5 text-sm text-emerald-400 font-medium text-center focus:outline-none border-[2px] border-emerald-500/30">
+              <option value="Admin Review" selected>Admin Review</option>
+              <option value="HC Approval">HC Approval</option>
+              <option value="Call / Release">Call / Release</option>
+              <option value="Sustain">Sustain</option>
+              <option value="Set Apart">Set Apart</option>
+              <option value="Training">Training</option>
+            </select>
           </div>
           <div>
             <label class="block text-sm font-medium text-slate-400 mb-1">Notes / Instructions</label>
@@ -6119,7 +6123,7 @@
         record["Member to Release"] = document.getElementById('form-release-member').value;
         record["Unit of Member to Release"] = document.getElementById('form-release-unit').value;
         record["Notes"] = document.getElementById('form-notes').value;
-        record["Need to be Released"] = record["Member to Release"] ? 'Yes' : 'No';
+        record["Need to be Released"] = document.getElementById('form-need-release').value || (record["Member to Release"] ? 'Yes' : 'No');
         record["Current Step"] = document.getElementById('form-current-step').value;
         record["Recommended By"] = document.getElementById('form-recommended-by').value;
         record["Over the Pulpit Sustaining"] = document.getElementById('form-pulpit-sustaining').value;
