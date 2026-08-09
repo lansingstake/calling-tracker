@@ -2857,11 +2857,21 @@
           const renderCard = (a, borderExtra) => {
             const createdDate = a["Timestamp"] ? new Date(a["Timestamp"]).toLocaleDateString('en-US', {month: 'numeric', day: 'numeric', year: '2-digit'}) : '';
             const modifiedDate = a["Modified Date"] ? new Date(a["Modified Date"]).toLocaleDateString('en-US', {month: 'numeric', day: 'numeric', year: '2-digit'}) : '';
+            // Show only owners still awaiting completion (mirrors the modal's
+            // "Awaiting completion from"); completed people drop off the tile.
+            // Actions without per-person tracking fall back to the Owner string.
             let displayOwner = a["Owner"] || '';
-            if (displayOwner === 'Custom') {
-               const parsedNames = Object.keys(a).filter(k => k.startsWith('Approval [') && ['TRUE', 'FALSE'].includes(String(a[k]).toUpperCase())).map(k => k.replace('Approval [', '').replace(']', ''));
-               if (parsedNames.length > 0) displayOwner = parsedNames.join(', ');
-            }
+            const cardPending = [], cardDone = [];
+            Object.keys(a).forEach(k => {
+              if (k.startsWith('Approval [')) {
+                const v = String(a[k]).toUpperCase();
+                const nm = k.slice('Approval ['.length, -1);
+                if (v === 'FALSE') cardPending.push(nm);
+                else if (v === 'TRUE') cardDone.push(nm);
+              }
+            });
+            if (cardPending.length > 0) displayOwner = cardPending.join(', ');
+            else if (cardDone.length > 0) displayOwner = 'All completed';
             return `
             <div class="glass p-4 rounded-xl border ${borderExtra} space-y-2 relative" onclick="openRecordDetails('Actions', '${a["Timestamp"]}', '')">
               <div class="flex justify-between items-start">
@@ -4097,12 +4107,15 @@
         let completedCount = 0;
         let pendingCount = 0;
         const pendingNames = [];
+        const completedNames = [];
         Object.keys(record).forEach(key => {
           if (key.startsWith("Approval [")) {
             const val = String(record[key]).toUpperCase();
             const name = key.replace("Approval [", "").replace("]", "");
-            if (val === "TRUE") completedCount++;
-            else if (val === "FALSE") {
+            if (val === "TRUE") {
+              completedCount++;
+              completedNames.push(name);
+            } else if (val === "FALSE") {
               pendingCount++;
               pendingNames.push(name);
             }
@@ -4249,8 +4262,14 @@
               
               ${pendingNames.length > 0 ? `
               <div class="text-[11px] text-slate-400 bg-slate-800/50 p-2.5 rounded-lg mt-2 border border-slate-700/50 leading-relaxed">
-                <span class="font-bold text-slate-300 block mb-1">Awaiting completion from:</span> 
+                <span class="font-bold text-slate-300 block mb-1">Awaiting completion from:</span>
                 ${pendingNames.join(", ")}
+              </div>
+              ` : ''}
+              ${completedNames.length > 0 ? `
+              <div class="text-[11px] text-slate-400 bg-emerald-500/5 p-2.5 rounded-lg mt-2 border border-emerald-500/20 leading-relaxed">
+                <span class="font-bold text-emerald-400 block mb-1">Completed:</span>
+                ${completedNames.join(", ")}
               </div>
               ` : ''}
               
