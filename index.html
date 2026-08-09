@@ -1729,6 +1729,10 @@
         setFilter('all');
       }
       
+      // Members only have the Active dashboard — never carry the admin's Actions or
+      // Conference panel into a member (or View As) session.
+      if (state.role !== 'admin') state.dashboardViewType = 'active';
+
       updateRosterDatalist();
       switchTab('dashboard');
     }
@@ -3407,7 +3411,11 @@
       } else if (owner === "Admins") {
         adminRoster.forEach(name => { if(name) record[`Approval [${name}]`] = "FALSE"; });
       } else if (owner) {
-        record[`Approval [${owner}]`] = "FALSE";
+        // The owner picker produces a comma-joined list for multi-person selections —
+        // one approval entry PER PERSON, never a single combined "Approval [A, B, C]".
+        owner.split(',').map(n => n.trim()).filter(Boolean).forEach(name => {
+          record[`Approval [${name}]`] = "FALSE";
+        });
       }
       
       apiCall('addRecord', {
