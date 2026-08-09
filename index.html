@@ -4402,7 +4402,7 @@
       return ' req-field';
     }
 
-    function getStepInfoHtml(recordType, currentStep, isAdmin) {
+    function getStepInfoHtml(recordType, currentStep, isAdmin, includeGoldLegend = true) {
       const FINISHED = ['Complete', 'Declined', 'Cancelled', 'Release Complete', 'Release Completed', ''];
       if (FINISHED.includes(currentStep)) return '';
 
@@ -4438,7 +4438,7 @@
         html += `<p class="step-admin-info text-xs text-center mt-2 mb-1"><span class="step-label-bold font-bold">Admin Info:</span> ${info.admin}</p>`;
       }
       html += `<p class="step-next-info text-xs text-center ${isAdmin ? '' : 'mt-2'}"><span class="step-label-bold font-bold">Next Step:</span> ${info.next}</p>`;
-      if (REQUIRED_STEP_FIELDS[recordType] && REQUIRED_STEP_FIELDS[recordType][currentStep]) {
+      if (includeGoldLegend && REQUIRED_STEP_FIELDS[recordType] && REQUIRED_STEP_FIELDS[recordType][currentStep]) {
         html += `<p class="text-[11px] text-center mt-1 text-amber-400 font-semibold">Gold-bordered fields are required to move this record to the next step.</p>`;
       }
       return html;
@@ -5921,6 +5921,38 @@
       renderFormFields();
     }
 
+    // Create-form Current Step block — mirrors the edit modal's emerald card, including
+    // the Admin Info / Next Step lines, which live-update as the selection changes.
+    // (Gold-field legend suppressed: the create form has no gold-highlighted fields.)
+    const FORM_STEP_CONFIG = {
+      calling:    { type: 'Callings Releasings', def: 'Admin Review',    steps: ['Admin Review', 'HC Approval', 'Call / Release', 'Sustain', 'Set Apart', 'Training'] },
+      ordination: { type: 'Ordinations',         def: 'Stake Interview', steps: ['Admin Review', 'Stake Interview', 'HC Approval', 'Sustain', 'Ordination', 'Certificate'] },
+      release:    { type: 'Release Only',        def: 'Admin Review',    steps: ['Admin Review', 'Extend Release', 'Pulpit Release', 'Complete', 'Cancelled'] }
+    };
+
+    function renderFormStepField() {
+      const cfg = FORM_STEP_CONFIG[state.formType];
+      if (!cfg) return '';
+      const labelFor = (s) => s === 'Stake Interview' ? 'Interview' : s;
+      return `
+          <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 w-full">
+            <label class="block text-base text-emerald-400 font-bold mb-2 text-center">Current Step</label>
+            <select id="form-current-step" onchange="updateFormStepInfo()" class="current-step-select w-full glass rounded-lg px-2.5 py-2 text-base text-emerald-400 font-medium text-center focus:outline-none border-[2px] border-emerald-500/30">
+              ${cfg.steps.map(s => `<option value="${s}" ${s === cfg.def ? 'selected' : ''}>${labelFor(s)}</option>`).join('')}
+            </select>
+            <div id="form-step-info">${getStepInfoHtml(cfg.type, cfg.def, state.role === 'admin', false)}</div>
+          </div>`;
+    }
+
+    function updateFormStepInfo() {
+      const cfg = FORM_STEP_CONFIG[state.formType];
+      const infoDiv = document.getElementById('form-step-info');
+      const stepSel = document.getElementById('form-current-step');
+      if (cfg && infoDiv && stepSel) {
+        infoDiv.innerHTML = getStepInfoHtml(cfg.type, stepSel.value, state.role === 'admin', false);
+      }
+    }
+
     function renderFormFields() {
       const container = document.getElementById('dynamic-form-fields');
       const lblName = document.getElementById('lbl-member-name');
@@ -6000,17 +6032,7 @@
               <option value="Complete">Complete</option>
             </select>
           </div>
-          <div>
-            <label class="block text-sm font-medium text-slate-400 mb-1">Current Step</label>
-            <select id="form-current-step" class="current-step-select w-full glass rounded-xl px-3 py-2.5 text-sm text-emerald-400 font-medium text-center focus:outline-none border-[2px] border-emerald-500/30">
-              <option value="Admin Review" selected>Admin Review</option>
-              <option value="HC Approval">HC Approval</option>
-              <option value="Call / Release">Call / Release</option>
-              <option value="Sustain">Sustain</option>
-              <option value="Set Apart">Set Apart</option>
-              <option value="Training">Training</option>
-            </select>
-          </div>
+          ${renderFormStepField()}
           <div>
             <label class="block text-sm font-medium text-slate-400 mb-1">Notes / Instructions</label>
             <textarea id="form-notes" rows="3" placeholder="Additional context..." class="w-full glass rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200"></textarea>
@@ -6034,17 +6056,6 @@
             </select>
           </div>
           <div>
-            <label class="block text-sm font-medium text-slate-400 mb-1">Current Step</label>
-            <select id="form-current-step" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
-              <option value="Admin Review">Admin Review</option>
-              <option value="Stake Interview" selected>Interview</option>
-              <option value="HC Approval">HC Approval</option>
-              <option value="Sustain">Sustain</option>
-              <option value="Ordination">Ordination</option>
-              <option value="Certificate">Certificate</option>
-            </select>
-          </div>
-          <div>
             <label class="block text-sm font-medium text-slate-400 mb-1">Assigned to Oversee</label>
             <input type="text" list="stake-presidency-hc-list" id="form-oversee-assigned" placeholder="Select or type name" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
           </div>
@@ -6052,6 +6063,7 @@
             <label class="block text-sm font-medium text-slate-400 mb-1">Presidency Date Approved</label>
             <input type="date" id="form-sp-approved-date" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
           </div>
+          ${renderFormStepField()}
           <div>
             <label class="block text-sm font-medium text-slate-400 mb-1">Notes</label>
             <textarea id="form-notes" rows="3" placeholder="Details..." class="w-full glass rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200"></textarea>
@@ -6079,16 +6091,6 @@
             </select>
           </div>
           <div>
-            <label class="block text-sm font-medium text-slate-400 mb-1">Current Step</label>
-            <select id="form-current-step" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
-              <option value="Admin Review" selected>Admin Review</option>
-              <option value="Extend Release">Extend Release</option>
-              <option value="Pulpit Release">Pulpit Release</option>
-              <option value="Complete">Complete</option>
-              <option value="Cancelled">Cancelled</option>
-            </select>
-          </div>
-          <div>
             <label class="block text-sm font-medium text-slate-400 mb-1">Presidency Date Approved</label>
             <input type="date" id="form-sp-approved-date" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
           </div>
@@ -6101,6 +6103,11 @@
               <label class="block text-sm font-medium text-slate-400 mb-1">Assigned to Release</label>
               <input type="text" list="stake-presidency-hc-list" id="form-release-assigned" placeholder="Select or type name" class="w-full glass rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
             </div>
+          </div>
+          ${renderFormStepField()}
+          <div>
+            <label class="block text-sm font-medium text-slate-400 mb-1">Notes</label>
+            <textarea id="form-notes" rows="3" placeholder="Details..." class="w-full glass rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-200"></textarea>
           </div>
         `;
       }
@@ -6152,6 +6159,7 @@
         record["Current Step"] = document.getElementById('form-current-step').value;
         record["Reason for Release"] = document.getElementById('form-release-reason').value;
         record["Assigned to Extend Release"] = document.getElementById('form-release-assigned').value;
+        record["Notes"] = document.getElementById('form-notes').value;
         record["Stake Conference Sustaining"] = "";
         record["Stake Presidency Date Approved"] = document.getElementById('form-sp-approved-date').value;
       }
