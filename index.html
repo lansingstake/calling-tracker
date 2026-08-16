@@ -235,7 +235,9 @@
   </header>
 
   <!-- Notification Toast Container -->
-  <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+  <!-- z-[200]: must stack above every modal/overlay (drawers are z-50, dialogs z-[100]) —
+       error toasts fired while a modal stays open were invisible behind its backdrop -->
+  <div id="toast-container" class="fixed top-4 right-4 z-[200] flex flex-col gap-2 pointer-events-none"></div>
 
   <!-- Pull-to-refresh indicator (shown while pulling down / refreshing the current view) -->
   <div id="ptr-indicator" class="hidden fixed top-0 left-0 right-0 flex justify-center z-[55] pointer-events-none" style="opacity:0;">
