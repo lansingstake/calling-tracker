@@ -1889,6 +1889,21 @@
       window.open(state.spreadsheetUrl, '_blank');
     }
 
+    // The Code.js version this frontend was written against. getData/login
+    // responses echo the deployed backend's version; a mismatch means the
+    // Apps Script deployment is stale (pasted but never redeployed as a new
+    // version) and admins get warned instead of silently hitting old behavior.
+    const EXPECTED_BACKEND_VERSION = '2026-08-16.7';
+
+    function warnIfBackendStale(res) {
+      if (state.isDemo || state.role !== 'admin' || state.backendStaleWarned) return;
+      const got = res.backendVersion || '';
+      if (got === EXPECTED_BACKEND_VERSION) return;
+      state.backendStaleWarned = true;
+      const label = got ? `backend version ${got}` : 'a backend older than version reporting';
+      showToast(`This app expects backend ${EXPECTED_BACKEND_VERSION} but the server is running ${label}. In Apps Script: paste the latest Code.js, then Deploy → Manage deployments → Edit (pencil) → Version: "New version" → Deploy. Saving the file alone does NOT update the live app.`, 'warning', 25000);
+    }
+
     // Core API Client Fetch Function
     function apiCall(action, payload) {
       if (state.isDemo || !state.apiUrl) {
@@ -2337,6 +2352,7 @@
       apiCall('getData')
         .then(res => {
           if (res.success) {
+            warnIfBackendStale(res);
             if (res.stakeName) {
               state.stakeName = res.stakeName;
               const titleEl = document.getElementById('app-title');
@@ -5036,6 +5052,7 @@
       apiCall('getData')
         .then(res => {
           if (res.success) {
+            warnIfBackendStale(res);
             if (res.stakeUnits) state.stakeUnits = res.stakeUnits;
             if (res.stakeUnitTypes) state.stakeUnitTypes = res.stakeUnitTypes;
             state.records.callings = res.callings || [];
