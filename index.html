@@ -7310,12 +7310,22 @@
         return;
       }
 
-      apiCall('sendApprovalRequest', { selectedRecords: selectedRecords, appUrl: appUrlString, scheduledAtMs: scheduledAtMs, deliveryMode: draftMode ? 'draft' : null })
+      // Drafts and scheduled sends use their own backend actions: an outdated
+      // Code.js deployment rejects the unknown action and sends NOTHING, instead
+      // of ignoring the flags and firing the emails immediately.
+      const approvalAction = draftMode ? 'draftApprovalRequest'
+                           : scheduledAtMs ? 'scheduleApprovalRequest'
+                           : 'sendApprovalRequest';
+      apiCall(approvalAction, { selectedRecords: selectedRecords, appUrl: appUrlString, scheduledAtMs: scheduledAtMs })
         .then(res => {
           btn.disabled = false;
           btn.innerHTML = remoteApprovalIdleBtnHtml();
           lucide.createIcons();
-          if (res.success && res.drafted) {
+          if (res.success && (draftMode ? !res.drafted : scheduledAtMs ? !res.scheduled : false)) {
+            // Belt-and-suspenders: success without the mode confirmation means a
+            // mismatched backend acted on the request — tell the admin to verify.
+            showToast('The backend did not confirm the requested delivery mode — deploy the latest Code.js, then check Gmail Sent/Drafts before retrying.', 'error', 12000);
+          } else if (res.success && res.drafted) {
             showToast(`${res.draftCount} draft email(s) saved to the admin Gmail Drafts covering ${selectedRecords.length} record(s) — review and send from Gmail.`, 'success', 8000);
             showRemoteApprovalMathToast(res);
             closeRemoteApprovalModal();
@@ -7326,6 +7336,8 @@
             showToast(`Approval request sent to ${res.sentCount} High Councilor(s) for ${selectedRecords.length} record(s)!`, 'success', 6000);
             showRemoteApprovalMathToast(res);
             closeRemoteApprovalModal();
+          } else if (String(res.error || '').indexOf('Unknown action') === 0) {
+            showToast('This delivery option needs the latest Code.js deployed to Apps Script. Nothing was sent or drafted.', 'error', 10000);
           } else {
             showToast(res.error || 'Failed to send approval request.', 'error');
           }
