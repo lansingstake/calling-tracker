@@ -7247,6 +7247,13 @@
           lucide.createIcons();
           if (res.success) {
             showToast(`Approval request sent to ${res.sentCount} High Councilor(s) for ${selectedRecords.length} record(s)!`, 'success', 6000);
+            // Confidentiality gut check: show the sender exactly who was kept off each restricted record
+            if (res.exclusions && res.exclusions.length > 0) {
+              const total = res.totalRecipients || 0;
+              const lines = res.exclusions.map(x =>
+                `${x.record}: sent to ${total - x.excluded.length} of ${total} High Councilors (excluded: ${x.excluded.join(', ')})`);
+              showToast('Confidentiality applied — ' + lines.join(' • '), 'info', 12000);
+            }
             closeRemoteApprovalModal();
           } else {
             showToast(res.error || 'Failed to send approval request.', 'error');
