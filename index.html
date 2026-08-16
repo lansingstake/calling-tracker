@@ -897,11 +897,23 @@
         <!-- Records List -->
         <div id="remote-approval-records" class="space-y-2"></div>
 
-        <!-- Schedule Send -->
+        <!-- Delivery: schedule send vs save to drafts -->
         <div id="remote-approval-schedule-wrap" class="pt-2 border-t border-slate-800">
-          <label class="block text-sm font-medium text-amber-400 mb-1"><i data-lucide="clock" class="w-3.5 h-3.5 inline-block mr-1"></i>Schedule Send (optional)</label>
-          <input type="datetime-local" id="remote-approval-schedule" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-amber-500">
-          <p class="text-xs text-slate-500 mt-1">Leave blank to send immediately. Confidentiality restrictions are re-checked at the scheduled time.</p>
+          <div class="flex items-center gap-5 mb-2 flex-wrap">
+            <label class="flex items-center gap-2 text-sm font-medium text-slate-200 cursor-pointer">
+              <input type="radio" name="remote-approval-mode" id="remote-approval-mode-send" value="send" checked onchange="updateRemoteApprovalMode()" class="w-4 h-4 text-amber-500 focus:ring-amber-500 bg-slate-800 border-slate-700">
+              <i data-lucide="clock" class="w-3.5 h-3.5 text-amber-400"></i>Schedule Send
+            </label>
+            <label class="flex items-center gap-2 text-sm font-medium text-slate-200 cursor-pointer">
+              <input type="radio" name="remote-approval-mode" id="remote-approval-mode-draft" value="draft" onchange="updateRemoteApprovalMode()" class="w-4 h-4 text-amber-500 focus:ring-amber-500 bg-slate-800 border-slate-700">
+              <i data-lucide="file-text" class="w-3.5 h-3.5 text-amber-400"></i>Save in Drafts
+            </label>
+          </div>
+          <div id="remote-approval-schedule-fields">
+            <input type="datetime-local" id="remote-approval-schedule" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-amber-500">
+            <p class="text-xs text-slate-500 mt-1">Leave blank to send immediately. Confidentiality restrictions are re-checked at the scheduled time.</p>
+          </div>
+          <p id="remote-approval-draft-note" class="text-xs text-slate-500 mt-1 hidden">Saves the vote email(s) to the admin Gmail account's Drafts so you can check them for accuracy — nothing sends until you send the drafts from Gmail.</p>
         </div>
 
         <!-- Send Button -->
@@ -7147,6 +7159,8 @@
       if (selectAllCb) selectAllCb.checked = false;
       const schedReset = document.getElementById('remote-approval-schedule');
       if (schedReset) schedReset.value = '';
+      const modeSend = document.getElementById('remote-approval-mode-send');
+      if (modeSend) { modeSend.checked = true; updateRemoteApprovalMode(); }
 
       if (allRecords.length === 0) {
         container.innerHTML = `
@@ -7210,6 +7224,34 @@
       document.querySelectorAll('.remote-approval-cb').forEach(cb => { cb.checked = checked; });
     }
 
+    function remoteApprovalIdleBtnHtml() {
+      const draft = document.getElementById('remote-approval-mode-draft');
+      return draft && draft.checked
+        ? '<i data-lucide="file-text" class="w-4 h-4"></i> Save Vote Email(s) to Drafts'
+        : '<i data-lucide="send" class="w-4 h-4"></i> Send Approval Request to High Council';
+    }
+
+    function updateRemoteApprovalMode() {
+      const draft = document.getElementById('remote-approval-mode-draft');
+      const isDraft = !!(draft && draft.checked);
+      document.getElementById('remote-approval-schedule-fields').classList.toggle('hidden', isDraft);
+      document.getElementById('remote-approval-draft-note').classList.toggle('hidden', !isDraft);
+      const btn = document.getElementById('btn-send-remote-approval');
+      if (btn && !btn.disabled) {
+        btn.innerHTML = remoteApprovalIdleBtnHtml();
+        lucide.createIcons();
+      }
+    }
+
+    // Confidentiality gut check: show the sender exactly who was kept off each restricted record
+    function showRemoteApprovalMathToast(res) {
+      if (!res.exclusions || res.exclusions.length === 0) return;
+      const total = res.totalRecipients || 0;
+      const lines = res.exclusions.map(x =>
+        `${x.record}: ${total - x.excluded.length} of ${total} High Councilors (excluded: ${x.excluded.join(', ')})`);
+      showToast('Confidentiality applied — ' + lines.join(' • '), 'info', 12000);
+    }
+
     function sendRemoteApprovalRequest() {
       const checkboxes = document.querySelectorAll('.remote-approval-cb:checked');
       if (checkboxes.length === 0) {
@@ -7217,10 +7259,13 @@
         return;
       }
 
-      // Optional scheduled send — validate before anything else fires
+      const draftEl = document.getElementById('remote-approval-mode-draft');
+      const draftMode = !!(draftEl && draftEl.checked);
+
+      // Optional scheduled send — validate before anything else fires (drafts don't schedule)
       const schedEl = document.getElementById('remote-approval-schedule');
       let scheduledAtMs = null;
-      if (schedEl && schedEl.value) {
+      if (!draftMode && schedEl && schedEl.value) {
         const when = new Date(schedEl.value);
         if (isNaN(when.getTime())) {
           showToast('The schedule time is not a valid date.', 'warning');
@@ -7259,29 +7304,27 @@
           btn.innerHTML = '<i data-lucide="send" class="w-4 h-4"></i> Send Approval Request to High Council';
           lucide.createIcons();
           const hcCount = (state.records.highCouncilors || []).filter(Boolean).length || 0;
-          showToast(`[Demo Mode] Simulated approval request ${scheduledAtMs ? 'scheduled for ' + new Date(scheduledAtMs).toLocaleString() : 'sent'} for ${selectedRecords.length} record(s) to ${hcCount} High Councilor(s).`, 'success', 6000);
+          showToast(`[Demo Mode] Simulated approval request ${draftMode ? 'saved to Drafts' : scheduledAtMs ? 'scheduled for ' + new Date(scheduledAtMs).toLocaleString() : 'sent'} for ${selectedRecords.length} record(s) to ${hcCount} High Councilor(s).`, 'success', 6000);
           closeRemoteApprovalModal();
         }, 1500);
         return;
       }
 
-      apiCall('sendApprovalRequest', { selectedRecords: selectedRecords, appUrl: appUrlString, scheduledAtMs: scheduledAtMs })
+      apiCall('sendApprovalRequest', { selectedRecords: selectedRecords, appUrl: appUrlString, scheduledAtMs: scheduledAtMs, deliveryMode: draftMode ? 'draft' : null })
         .then(res => {
           btn.disabled = false;
-          btn.innerHTML = '<i data-lucide="send" class="w-4 h-4"></i> Send Approval Request to High Council';
+          btn.innerHTML = remoteApprovalIdleBtnHtml();
           lucide.createIcons();
-          if (res.success && res.scheduled) {
+          if (res.success && res.drafted) {
+            showToast(`${res.draftCount} draft email(s) saved to the admin Gmail Drafts covering ${selectedRecords.length} record(s) — review and send from Gmail.`, 'success', 8000);
+            showRemoteApprovalMathToast(res);
+            closeRemoteApprovalModal();
+          } else if (res.success && res.scheduled) {
             showToast(`Approval request for ${res.recordCount} record(s) scheduled for ${new Date(res.scheduledAtMs).toLocaleString()}. Confidentiality restrictions are re-checked when it sends.`, 'success', 8000);
             closeRemoteApprovalModal();
           } else if (res.success) {
             showToast(`Approval request sent to ${res.sentCount} High Councilor(s) for ${selectedRecords.length} record(s)!`, 'success', 6000);
-            // Confidentiality gut check: show the sender exactly who was kept off each restricted record
-            if (res.exclusions && res.exclusions.length > 0) {
-              const total = res.totalRecipients || 0;
-              const lines = res.exclusions.map(x =>
-                `${x.record}: sent to ${total - x.excluded.length} of ${total} High Councilors (excluded: ${x.excluded.join(', ')})`);
-              showToast('Confidentiality applied — ' + lines.join(' • '), 'info', 12000);
-            }
+            showRemoteApprovalMathToast(res);
             closeRemoteApprovalModal();
           } else {
             showToast(res.error || 'Failed to send approval request.', 'error');
@@ -7289,7 +7332,7 @@
         })
         .catch(err => {
           btn.disabled = false;
-          btn.innerHTML = '<i data-lucide="send" class="w-4 h-4"></i> Send Approval Request to High Council';
+          btn.innerHTML = remoteApprovalIdleBtnHtml();
           lucide.createIcons();
           showToast('Network error sending approval request.', 'error');
         });
