@@ -1254,7 +1254,7 @@
           callings: mockData.records.filter(r => r['Record Type'] === 'Calling'),
           ordinations: mockData.records.filter(r => r['Record Type'] === 'Ordination'),
           releases: mockData.records.filter(r => r['Record Type'] === 'Release'),
-          sustainings: [...mockData.pulpitTracker],
+          sustainings: [...(mockData.pulpitTracker || mockData.sustainings || [])],
           highCouncilors: [...mockData.highCouncilors],
           highCouncilorUnits: [...mockData.highCouncilorUnits],
           highCouncilorEmails: [],
@@ -4779,7 +4779,17 @@
     // Update single fields (checklist options, text, dates)
     function updateRecordField(fieldKey, value) {
       if (!state.activeRecord) return;
-      
+
+      // HC Approval requires the Presidency Approval Date to be set first
+      if (fieldKey === 'Current Step' && value === 'HC Approval' &&
+          ['Callings Releasings', 'Ordinations'].includes(state.activeRecord.type) &&
+          !String(state.activeRecord.record['Stake Presidency Date Approved'] || '').trim()) {
+        showToast('Enter the Presidency Approval Date before moving to HC Approval.', 'warning', 5000);
+        renderModalContent(state.activeRecord.type, state.activeRecord.record);
+        lucide.createIcons();
+        return;
+      }
+
       // Prompt logic for Training Provided
       if ((fieldKey === 'Training Provided?' || fieldKey === 'Training Provided') && value === 'Yes') {
         setTimeout(() => {
@@ -5963,7 +5973,11 @@
     function hiddenFromMembers() {
       const sp = state.isDemo ? (state.records.stakePresidency || []) : (state.stakePresidency || []);
       const hc = state.isDemo ? (state.records.highCouncilors || []) : (state.highCouncilors || []);
-      return uniqueNames([...(sp || []), ...(hc || [])]);
+      const admins = state.isDemo ? (state.records.admins || []) : (state.admins || []);
+      // Admins are hideable too — except yourself, so you can't lock yourself out
+      const me = String(state.username || '').trim().toLowerCase();
+      return uniqueNames([...(sp || []), ...(hc || []), ...(admins || [])])
+        .filter(n => n.trim().toLowerCase() !== me);
     }
 
     function renderHiddenFromPicker(prefix, selectedStr, onChangeFn) {
@@ -5987,7 +6001,7 @@
             <div id="${prefix}-menu" class="hidden absolute z-[100] mt-1 w-full bg-slate-950 border border-slate-700 rounded-xl shadow-2xl p-3 max-h-64 overflow-y-auto custom-scrollbar" style="opacity: 1; backdrop-filter: none; -webkit-backdrop-filter: none;">
               ${boxes}
               <div class="sticky bottom-0 bg-slate-950 pt-2 pb-1 border-t border-slate-800 mt-2">
-                <button type="button" onclick="document.getElementById('${prefix}-menu').classList.add('hidden')" class="w-full bg-slate-700 hover:bg-slate-600 active:scale-95 text-white font-bold py-2 rounded-lg text-sm transition-all shadow-lg">Done</button>
+                <button type="button" onclick="document.getElementById('${prefix}-menu').classList.add('hidden')" class="w-full bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold py-2 rounded-lg text-sm transition-all shadow-lg">Done</button>
               </div>
             </div>
           </div>
@@ -6257,6 +6271,13 @@
         record["Notes"] = document.getElementById('form-notes').value;
         record["Stake Conference Sustaining"] = "";
         record["Stake Presidency Date Approved"] = document.getElementById('form-sp-approved-date').value;
+      }
+
+      // HC Approval requires the Presidency Approval Date to be set first
+      if (record["Current Step"] === 'HC Approval' &&
+          !String(record["Stake Presidency Date Approved"] || '').trim()) {
+        showToast('Enter the Presidency Approval Date before selecting the HC Approval step.', 'warning', 5000);
+        return;
       }
 
       // Confidential-record restrictions selected by the admin (any record type)
