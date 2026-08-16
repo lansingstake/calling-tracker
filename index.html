@@ -7160,7 +7160,8 @@
                 data-name="${rec.name.replace(/"/g, '&quot;')}"
                 data-unit="${rec.unit.replace(/"/g, '&quot;')}"
                 data-detail="${rec.callingOrPriesthood.replace(/"/g, '&quot;')}"
-                data-type="${rec.type}">
+                data-type="${rec.type}"
+                data-timestamp="${String(rec.timestamp).replace(/"/g, '&quot;')}">
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2 flex-wrap">
                   <span class="text-sm font-semibold text-slate-100">${rec.name}</span>
@@ -7211,7 +7212,10 @@
         name: cb.dataset.name,
         unit: cb.dataset.unit,
         callingOrPriesthood: cb.dataset.detail,
-        type: cb.dataset.type
+        type: cb.dataset.type,
+        // The backend keys Hidden From restrictions off this timestamp — without
+        // it every record looks unrestricted and confidential ones leak
+        timestamp: cb.dataset.timestamp || ''
       }));
 
       const btn = document.getElementById('btn-send-remote-approval');
