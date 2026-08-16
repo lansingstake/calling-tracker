@@ -897,6 +897,13 @@
         <!-- Records List -->
         <div id="remote-approval-records" class="space-y-2"></div>
 
+        <!-- Schedule Send -->
+        <div id="remote-approval-schedule-wrap" class="pt-2 border-t border-slate-800">
+          <label class="block text-sm font-medium text-amber-400 mb-1"><i data-lucide="clock" class="w-3.5 h-3.5 inline-block mr-1"></i>Schedule Send (optional)</label>
+          <input type="datetime-local" id="remote-approval-schedule" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-amber-500">
+          <p class="text-xs text-slate-500 mt-1">Leave blank to send immediately. Confidentiality restrictions are re-checked at the scheduled time.</p>
+        </div>
+
         <!-- Send Button -->
         <button onclick="sendRemoteApprovalRequest()" id="btn-send-remote-approval" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-amber-500/20 active:scale-95 flex items-center justify-center gap-2 mt-4">
           <i data-lucide="send" class="w-4 h-4"></i> Send Approval Request to High Council
@@ -7138,6 +7145,8 @@
       const container = document.getElementById('remote-approval-records');
       const selectAllCb = document.getElementById('remote-approval-select-all');
       if (selectAllCb) selectAllCb.checked = false;
+      const schedReset = document.getElementById('remote-approval-schedule');
+      if (schedReset) schedReset.value = '';
 
       if (allRecords.length === 0) {
         container.innerHTML = `
@@ -7208,6 +7217,22 @@
         return;
       }
 
+      // Optional scheduled send — validate before anything else fires
+      const schedEl = document.getElementById('remote-approval-schedule');
+      let scheduledAtMs = null;
+      if (schedEl && schedEl.value) {
+        const when = new Date(schedEl.value);
+        if (isNaN(when.getTime())) {
+          showToast('The schedule time is not a valid date.', 'warning');
+          return;
+        }
+        if (when.getTime() <= Date.now()) {
+          showToast('The scheduled send time must be in the future.', 'warning');
+          return;
+        }
+        scheduledAtMs = when.getTime();
+      }
+
       const selectedRecords = Array.from(checkboxes).map(cb => ({
         name: cb.dataset.name,
         unit: cb.dataset.unit,
@@ -7234,18 +7259,21 @@
           btn.innerHTML = '<i data-lucide="send" class="w-4 h-4"></i> Send Approval Request to High Council';
           lucide.createIcons();
           const hcCount = (state.records.highCouncilors || []).filter(Boolean).length || 0;
-          showToast(`[Demo Mode] Simulated approval request sent for ${selectedRecords.length} record(s) to ${hcCount} High Councilor(s).`, 'success', 6000);
+          showToast(`[Demo Mode] Simulated approval request ${scheduledAtMs ? 'scheduled for ' + new Date(scheduledAtMs).toLocaleString() : 'sent'} for ${selectedRecords.length} record(s) to ${hcCount} High Councilor(s).`, 'success', 6000);
           closeRemoteApprovalModal();
         }, 1500);
         return;
       }
 
-      apiCall('sendApprovalRequest', { selectedRecords: selectedRecords, appUrl: appUrlString })
+      apiCall('sendApprovalRequest', { selectedRecords: selectedRecords, appUrl: appUrlString, scheduledAtMs: scheduledAtMs })
         .then(res => {
           btn.disabled = false;
           btn.innerHTML = '<i data-lucide="send" class="w-4 h-4"></i> Send Approval Request to High Council';
           lucide.createIcons();
-          if (res.success) {
+          if (res.success && res.scheduled) {
+            showToast(`Approval request for ${res.recordCount} record(s) scheduled for ${new Date(res.scheduledAtMs).toLocaleString()}. Confidentiality restrictions are re-checked when it sends.`, 'success', 8000);
+            closeRemoteApprovalModal();
+          } else if (res.success) {
             showToast(`Approval request sent to ${res.sentCount} High Councilor(s) for ${selectedRecords.length} record(s)!`, 'success', 6000);
             // Confidentiality gut check: show the sender exactly who was kept off each restricted record
             if (res.exclusions && res.exclusions.length > 0) {
