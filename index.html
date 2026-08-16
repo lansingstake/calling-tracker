@@ -7326,7 +7326,7 @@
             // mismatched backend acted on the request — tell the admin to verify.
             showToast('The backend did not confirm the requested delivery mode — deploy the latest Code.js, then check Gmail Sent/Drafts before retrying.', 'error', 12000);
           } else if (res.success && res.drafted) {
-            showToast(`${res.draftCount} draft email(s) saved to the admin Gmail Drafts covering ${selectedRecords.length} record(s) — review and send from Gmail.`, 'success', 8000);
+            showToast(`${res.draftCount} draft email(s) saved to the Gmail Drafts of ${res.draftAccount || 'the account the Apps Script runs as'} — review and send from that account's Gmail.`, 'success', 10000);
             showRemoteApprovalMathToast(res);
             closeRemoteApprovalModal();
           } else if (res.success && res.scheduled) {
