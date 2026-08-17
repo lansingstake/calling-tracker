@@ -890,6 +890,9 @@
 
       <!-- Scrollable Content -->
       <div class="space-y-4 px-6 pb-6 pt-4 overflow-y-auto scrollbar-hide flex-1">
+        <!-- Pending scheduled sends (populated when any exist) -->
+        <div id="remote-approval-pending" class="hidden"></div>
+
         <!-- Select All -->
         <label class="flex items-center gap-2.5 cursor-pointer select-none p-2 rounded-lg hover:bg-slate-800/50 transition-colors border-b border-slate-800 pb-3">
           <input type="checkbox" id="remote-approval-select-all" onchange="toggleRemoteApprovalSelectAll(this.checked)" class="w-4 h-4 rounded text-amber-500 focus:ring-amber-500 bg-slate-800 border-slate-700">
@@ -1895,7 +1898,7 @@
     // responses echo the deployed backend's version; a mismatch means the
     // Apps Script deployment is stale (pasted but never redeployed as a new
     // version) and admins get warned instead of silently hitting old behavior.
-    const EXPECTED_BACKEND_VERSION = '2026-08-16.9';
+    const EXPECTED_BACKEND_VERSION = '2026-08-16.10';
 
     function warnIfBackendStale(res) {
       if (state.isDemo || state.role !== 'admin' || state.backendStaleWarned) return;
@@ -7180,6 +7183,7 @@
       if (schedReset) schedReset.value = '';
       const modeSend = document.getElementById('remote-approval-mode-send');
       if (modeSend) { modeSend.checked = true; updateRemoteApprovalMode(); }
+      loadScheduledRequests();
 
       if (allRecords.length === 0) {
         container.innerHTML = `
@@ -7226,6 +7230,76 @@
         modal.querySelector(':scope > div').classList.remove('translate-y-full');
       });
       lucide.createIcons();
+    }
+
+    // Pending scheduled sends live server-side (one Apps Script trigger each),
+    // so the list is fetched fresh each time the modal opens. Failures stay silent:
+    // an older backend without the action simply shows no section.
+    function loadScheduledRequests() {
+      const wrap = document.getElementById('remote-approval-pending');
+      if (!wrap) return;
+      wrap.classList.add('hidden');
+      wrap.innerHTML = '';
+      if (state.isDemo) return;
+      apiCall('listScheduledRequests')
+        .then(res => {
+          if (res && res.success && res.scheduled && res.scheduled.length) {
+            renderScheduledRequests(res.scheduled);
+          }
+        })
+        .catch(() => {});
+    }
+
+    function renderScheduledRequests(items) {
+      const wrap = document.getElementById('remote-approval-pending');
+      if (!wrap) return;
+      wrap.innerHTML = `
+        <div class="text-xs font-bold text-amber-400 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+          <i data-lucide="clock" class="w-3.5 h-3.5"></i>Scheduled Sends (${items.length})
+        </div>
+        ${items.map(it => `
+          <div class="flex items-start justify-between gap-3 glass border border-amber-500/20 rounded-xl p-3 mb-2">
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-semibold text-slate-100">${new Date(it.scheduledAtMs).toLocaleString()}</div>
+              <p class="text-xs text-slate-400 mt-0.5">${it.recordCount} record(s)${it.recordNames && it.recordNames.length ? ' &middot; ' + it.recordNames.join(', ') : ''}</p>
+            </div>
+            <button onclick="cancelScheduledRequest('${it.id}')" class="flex-shrink-0 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-rose-500/15 text-rose-400 border border-rose-500/30 hover:bg-rose-500/25 transition-colors">Cancel</button>
+          </div>`).join('')}
+        <div class="border-b border-slate-800 pb-1"></div>
+      `;
+      wrap.classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function cancelScheduledRequest(id) {
+      const overlay = document.createElement('div');
+      // z-[150]: above the approval modal (z-50), below toasts (z-[200])
+      overlay.className = 'fixed inset-0 bg-black/60 z-[150] flex items-center justify-center backdrop-blur-sm';
+      overlay.innerHTML = `
+        <div class="bg-slate-900 border border-slate-700 p-6 rounded-2xl shadow-2xl max-w-sm w-full mx-4">
+          <h3 class="text-xl font-bold text-slate-100 mb-2">Cancel Scheduled Send</h3>
+          <p class="text-slate-400 mb-6">This vote request will not be sent. You can always schedule it again.</p>
+          <div class="flex gap-3 justify-end">
+            <button id="btn-keep-sched" class="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 font-medium hover:bg-slate-700 transition-colors border border-slate-700">Keep It</button>
+            <button id="btn-cancel-sched" class="px-4 py-2 rounded-lg bg-rose-500/20 text-rose-400 font-bold hover:bg-rose-500/30 transition-colors border border-rose-500/30">Cancel Send</button>
+          </div>
+        </div>`;
+      document.body.appendChild(overlay);
+      const close = () => { if (overlay.parentNode) document.body.removeChild(overlay); };
+      document.getElementById('btn-keep-sched').onclick = close;
+      document.getElementById('btn-cancel-sched').onclick = () => {
+        close();
+        apiCall('cancelScheduledRequest', { scheduledId: id })
+          .then(res => {
+            if (res && res.success) {
+              showToast('Scheduled send cancelled.', 'success');
+            } else {
+              showToast((res && res.error) || 'Could not cancel that scheduled send.', 'error', 8000);
+            }
+            loadScheduledRequests();
+          })
+          .catch(() => showToast('Network error cancelling the scheduled send.', 'error'));
+      };
     }
 
     function closeRemoteApprovalModal() {
