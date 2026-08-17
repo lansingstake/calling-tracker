@@ -1895,7 +1895,7 @@
     // responses echo the deployed backend's version; a mismatch means the
     // Apps Script deployment is stale (pasted but never redeployed as a new
     // version) and admins get warned instead of silently hitting old behavior.
-    const EXPECTED_BACKEND_VERSION = '2026-08-16.8';
+    const EXPECTED_BACKEND_VERSION = '2026-08-16.9';
 
     function warnIfBackendStale(res) {
       if (state.isDemo || state.role !== 'admin' || state.backendStaleWarned) return;
