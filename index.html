@@ -987,7 +987,13 @@
       
       // Sunday Pulpit Candidate Lists (Client-side custom order arrays)
       sundayReleasesOrder: [],
-      sundaySustainingsOrder: []
+      sundaySustainingsOrder: [],
+
+      // The admin's dashboard arrangement, fetched from the server so every
+      // device shares it, plus a flag per pulpit section for readers who
+      // rearrange by hand.
+      recordOrder: {},
+      sundayOrderOverrides: {}
     };
 
     // Constants
@@ -1898,7 +1904,7 @@
     // responses echo the deployed backend's version; a mismatch means the
     // Apps Script deployment is stale (pasted but never redeployed as a new
     // version) and admins get warned instead of silently hitting old behavior.
-    const EXPECTED_BACKEND_VERSION = '2026-08-16.10';
+    const EXPECTED_BACKEND_VERSION = '2026-09-20.1';
 
     function warnIfBackendStale(res) {
       if (state.isDemo || state.role !== 'admin' || state.backendStaleWarned) return;
@@ -2239,11 +2245,18 @@
 
     // Dashboard Fetch & Render Functions
     function sortRecordsByStoredOrder(type, recordsList) {
-      const key = 'order_' + type.toLowerCase().replace(/\s/g, '');
-      const stored = localStorage.getItem(key);
-      if (!stored) return recordsList;
+      // The arrangement saved on the server wins: it is shared with every user and
+      // is what the Over the Pulpit lists are ranked from. localStorage is only a
+      // fallback for demo mode and for backends predating the shared order.
+      let orderKeys = ((state.recordOrder || {})[type]) || null;
+      if (!orderKeys || !orderKeys.length) {
+        const key = 'order_' + type.toLowerCase().replace(/\s/g, '');
+        const stored = localStorage.getItem(key);
+        if (!stored) return recordsList;
+        try { orderKeys = JSON.parse(stored); } catch (e) { return recordsList; }
+      }
+      if (!Array.isArray(orderKeys) || !orderKeys.length) return recordsList;
       try {
-        const orderKeys = JSON.parse(stored);
         return [...recordsList].sort((a, b) => {
           const keyA = `${a.Timestamp}|${a["Member Name"]}`;
           const keyB = `${b.Timestamp}|${b["Member Name"]}`;
@@ -2301,9 +2314,21 @@
         const key = 'order_' + type.toLowerCase().replace(/\s/g, '');
         const keys = mainArray.map(r => `${r.Timestamp}|${r["Member Name"]}`);
         localStorage.setItem(key, JSON.stringify(keys));
+        state.recordOrder = state.recordOrder || {};
+        state.recordOrder[type] = keys;
 
         if (state.isDemo) {
           saveDemoDatabase();
+        } else if (state.role === 'admin') {
+          // Share it - the pulpit reader's screen follows this arrangement
+          apiCall('saveRecordOrder', { type: type, keys: keys })
+            .then(res => {
+              if (res && res.success) return;
+              if (state.recordOrderWarned) return;
+              state.recordOrderWarned = true;
+              showToast('Saved on this device only \u2014 deploy the latest Code.js so the Over the Pulpit order follows the dashboard.', 'warning', 10000);
+            })
+            .catch(() => {});
         }
 
         renderDashboard();
@@ -2366,6 +2391,7 @@
             }
             state.stakeUnits = res.stakeUnits || [];
             state.stakeUnitTypes = res.stakeUnitTypes || [];
+            state.recordOrder = res.recordOrder || {};
             state.records.callings = sortRecordsByStoredOrder('Callings Releasings', res.callings || []);
             state.records.ordinations = normalizeOrdinationSteps(sortRecordsByStoredOrder('Ordinations', res.ordinations || []));
             state.records.releases = sortRecordsByStoredOrder('Release Only', res.releases || []);
@@ -5060,9 +5086,11 @@
             warnIfBackendStale(res);
             if (res.stakeUnits) state.stakeUnits = res.stakeUnits;
             if (res.stakeUnitTypes) state.stakeUnitTypes = res.stakeUnitTypes;
-            state.records.callings = res.callings || [];
-            state.records.ordinations = normalizeOrdinationSteps(res.ordinations || []);
-            state.records.releases = res.releases || [];
+            // Same arrangement the dashboard uses - the pulpit lists rank from it
+            state.recordOrder = res.recordOrder || {};
+            state.records.callings = sortRecordsByStoredOrder('Callings Releasings', res.callings || []);
+            state.records.ordinations = normalizeOrdinationSteps(sortRecordsByStoredOrder('Ordinations', res.ordinations || []));
+            state.records.releases = sortRecordsByStoredOrder('Release Only', res.releases || []);
             state.records.sustainings = normalizeSustainings(res.sustainings || []);
 
             // Re-initialize Sunday ordering cache if it's empty
@@ -5268,10 +5296,65 @@
       // Filter list of callings sustainings (Action === "Sustain" && Calling !== "Elder" && Calling !== "High Priest")
       const sustains = filteredSustainings.filter(s => s["Action"] === "Sustain" && s["Calling"] !== "Elder" && s["Calling"] !== "High Priest");
       
-      // Compare and align order arrays, adding any new ones at the end
-      state.sundayOrdinationsOrder = alignOrderArray(state.sundayOrdinationsOrder || [], ordinations);
-      state.sundayReleasesOrder = alignOrderArray(state.sundayReleasesOrder || [], releases);
-      state.sundaySustainingsOrder = alignOrderArray(state.sundaySustainingsOrder || [], sustains);
+      // Rank each list by where its parent record sits in the admin's dashboard
+      // arrangement, so what is read over the pulpit matches what the admin laid
+      // out. A reader who taps the arrows takes over that section for the session
+      // (alignOrderArray keeps their arrangement) until they restore it.
+      const ordered = (candidates, ranker) => candidates
+        .map((c, i) => ({ c: c, i: i, rank: ranker(c) }))
+        .sort((a, b) => (a.rank - b.rank) || (a.i - b.i))
+        .map(x => x.c);
+
+      const rankedOrdinations = ordered(ordinations, pulpitRankOrdination);
+      const rankedReleases = ordered(releases, pulpitRankRelease);
+      const rankedSustains = ordered(sustains, pulpitRankSustain);
+
+      state.sundayOrderOverrides = state.sundayOrderOverrides || {};
+      state.sundayOrdinationsOrder = state.sundayOrderOverrides.ordination
+        ? alignOrderArray(state.sundayOrdinationsOrder || [], rankedOrdinations) : rankedOrdinations;
+      state.sundayReleasesOrder = state.sundayOrderOverrides.release
+        ? alignOrderArray(state.sundayReleasesOrder || [], rankedReleases) : rankedReleases;
+      state.sundaySustainingsOrder = state.sundayOrderOverrides.sustain
+        ? alignOrderArray(state.sundaySustainingsOrder || [], rankedSustains) : rankedSustains;
+    }
+
+    // Where a pulpit item's parent record sits in the admin's dashboard order.
+    // Items with no matching record rank last and keep their relative order.
+    const PULPIT_RANK_LAST = Number.MAX_SAFE_INTEGER;
+    const RELEASE_ONLY_RANK_OFFSET = 100000;
+
+    function pulpitNorm(v) { return String(v == null ? '' : v).trim().toLowerCase(); }
+
+    function dashboardIndex(list, matchFn) {
+      const i = (list || []).findIndex(matchFn);
+      return i === -1 ? PULPIT_RANK_LAST : i;
+    }
+
+    function pulpitRankOrdination(o) {
+      const name = pulpitNorm(o["Individual"]);
+      const office = pulpitNorm(o["Calling"]);
+      return dashboardIndex(state.records.ordinations, r =>
+        pulpitNorm(r["Member Name"]) === name && pulpitNorm(r["Priesthood Office"]) === office);
+    }
+
+    function pulpitRankSustain(s) {
+      const name = pulpitNorm(s["Individual"]);
+      const calling = pulpitNorm(s["Calling"]);
+      return dashboardIndex(state.records.callings, r =>
+        pulpitNorm(r["Member Name"]) === name && pulpitNorm(r["Calling"]) === calling);
+    }
+
+    function pulpitRankRelease(rel) {
+      const name = pulpitNorm(rel["Individual"]);
+      const calling = pulpitNorm(rel["Calling"] || rel["Calling / Office"]);
+      // A release created by a calling follows that calling's dashboard position
+      const fromCalling = dashboardIndex(state.records.callings, c =>
+        pulpitNorm(c["Member to Release"]) === name && pulpitNorm(c["Calling"]) === calling);
+      if (fromCalling !== PULPIT_RANK_LAST) return fromCalling;
+      // Release Only records follow their own list, grouped after those
+      const fromRelease = dashboardIndex(state.records.releases, c =>
+        pulpitNorm(c["Member Name"]) === name && pulpitNorm(c["Calling to be Released From"]) === calling);
+      return fromRelease === PULPIT_RANK_LAST ? PULPIT_RANK_LAST : RELEASE_ONLY_RANK_OFFSET + fromRelease;
     }
 
     function alignOrderArray(existingOrder, currentCandidates) {
@@ -5359,7 +5442,7 @@
           ordScriptBox.innerHTML = ordHtml;
           }
         }
-        ordContainer.innerHTML = ordinations.map((o, i) => renderSundayCandidateRow(o, i, 'ordination')).join('');
+        ordContainer.innerHTML = ordinations.map((o, i) => renderSundayCandidateRow(o, i, 'ordination')).join('') + sundayResetOrderHtml('ordination');
       }
 
       // 2. Render Release Announcements
@@ -5382,7 +5465,7 @@
           `;
           }
         }
-        relContainer.innerHTML = releases.map((r, i) => renderSundayCandidateRow(r, i, 'release')).join('');
+        relContainer.innerHTML = releases.map((r, i) => renderSundayCandidateRow(r, i, 'release')).join('') + sundayResetOrderHtml('release');
       }
 
       // 3. Render Sustaining Announcements
@@ -5410,7 +5493,7 @@
           `;
           }
         }
-        susContainer.innerHTML = sustains.map((s, i) => renderSundayCandidateRow(s, i, 'sustain')).join('');
+        susContainer.innerHTML = sustains.map((s, i) => renderSundayCandidateRow(s, i, 'sustain')).join('') + sundayResetOrderHtml('sustain');
       }
       lucide.createIcons();
     }
@@ -5532,8 +5615,30 @@
       const temp = arr[idx];
       arr[idx] = arr[targetIdx];
       arr[targetIdx] = temp;
+      // This reader has taken over the order for this section
+      state.sundayOrderOverrides = state.sundayOrderOverrides || {};
+      state.sundayOrderOverrides[type] = true;
       
       renderSundayView();
+    }
+
+    // Hand a section back to the admin's dashboard arrangement
+    function resetSundayOrder(type) {
+      state.sundayOrderOverrides = state.sundayOrderOverrides || {};
+      state.sundayOrderOverrides[type] = false;
+      if (type === 'ordination') state.sundayOrdinationsOrder = [];
+      else if (type === 'release') state.sundayReleasesOrder = [];
+      else state.sundaySustainingsOrder = [];
+      renderSundayView();
+      showToast("Restored the admin's order.", 'success');
+    }
+
+    function sundayResetOrderHtml(type) {
+      if (!(state.sundayOrderOverrides || {})[type]) return '';
+      return `
+        <button onclick="resetSundayOrder('${type}')" class="w-full mt-1 text-[11px] font-semibold text-slate-400 hover:text-indigo-400 transition-colors py-1.5">
+          <i data-lucide="rotate-ccw" class="w-3 h-3 inline-block mr-1"></i>Restore the admin's order
+        </button>`;
     }
 
     // Unified toggle sustaining checkbox / check-off event
