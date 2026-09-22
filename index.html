@@ -1904,7 +1904,7 @@
     // responses echo the deployed backend's version; a mismatch means the
     // Apps Script deployment is stale (pasted but never redeployed as a new
     // version) and admins get warned instead of silently hitting old behavior.
-    const EXPECTED_BACKEND_VERSION = '2026-09-20.1';
+    const EXPECTED_BACKEND_VERSION = '2026-09-21.1';
 
     function warnIfBackendStale(res) {
       if (state.isDemo || state.role !== 'admin' || state.backendStaleWarned) return;
@@ -1914,6 +1914,93 @@
       const label = got ? `backend version ${got}` : 'a backend older than version reporting';
       showToast(`This app expects backend ${EXPECTED_BACKEND_VERSION} but the server is running ${label}. In Apps Script: paste the latest Code.js, then Deploy → Manage deployments → Edit (pencil) → Version: "New version" → Deploy. Saving the file alone does NOT update the live app.`, 'warning', 25000);
     }
+
+    // ---- App error reporting to the Activity Log ----
+    // Some failures never reach the server by themselves: a dropped connection,
+    // an unreadable reply, a crash in the page. They are queued on the device
+    // (surviving a reload) and delivered with the next successful request, so
+    // the Activity Log shows them alongside everything else.
+    const CLIENT_EVENT_KEY = 'tracker_pending_client_events';
+    const CLIENT_EVENT_MAX = 20;
+    let clientEventFlushInFlight = false;
+    let clientEventReportingOff = false;
+
+    function readClientEvents() {
+      try {
+        const list = JSON.parse(localStorage.getItem(CLIENT_EVENT_KEY) || '[]');
+        return Array.isArray(list) ? list : [];
+      } catch (e) { return []; }
+    }
+
+    function writeClientEvents(list) {
+      try { localStorage.setItem(CLIENT_EVENT_KEY, JSON.stringify(list.slice(-CLIENT_EVENT_MAX))); } catch (e) {}
+    }
+
+    function queueClientEvent(ev) {
+      try {
+        if (state.isDemo) return;
+        const message = String(ev.message || '').slice(0, 500);
+        const list = readClientEvents();
+        // The same failure repeating is one entry with a count, not a flood
+        const same = list.find(x => x.kind === ev.kind && x.message === message && x.action === (ev.action || ''));
+        if (same) {
+          same.count = (same.count || 1) + 1;
+          same.lastAt = new Date().toISOString();
+        } else {
+          list.push({
+            kind: ev.kind,
+            message: message,
+            source: String(ev.source || '').slice(0, 200),
+            action: ev.action || '',
+            screen: state.activeTab || '',
+            at: new Date().toISOString(),
+            count: 1,
+            user: state.username || '',
+            device: String(navigator.userAgent || '').slice(0, 200)
+          });
+        }
+        writeClientEvents(list);
+      } catch (e) {}
+    }
+
+    function maybeFlushClientEvents(justFinished) {
+      try {
+        if (justFinished === 'logClientEvent' || clientEventFlushInFlight || clientEventReportingOff) return;
+        if (state.isDemo || !state.apiUrl || !state.pin) return;
+        const list = readClientEvents();
+        if (!list.length) return;
+        clientEventFlushInFlight = true;
+        writeClientEvents([]);
+        const putBack = () => writeClientEvents(list.concat(readClientEvents()));
+        apiCall('logClientEvent', { events: list })
+          .then(res => {
+            if (res && res.success) return;
+            putBack();
+            // An older backend has no such action; stop retrying this session
+            if (res && String(res.error || '').indexOf('Unknown action') === 0) clientEventReportingOff = true;
+          })
+          .catch(putBack)
+          .finally(() => { clientEventFlushInFlight = false; });
+      } catch (e) {
+        clientEventFlushInFlight = false;
+      }
+    }
+
+    window.addEventListener('error', (e) => {
+      // "Script error." is a cross-origin library error with no usable detail
+      if (!e || !e.message || e.message === 'Script error.') return;
+      const file = String(e.filename || '').split('/').pop().split('?')[0];
+      queueClientEvent({ kind: 'script', message: e.message, source: (file || 'inline script') + ':' + (e.lineno || 0) + ':' + (e.colno || 0) });
+    });
+
+    window.addEventListener('unhandledrejection', (e) => {
+      const reason = e && e.reason;
+      if (reason && reason.reported) return; // apiCall already queued this one
+      queueClientEvent({ kind: 'promise', message: (reason && (reason.message || String(reason))) || 'Unhandled promise rejection' });
+    });
+
+    // Back online: deliver anything queued while the connection was down
+    window.addEventListener('online', () => maybeFlushClientEvents(''));
 
     // Core API Client Fetch Function
     function apiCall(action, payload) {
@@ -1931,6 +2018,9 @@
         action: action,
         pin: state.pin,
         username: state.username,
+        // For the Activity Log: flags stale app versions, attributes View As
+        clientVersion: EXPECTED_BACKEND_VERSION,
+        viewAsBy: state.viewingAsBackup ? (state.viewingAsBackup.username || 'Admin') : '',
         ...payload
       };
       
@@ -1943,7 +2033,34 @@
           'Content-Type': 'text/plain;charset=utf-8'
         },
         body: JSON.stringify(body)
-      }).then(res => res.json());
+      })
+        .then(res => res.text().then(text => {
+          try {
+            return JSON.parse(text);
+          } catch (parseErr) {
+            // Apps Script replies with an HTML page when the deployment itself is
+            // broken (wrong version, access settings, a crash before doPost runs)
+            const err = new Error('Server sent a non-JSON reply (HTTP ' + res.status + '): ' +
+              text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200));
+            err.badResponse = true;
+            throw err;
+          }
+        }))
+        .then(json => {
+          maybeFlushClientEvents(action);
+          return json;
+        })
+        .catch(err => {
+          if (action !== 'logClientEvent' && err && !err.reported) {
+            queueClientEvent({
+              kind: err.badResponse ? 'bad-response' : 'network',
+              action: action,
+              message: String((err && err.message) || err)
+            });
+            err.reported = true;
+          }
+          throw err;
+        });
     }
 
     // Simulated Demo Mode API Server
