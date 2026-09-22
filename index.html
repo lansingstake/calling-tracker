@@ -591,7 +591,13 @@
 
     <!-- 5. SEARCH HISTORY VIEW -->
     <section id="view-history" class="hidden space-y-4">
-      <div class="glass rounded-2xl p-5 shadow-xl space-y-4">
+      <!-- Records | Activity Log (History is admin-only, and so is the log) -->
+      <div class="bg-slate-900/60 p-1 rounded-xl border border-slate-800 grid grid-cols-2 gap-2">
+        <button onclick="setHistoryMode('records')" id="hist-mode-records" class="py-1.5 text-sm font-semibold rounded-lg bg-indigo-600 text-white transition-all">Record History</button>
+        <button onclick="setHistoryMode('activity')" id="hist-mode-activity" class="py-1.5 text-sm font-semibold rounded-lg text-slate-400 hover:text-slate-200 transition-all">Activity Log</button>
+      </div>
+
+      <div id="history-records-panel" class="glass rounded-2xl p-5 shadow-xl space-y-4">
         <h2 class="text-lg font-bold flex items-center gap-2">
           <i data-lucide="history" class="w-5 h-5 text-indigo-500"></i>
           History Search
@@ -624,6 +630,54 @@
         <div id="history-results" class="space-y-4">
           <!-- Initial 10 loaded, updates via query -->
         </div>
+      </div>
+
+      <div id="history-activity-panel" class="hidden glass rounded-2xl p-5 shadow-xl space-y-4">
+        <div class="flex items-center justify-between gap-2">
+          <h2 class="text-lg font-bold flex items-center gap-2">
+            <i data-lucide="scroll-text" class="w-5 h-5 text-indigo-500"></i>
+            Activity Log
+          </h2>
+          <button onclick="loadActivityLog(true)" title="Refresh" class="p-2 rounded-lg glass text-slate-300 hover:text-indigo-400 transition-colors">
+            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <div class="flex gap-2">
+          <input type="text" id="activity-query" placeholder="Search names, records, errors..." onkeydown="if (event.key === 'Enter') loadActivityLog(true)" class="flex-grow min-w-0 glass rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+          <button onclick="loadActivityLog(true)" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-4 py-2.5 rounded-xl active:scale-95 transition-all flex items-center justify-center">
+            <i data-lucide="search" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <select id="activity-result" onchange="loadActivityLog(true)" class="w-full min-w-0 glass rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200 font-semibold">
+            <option value="">All results</option>
+            <option value="problems">Problems only</option>
+            <option value="Warning">Warnings</option>
+            <option value="Success">Success</option>
+            <option value="Failed">Failed</option>
+            <option value="Denied">Denied</option>
+            <option value="Error">Error</option>
+            <option value="App Error">App errors</option>
+          </select>
+          <select id="activity-user" onchange="loadActivityLog(true)" class="w-full min-w-0 glass rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200 font-semibold">
+            <option value="">Everyone</option>
+          </select>
+          <label class="block min-w-0">
+            <span class="block text-[11px] font-semibold text-slate-400 mb-0.5">From</span>
+            <input type="date" id="activity-from" onchange="loadActivityLog(true)" class="w-full min-w-0 glass rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
+          </label>
+          <label class="block min-w-0">
+            <span class="block text-[11px] font-semibold text-slate-400 mb-0.5">To</span>
+            <input type="date" id="activity-to" onchange="loadActivityLog(true)" class="w-full min-w-0 glass rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-200">
+          </label>
+        </div>
+        <div class="flex justify-end -mt-2">
+          <button onclick="clearActivityFilters()" class="text-[11px] font-semibold text-slate-400 hover:text-indigo-400 transition-colors">Clear filters</button>
+        </div>
+
+        <div id="activity-results" class="space-y-3"></div>
       </div>
     </section>
 
@@ -1462,8 +1516,12 @@
       } else if (viewId === 'sunday') {
         fetchSundayData();
       } else if (viewId === 'history') {
-        // Run initial empty query to fetch default list of 10
-        performHistorySearch("");
+        if (state.historyMode === 'activity') {
+          loadActivityLog(true);
+        } else {
+          // Run initial empty query to fetch default list of 10
+          performHistorySearch("");
+        }
       } else if (viewId === 'settings') {
         renderSettings();
       } else if (viewId === 'create') {
@@ -1904,7 +1962,7 @@
     // responses echo the deployed backend's version; a mismatch means the
     // Apps Script deployment is stale (pasted but never redeployed as a new
     // version) and admins get warned instead of silently hitting old behavior.
-    const EXPECTED_BACKEND_VERSION = '2026-09-21.1';
+    const EXPECTED_BACKEND_VERSION = '2026-09-21.2';
 
     function warnIfBackendStale(res) {
       if (state.isDemo || state.role !== 'admin' || state.backendStaleWarned) return;
@@ -2680,6 +2738,10 @@
           fetchSundayData();
           break;
         case 'history': {
+          if (state.historyMode === 'activity') {
+            loadActivityLog(true);
+            break;
+          }
           const q = document.getElementById('history-query');
           performHistorySearch(q ? q.value : '');
           break;
@@ -6722,6 +6784,205 @@
           }).join('')}
         </div>
       `;
+    }
+
+    // ---- Activity Log viewer (admin only; the server enforces it too) ----
+    // Log entries include text any signed-in device can submit (error reports),
+    // so every value is escaped before it touches the page.
+    function escapeHtml(v) {
+      return String(v === undefined || v === null ? '' : v)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function setHistoryMode(mode) {
+      state.historyMode = mode === 'activity' ? 'activity' : 'records';
+      const isActivity = state.historyMode === 'activity';
+      document.getElementById('history-records-panel').classList.toggle('hidden', isActivity);
+      document.getElementById('history-activity-panel').classList.toggle('hidden', !isActivity);
+      [['records', !isActivity], ['activity', isActivity]].forEach(([m, on]) => {
+        const b = document.getElementById('hist-mode-' + m);
+        b.classList.toggle('bg-indigo-600', on);
+        b.classList.toggle('text-white', on);
+        b.classList.toggle('text-slate-400', !on);
+        b.classList.toggle('hover:text-slate-200', !on);
+      });
+      if (isActivity) {
+        populateActivityUserFilter();
+        loadActivityLog(true);
+      } else {
+        const q = document.getElementById('history-query');
+        performHistorySearch(q ? q.value : '');
+      }
+    }
+
+    function populateActivityUserFilter() {
+      const sel = document.getElementById('activity-user');
+      const current = sel.value;
+      const people = uniqueNames([...(state.stakePresidency || []), ...(state.highCouncilors || []),
+                                  ...(state.admins || []), 'Admin']);
+      sel.innerHTML = '<option value="">Everyone</option>' +
+        people.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('') +
+        '<option value="System">System (scheduled sends)</option>';
+      sel.value = current;
+    }
+
+    function clearActivityFilters() {
+      ['activity-query', 'activity-result', 'activity-user', 'activity-from', 'activity-to']
+        .forEach(id => { document.getElementById(id).value = ''; });
+      loadActivityLog(true);
+    }
+
+    function activityFilters() {
+      return {
+        text: document.getElementById('activity-query').value.trim(),
+        result: document.getElementById('activity-result').value,
+        user: document.getElementById('activity-user').value,
+        from: document.getElementById('activity-from').value,
+        to: document.getElementById('activity-to').value
+      };
+    }
+
+    function loadActivityLog(reset) {
+      const container = document.getElementById('activity-results');
+      if (!container) return;
+      if (state.isDemo) {
+        container.innerHTML = `<p class="text-sm text-slate-400 text-center py-6">The Activity Log records the live system, so it isn't available in demo mode.</p>`;
+        return;
+      }
+      if (reset) {
+        state.activityEntries = [];
+        state.activityNextBefore = null;
+        container.innerHTML = `
+          <div class="flex flex-col items-center py-8">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-2"></div>
+            <span class="text-sm text-slate-400">Loading activity...</span>
+          </div>`;
+      } else {
+        const more = document.getElementById('activity-load-more');
+        if (more) { more.disabled = true; more.textContent = 'Loading...'; }
+      }
+      // Filters can change faster than replies arrive; only the latest request may render
+      const requestId = (state.activityRequestId || 0) + 1;
+      state.activityRequestId = requestId;
+      apiCall('getActivityLog', { filters: activityFilters(), before: reset ? null : state.activityNextBefore, limit: 50 })
+        .then(res => {
+          if (requestId !== state.activityRequestId) return;
+          if (!res || !res.success) {
+            const err = String((res && res.error) || 'Unknown error');
+            container.innerHTML = `<p class="text-sm text-red-400 text-center py-6">${err.indexOf('Unknown action') === 0
+              ? 'The log viewer needs the latest Code.js deployed to Apps Script.'
+              : 'Could not load the activity log: ' + escapeHtml(err)}</p>`;
+            return;
+          }
+          state.activityEntries = (state.activityEntries || []).concat(res.rows || []);
+          state.activityNextBefore = res.nextBefore || null;
+          state.activityOldest = res.oldestScanned || '';
+          state.activityEmpty = !!res.empty;
+          renderActivityLog();
+        })
+        .catch(() => {
+          if (requestId !== state.activityRequestId) return;
+          container.innerHTML = `<p class="text-sm text-red-400 text-center py-6">Connection error loading the activity log.</p>`;
+        });
+    }
+
+    function activityDayLabel(ymd) {
+      const p = String(ymd).split('-').map(Number);
+      const day = new Date(p[0], p[1] - 1, p[2]);
+      if (isNaN(day.getTime())) return ymd;
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const diff = Math.round((today - day) / 86400000);
+      if (diff === 0) return 'Today';
+      if (diff === 1) return 'Yesterday';
+      const opts = { weekday: 'short', month: 'short', day: 'numeric' };
+      if (day.getFullYear() !== today.getFullYear()) opts.year = 'numeric';
+      return day.toLocaleDateString(undefined, opts);
+    }
+
+    // The sheet's wall-clock time, shown as-is (not shifted by the viewer's zone)
+    function activityTime(ts) {
+      const d = new Date(String(ts).replace(' ', 'T'));
+      return isNaN(d.getTime()) ? String(ts) : d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', second: '2-digit' });
+    }
+
+    const ACTIVITY_PROBLEMS = ['Failed', 'Denied', 'Error', 'App Error'];
+
+    function activityEntryHtml(e) {
+      const problem = ACTIVITY_PROBLEMS.includes(e.result);
+      const warning = e.result === 'Warning';
+      const badge = problem ? 'bg-red-500/10 text-red-400 border border-red-500/30'
+                  : warning ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
+                  : 'text-slate-400 border border-slate-700';
+      const border = problem ? 'border-red-500/30' : warning ? 'border-amber-500/30' : 'border-slate-800';
+      const who = [escapeHtml(e.user || '(unknown)'), e.role ? escapeHtml(e.role) : ''].filter(Boolean).join(' &middot; ');
+      const lines = String(e.details || '').split('; ').filter(Boolean);
+      const staleApp = /older app version|app expects/.test(e.source || '');
+      return `
+        <div class="rounded-xl border ${border} bg-slate-900/40 p-3 space-y-1.5">
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex items-center gap-2 flex-wrap min-w-0">
+              <span class="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-full whitespace-nowrap ${badge}">${escapeHtml(e.result || 'Unknown')}</span>
+              <span class="text-sm font-semibold text-slate-100 break-words">${escapeHtml(e.action)}</span>
+            </div>
+            <span class="text-[11px] text-slate-400 whitespace-nowrap">${escapeHtml(activityTime(e.timestamp))}</span>
+          </div>
+          <div class="text-xs text-slate-400">${who}${e.viewAsBy ? ` &middot; <span class="text-amber-400">View As by ${escapeHtml(e.viewAsBy)}</span>` : ''}</div>
+          ${e.record ? `
+          <div class="text-sm text-slate-200 break-words">
+            ${e.recordType ? `<span class="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-full text-slate-400 border border-slate-700 mr-1">${escapeHtml(e.recordType)}</span>` : ''}${escapeHtml(e.record)}
+          </div>` : ''}
+          ${lines.length ? `
+          <ul class="text-xs text-slate-300 space-y-0.5 break-words">
+            ${lines.map(l => `<li class="${l.charAt(0) === '\u26a0' ? 'text-amber-400 font-semibold' : ''}">${escapeHtml(l)}</li>`).join('')}
+          </ul>` : ''}
+          ${e.error ? `<div class="text-xs text-red-400 break-words">${escapeHtml(e.error)}</div>` : ''}
+          ${(e.recordKey || staleApp) ? `
+          <div class="text-[10px] text-slate-400 break-words">
+            ${e.recordKey ? 'Record key ' + escapeHtml(e.recordKey) : ''}${e.recordKey && staleApp ? ' &middot; ' : ''}${staleApp ? `<span class="text-amber-400">${escapeHtml(e.source)}</span>` : ''}
+          </div>` : ''}
+        </div>`;
+    }
+
+    function renderActivityLog() {
+      const container = document.getElementById('activity-results');
+      const entries = state.activityEntries || [];
+      const more = state.activityNextBefore;
+      const oldest = state.activityOldest ? escapeHtml(state.activityOldest.slice(0, 10)) : '';
+
+      if (!entries.length) {
+        if (state.activityEmpty) {
+          container.innerHTML = `<p class="text-sm text-slate-400 text-center py-6">Nothing has been logged yet. Entries appear as people use the app once the updated Code.js is deployed.</p>`;
+        } else if (more) {
+          container.innerHTML = `
+            <p class="text-sm text-slate-400 text-center pt-6">No matches in the entries searched so far${oldest ? ' (back to ' + oldest + ')' : ''}.</p>
+            <div class="flex justify-center pb-4">
+              <button id="activity-load-more" onclick="loadActivityLog(false)" class="mt-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold active:scale-95 transition-all">Search older entries</button>
+            </div>`;
+        } else {
+          container.innerHTML = `<p class="text-sm text-slate-400 text-center py-6">No activity matches these filters.</p>`;
+        }
+        lucide.createIcons();
+        return;
+      }
+
+      let html = '', lastDay = '';
+      entries.forEach(e => {
+        const day = String(e.timestamp).slice(0, 10);
+        if (day !== lastDay) {
+          html += `<div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 pt-2">${escapeHtml(activityDayLabel(day))}</div>`;
+          lastDay = day;
+        }
+        html += activityEntryHtml(e);
+      });
+      html += more
+        ? `<div class="flex flex-col items-center gap-1 pt-2">
+             <button id="activity-load-more" onclick="loadActivityLog(false)" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold active:scale-95 transition-all">Load more</button>
+             <span class="text-[11px] text-slate-400">Showing ${entries.length} entries</span>
+           </div>`
+        : `<p class="text-[11px] text-slate-400 text-center pt-2">End of the log &middot; ${entries.length} entries</p>`;
+      container.innerHTML = html;
+      lucide.createIcons();
     }
 
     function openHistoryRecordDetails(typeStr, timestamp, memberName) {
