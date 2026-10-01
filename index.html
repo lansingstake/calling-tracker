@@ -1078,6 +1078,16 @@
       return name + ' ' + unitTypeFor(name);
     }
 
+    // Short date for tiles. A bare yyyy-mm-dd is parsed as local, not UTC, so
+    // an interview on the 8th never shows as the 7th west of Greenwich.
+    function shortDate(value) {
+      const raw = String(value || '').trim();
+      if (!raw) return '';
+      const ymd = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      const d = ymd ? new Date(+ymd[1], +ymd[2] - 1, +ymd[3]) : new Date(raw);
+      return isNaN(d.getTime()) ? raw : d.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: '2-digit' });
+    }
+
     // Escape HTML, then turn URLs into clickable links (new tab). stopPropagation keeps
     // a link click from also triggering the card's own onclick (e.g. opening the modal).
     function linkify(text) {
@@ -2947,9 +2957,8 @@
                 // interview with nobody named stays with the secretary, not nobody.
                 const interviewStatus = String(o["Interview Status"] || 'Pending').trim();
                 const interviewer = String(o["Interviewing Presidency Member"] || '').trim().toLowerCase();
-                const interviewWhen = String(o["Interview Date"] || '').trim();
                 if (interviewStatus === 'Scheduled' && interviewer && interviewer === usernameLower) {
-                    personalTasks.push({ record: o, name: o["Member Name"], task: "Conduct Priesthood Interview", details: `${o["Priesthood Office"]} (${o["Unit"]})${interviewWhen ? ' \u2014 ' + interviewWhen : ''}`, type: 'ordination', priority: 'High' });
+                    personalTasks.push({ record: o, name: o["Member Name"], task: "Conduct Priesthood Interview", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination', priority: 'High' });
                 } else if ((interviewStatus !== 'Scheduled' || !interviewer) && admin2 === usernameLower && usernameLower.length > 0) {
                     personalTasks.push({ record: o, name: o["Member Name"], task: "Set Up Priesthood Interview", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination', priority: 'High' });
                 }
@@ -3011,6 +3020,10 @@
             personalContainer.innerHTML = personalTasks.map(t => {
               const createdDate = t.record["Timestamp"] ? new Date(t.record["Timestamp"]).toLocaleDateString('en-US', {month: 'numeric', day: 'numeric', year: '2-digit'}) : '';
               const modifiedDate = t.record["Modified Date"] ? new Date(t.record["Modified Date"]).toLocaleDateString('en-US', {month: 'numeric', day: 'numeric', year: '2-digit'}) : '';
+              // Interview tasks carry their status and date on the tile face
+              const isInterviewTask = t.task === 'Set Up Priesthood Interview' || t.task === 'Conduct Priesthood Interview';
+              const interviewStatus = isInterviewTask ? (String(t.record['Interview Status'] || '').trim() || 'Pending') : '';
+              const interviewDate = isInterviewTask ? shortDate(t.record['Interview Date']) : '';
               const isTraining = t.task === 'Provide Training';
               const pBorder = isTraining ? 'border-amber-700/60' : t.priority === 'High' ? 'border-red-700/60' : t.priority === 'Low' ? 'border-slate-800/40' : 'border-slate-800';
               const pBg = isTraining ? 'bg-amber-950/30' : t.priority === 'High' ? 'bg-red-950/30' : '';
@@ -3028,6 +3041,11 @@
                     <p class="text-sm font-bold text-slate-100 break-words">${t.task}: ${t.name}</p>
                     `}
                     <p class="text-[11px] text-slate-400 font-medium break-words">${linkify(t.details)}</p>
+                    ${interviewStatus ? `
+                    <p class="text-[11px] font-medium break-words mt-0.5">
+                      <span class="text-slate-400">Interview:</span>
+                      <span class="${interviewStatus === 'Pending' ? 'text-amber-400 font-bold' : 'text-slate-200 font-semibold'}">${interviewStatus}</span>${interviewDate ? ` <span class="text-slate-300">&middot; ${interviewDate}</span>` : ''}
+                    </p>` : ''}
                   </div>
                   <div class="text-right shrink-0 ml-2">
                     <span class="text-[10px] text-slate-500 block">Created: ${createdDate}</span>
