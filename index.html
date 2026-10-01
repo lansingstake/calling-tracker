@@ -1962,7 +1962,7 @@
     // responses echo the deployed backend's version; a mismatch means the
     // Apps Script deployment is stale (pasted but never redeployed as a new
     // version) and admins get warned instead of silently hitting old behavior.
-    const EXPECTED_BACKEND_VERSION = '2026-09-27.1';
+    const EXPECTED_BACKEND_VERSION = '2026-10-01.1';
 
     function warnIfBackendStale(res) {
       if (state.isDemo || state.role !== 'admin' || state.backendStaleWarned) return;
@@ -2941,8 +2941,18 @@
 
             if (step === 'Admin Review' && admin1 === usernameLower && usernameLower.length > 0) {
                 personalTasks.push({ record: o, name: o["Member Name"], task: "Admin Review", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination', priority: 'High' });
-            } else if (step === 'Stake Interview' && admin2 === usernameLower && usernameLower.length > 0) {
-                personalTasks.push({ record: o, name: o["Member Name"], task: "Set Up Priesthood Interview", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination', priority: 'High' });
+            } else if (step === 'Stake Interview') {
+                // Pending sits with the Executive Secretary to arrange; once Scheduled
+                // it belongs to the presidency member conducting it. A scheduled
+                // interview with nobody named stays with the secretary, not nobody.
+                const interviewStatus = String(o["Interview Status"] || 'Pending').trim();
+                const interviewer = String(o["Interviewing Presidency Member"] || '').trim().toLowerCase();
+                const interviewWhen = String(o["Interview Date"] || '').trim();
+                if (interviewStatus === 'Scheduled' && interviewer && interviewer === usernameLower) {
+                    personalTasks.push({ record: o, name: o["Member Name"], task: "Conduct Priesthood Interview", details: `${o["Priesthood Office"]} (${o["Unit"]})${interviewWhen ? ' \u2014 ' + interviewWhen : ''}`, type: 'ordination', priority: 'High' });
+                } else if ((interviewStatus !== 'Scheduled' || !interviewer) && admin2 === usernameLower && usernameLower.length > 0) {
+                    personalTasks.push({ record: o, name: o["Member Name"], task: "Set Up Priesthood Interview", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination', priority: 'High' });
+                }
             } else if (step === 'Sustain' && overseer.includes(usernameLower) && usernameLower.length > 0) {
                 personalTasks.push({ record: o, name: o["Member Name"], task: "Sustain", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination', priority: 'High' });
             } else if (step === 'Ordination' && overseer.includes(usernameLower) && usernameLower.length > 0) {
@@ -4139,15 +4149,41 @@
               `}
             </div>
             
-            ${isAdmin ? `
+            ${isAdmin || record['Current Step'] === 'Stake Interview' ? `
             <div>
               <label class="block text-sm text-slate-400 font-medium mb-1">Interview Status</label>
+              ${isFieldEditable('Interview Status') ? `
               <select onchange="updateRecordField('Interview Status', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500${reqCls('Interview Status', record)}">
                 <option value="Pending" ${(record['Interview Status'] || 'Pending') === 'Pending' ? 'selected' : ''}>Pending</option>
                 <option value="Scheduled" ${record['Interview Status'] === 'Scheduled' ? 'selected' : ''}>Scheduled</option>
                 <option value="Complete" ${record['Interview Status'] === 'Complete' || record['Interview Status'] === 'Completed' ? 'selected' : ''}>Complete</option>
               </select>
+              ` : `
+              <div class="text-slate-300 text-base font-semibold py-1.5">${record['Interview Status'] || 'Pending'}</div>
+              `}
             </div>
+            <div>
+              <label class="block text-sm text-slate-400 font-medium mb-1">Interviewing Presidency Member</label>
+              ${isFieldEditable('Interviewing Presidency Member') ? `
+              <select onchange="updateRecordField('Interviewing Presidency Member', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500${reqCls('Interviewing Presidency Member', record)}">
+                <option value=""></option>
+                ${uniqueNames(state.isDemo ? (state.records.stakePresidency || mockData.stakePresidency || []) : (state.stakePresidency || [])).map(n => `<option value="${n}" ${record['Interviewing Presidency Member'] === n ? 'selected' : ''}>${n}</option>`).join('')}
+              </select>
+              ` : `
+              <div class="text-slate-300 text-base font-semibold py-1.5">${record['Interviewing Presidency Member'] || 'None'}</div>
+              `}
+            </div>
+            <div>
+              <label class="block text-sm text-slate-400 font-medium mb-1">Interview Date</label>
+              ${isFieldEditable('Interview Date') ? `
+              <input type="date" value="${record['Interview Date'] || ''}" onchange="updateRecordField('Interview Date', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200${reqCls('Interview Date', record)}">
+              ` : `
+              <div class="text-slate-300 text-base font-semibold py-1.5">${record['Interview Date'] || 'None'}</div>
+              `}
+            </div>
+            ` : ''}
+
+            ${isAdmin ? `
             <div>
               <label class="block text-sm text-slate-400 font-medium mb-1">Presidency Date Approved</label>
               <input type="date" value="${record['Stake Presidency Date Approved'] || ''}" onchange="updateRecordField('Stake Presidency Date Approved', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200">
@@ -4655,7 +4691,7 @@
         'Training': ['Training Provided?']
       },
       'Ordinations': {
-        'Stake Interview': ['Interview Status'],
+        'Stake Interview': ['Interview Status', 'Interviewing Presidency Member', 'Interview Date'],
         'Sustain': ['Date Sustained'],
         'Ordination': ['Ordained Date', 'Ordained By'],
         'Certificate': ['Certificate Printed?', 'Certificate Signed?', 'Certificate Delivered?', 'LCR Updated?']
@@ -4669,6 +4705,11 @@
       const stepMap = type && REQUIRED_STEP_FIELDS[type];
       const required = stepMap && stepMap[(record && record['Current Step'] || '').trim()];
       if (!required || !required.includes(fieldKey)) return '';
+      // Before an interview is scheduled only the status matters; once it is
+      // scheduled, who conducts it and when are what move the record along
+      if (fieldKey === 'Interviewing Presidency Member' || fieldKey === 'Interview Date') {
+        if (String(record['Interview Status'] || 'Pending').trim() !== 'Scheduled') return '';
+      }
       // Release-related fields only matter when someone is actually being released
       if (fieldKey === 'Notified of Release?' || fieldKey === 'Key Returned?') {
         const rel = (record['Member to Release'] || '').trim();
@@ -4692,7 +4733,7 @@
         },
         'Ordinations': {
           'Admin Review': { admin: 'Review this record and advance when ready', next: 'Prepare for High Council Approval and update the Current Step when ready.' },
-          'Stake Interview': { admin: 'Task has been set for the Executive Secretary to set up the interview', next: "Set up a meeting between the member and the presidency, and then change 'Interview Status' to Scheduled." },
+          'Stake Interview': { admin: 'While the Interview Status is Pending the task sits with the Executive Secretary. Once it is Scheduled the task moves to the Interviewing Presidency Member.', next: "Choose the Interviewing Presidency Member and Interview Date, then set 'Interview Status' to Scheduled. After the interview, set it to Complete and the record returns to Admin Review." },
           'HC Approval': { admin: 'Each High Councilor sees this record in their Dashboard and can now vote.', next: 'Vote below by clicking the voting tile with your name.' },
           'Sustain': { admin: 'Task has been set for the person assigned to complete the Sustaining', next: "Sustain the person over the pulpit in their unit and update the 'Date Sustained' below." },
           'Ordination': { admin: 'Task has been set for the person assigned to complete the Ordination', next: "Oversee the ordination of the person, then update the 'Ordained Date', 'Ordained By', and if necessary the 'Out of Unit Member Info' below." },
@@ -5063,6 +5104,9 @@
         }, 300);
       }
       
+      // Captured before the save: the interview rules below compare against it
+      const previousStep = String(state.activeRecord.record['Current Step'] || '');
+
       const updates = {};
       updates[fieldKey] = value;
       
@@ -5115,6 +5159,21 @@
             }
           }
           
+          // Interview handoffs: completing the interview sends the record back to
+          // Admin Review, and moving the step past the interview closes it out.
+          if (state.activeRecord.type === 'Ordinations') {
+            const ordRec = state.activeRecord.record;
+            const interviewIdx = ORDINATION_STEP_ORDER.indexOf('Stake Interview');
+            if (fieldKey === 'Interview Status' && value === 'Complete' && previousStep === 'Stake Interview') {
+              updateRecordField('Current Step', 'Admin Review');
+              showToast('Interview complete. Current Step moved to Admin Review.', 'info', 4000);
+            } else if (fieldKey === 'Current Step' && previousStep === 'Stake Interview' &&
+                       ORDINATION_STEP_ORDER.indexOf(value) > interviewIdx &&
+                       String(ordRec['Interview Status'] || '').trim() !== 'Complete') {
+              updateRecordField('Interview Status', 'Complete');
+            }
+          }
+
           // Ordination step progression logic
           if (state.activeRecord.type === 'Ordinations' && ['Date Sustained', 'Ordained Date', 'Ordained By'].includes(fieldKey)) {
             const rec = state.activeRecord.record;
