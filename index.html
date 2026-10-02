@@ -3763,7 +3763,7 @@
               <div class="text-xs opacity-80">This record has received ${yesVotes} approval votes from the High Council.</div>
             </div>
           </div>
-        ` : '<div id="approval-banner"></div>';
+        ` : '<div id="approval-banner" hidden></div>';
 
         const approvalsList = uniqueNames(state.highCouncilors).filter(n => !isNameHiddenFromRecord(record, n)).map(name => {
           const colHeader = `Approval [${name}]`;
@@ -3788,7 +3788,7 @@
         html += `
           ${approvalBannerHtml}
           
-          ${isAdmin ? `<div class="mb-4">${renderHiddenFromPicker('modal-hidefrom', record['Hidden From'] || '', 'onModalHiddenFromChange()')}</div>` : ''}
+          ${isAdmin ? `<div class="mb-4">${renderHiddenFromPicker('modal-hidefrom', record['Hidden From'] || '', 'onModalHiddenFromChange()', true)}</div>` : ''}
           <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 w-full mb-4">
             <label class="block text-base text-emerald-400 font-bold mb-2 text-center">Current Step</label>
             ${isFieldEditable('Current Step') ? `
@@ -3811,7 +3811,7 @@
           </div>
           <!-- Notes -->
           <div>
-            <label class="block text-sm text-slate-400 font-medium mb-1">Notes</label>
+            <label class="block text-base text-slate-400 font-medium mb-1">Notes</label>
             <textarea onchange="updateRecordField('Notes', this.value)" rows="2" class="w-full glass rounded-lg p-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Notes'] || ''}</textarea>
           </div>
           ${isAdmin ? `
@@ -4058,7 +4058,7 @@
         }
         const isApproved = yesVotes >= 7;
         const approvalBannerHtml = `
-          <div id="approval-banner" class="mb-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 flex items-center gap-3 text-emerald-400 ${isApproved ? '' : 'hidden'}">
+          <div id="approval-banner" ${isApproved ? '' : 'hidden'} class="mb-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 flex items-center gap-3 text-emerald-400 ${isApproved ? '' : 'hidden'}">
             <i data-lucide="check-circle" class="w-5 h-5 text-emerald-400 shrink-0"></i>
             <div>
               <div class="text-sm font-bold uppercase tracking-wider">&#10004; High Council Approved</div>
@@ -4090,7 +4090,7 @@
         html += `
           ${approvalBannerHtml}
 
-          ${isAdmin ? `<div class="mb-4">${renderHiddenFromPicker('modal-hidefrom', record['Hidden From'] || '', 'onModalHiddenFromChange()')}</div>` : ''}
+          ${isAdmin ? `<div class="mb-4">${renderHiddenFromPicker('modal-hidefrom', record['Hidden From'] || '', 'onModalHiddenFromChange()', true)}</div>` : ''}
           <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 w-full mb-4">
             <label class="block text-base text-emerald-400 font-bold mb-2 text-center">Current Step</label>
             ${isFieldEditable('Current Step') ? `
@@ -4112,7 +4112,7 @@
           </div>
           <!-- Notes -->
           <div>
-            <label class="block text-sm text-slate-400 font-medium mb-1">Notes</label>
+            <label class="block text-base text-slate-400 font-medium mb-1">Notes</label>
             <textarea onchange="updateRecordField('Notes', this.value)" rows="2" class="w-full glass rounded-lg p-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Notes'] || ''}</textarea>
           </div>
           ${isAdmin ? `
@@ -4295,7 +4295,7 @@
       
       else if (type === 'Release Only') {
         html += `
-          ${isAdmin ? `<div class="mb-4">${renderHiddenFromPicker('modal-hidefrom', record['Hidden From'] || '', 'onModalHiddenFromChange()')}</div>` : ''}
+          ${isAdmin ? `<div class="mb-4">${renderHiddenFromPicker('modal-hidefrom', record['Hidden From'] || '', 'onModalHiddenFromChange()', true)}</div>` : ''}
           <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 w-full mb-4">
             <label class="block text-base text-emerald-400 font-bold mb-2 text-center">Current Step</label>
             ${isFieldEditable('Current Step') ? `
@@ -4314,7 +4314,7 @@
           </div>
           <!-- Notes -->
           <div>
-            <label class="block text-sm text-slate-400 font-medium mb-1">Notes</label>
+            <label class="block text-base text-slate-400 font-medium mb-1">Notes</label>
             <textarea onchange="updateRecordField('Notes', this.value)" rows="2" class="w-full glass rounded-lg p-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Notes'] || ''}</textarea>
           </div>
 
@@ -6373,7 +6373,7 @@
         .filter(n => n.trim().toLowerCase() !== me);
     }
 
-    function renderHiddenFromPicker(prefix, selectedStr, onChangeFn) {
+    function renderHiddenFromPicker(prefix, selectedStr, onChangeFn, inline) {
       if (state.role !== 'admin') return '';
       const members = hiddenFromMembers();
       if (members.length === 0) return '';
@@ -6382,16 +6382,17 @@
         <label class="flex items-center gap-2 text-sm text-slate-300 mb-1 cursor-pointer hover:bg-slate-800/50 p-1 rounded">
           <input type="checkbox" data-name="${n}" ${selected.includes(n.toLowerCase()) ? 'checked' : ''} onchange="${onChangeFn}" class="${prefix}-cb rounded bg-slate-800 border-slate-600 text-rose-500 w-3.5 h-3.5"> <span class="select-none">${n}</span>
         </label>`).join('');
-      const displayText = String(selectedStr || '').trim() || 'No one — visible to all';
+      const emptyText = inline ? 'No one' : 'No one — visible to all';
+      const displayText = String(selectedStr || '').trim() || emptyText;
       return `
-        <div>
-          <label class="block text-sm font-medium text-rose-400 mb-1"><i data-lucide="eye-off" class="w-3.5 h-3.5 inline-block mr-1"></i>Hide This Record From</label>
-          <div class="relative">
+        <div${inline ? ' class="flex flex-wrap items-center gap-x-3 gap-y-1"' : ''}>
+          <label class="${inline ? 'shrink-0 whitespace-nowrap' : 'block mb-1'} text-sm font-medium text-rose-400"><i data-lucide="eye-off" class="w-3.5 h-3.5 inline-block mr-1"></i>Hide This Record From</label>
+          <div class="relative${inline ? ' flex-1 min-w-[7rem]' : ''}">
             <button type="button" onclick="document.getElementById('${prefix}-menu').classList.toggle('hidden')" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-rose-500 flex justify-between items-center text-left">
-              <span class="truncate" id="${prefix}-display">${displayText}</span>
+              <span class="truncate" id="${prefix}-display" data-empty="${emptyText}">${displayText}</span>
               <i data-lucide="chevron-down" class="w-4 h-4 ml-2 flex-shrink-0"></i>
             </button>
-            <div id="${prefix}-menu" class="hidden absolute z-[100] mt-1 w-full bg-slate-950 border border-slate-700 rounded-xl shadow-2xl p-3 max-h-64 overflow-y-auto custom-scrollbar" style="opacity: 1; backdrop-filter: none; -webkit-backdrop-filter: none;">
+            <div id="${prefix}-menu" class="hidden absolute z-[100] mt-1 ${inline ? 'right-0 w-max min-w-full max-w-[18rem]' : 'w-full'} bg-slate-950 border border-slate-700 rounded-xl shadow-2xl p-3 max-h-64 overflow-y-auto custom-scrollbar" style="opacity: 1; backdrop-filter: none; -webkit-backdrop-filter: none;">
               ${boxes}
               <div class="sticky bottom-0 bg-slate-950 pt-2 pb-1 border-t border-slate-800 mt-2">
                 <button type="button" onclick="document.getElementById('${prefix}-menu').classList.add('hidden')" class="w-full bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold py-2 rounded-lg text-sm transition-all shadow-lg">Done</button>
@@ -6409,7 +6410,7 @@
     function updateHiddenFromDisplay(prefix) {
       const sel = getHiddenFromSelection(prefix);
       const display = document.getElementById(`${prefix}-display`);
-      if (display) display.textContent = sel || 'No one — visible to all';
+      if (display) display.textContent = sel || display.dataset.empty || 'No one — visible to all';
       return sel;
     }
 
