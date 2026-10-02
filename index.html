@@ -3788,6 +3788,7 @@
         html += `
           ${approvalBannerHtml}
           
+          ${isAdmin ? `<div class="mb-4">${renderHiddenFromPicker('modal-hidefrom', record['Hidden From'] || '', 'onModalHiddenFromChange()')}</div>` : ''}
           <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 w-full mb-4">
             <label class="block text-base text-emerald-400 font-bold mb-2 text-center">Current Step</label>
             ${isFieldEditable('Current Step') ? `
@@ -3808,7 +3809,11 @@
             `}
             ${getStepInfoHtml('Callings Releasings', record['Current Step'], isAdmin)}
           </div>
-          ${isAdmin ? `<div class="mb-4">${renderHiddenFromPicker('modal-hidefrom', record['Hidden From'] || '', 'onModalHiddenFromChange()')}</div>` : ''}
+          <!-- Notes -->
+          <div>
+            <label class="block text-sm text-slate-400 font-medium mb-1">Notes</label>
+            <textarea onchange="updateRecordField('Notes', this.value)" rows="2" class="w-full glass rounded-lg p-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Notes'] || ''}</textarea>
+          </div>
           ${isAdmin ? `
           <div class="mb-4">
             <label class="block text-[10px] text-slate-400 font-bold mb-2 text-center uppercase tracking-wider">Jump To</label>
@@ -4038,13 +4043,6 @@
           </div>
           ` : ''}
 
-          ${isAdmin || ['Call / Release', 'Sustain', 'Set Apart'].includes(record['Current Step']) || isAdmin ? `<hr class="border-slate-800">` : ''}
-
-          <!-- Notes -->
-          <div>
-            <label class="block text-sm text-slate-400 font-medium mb-1">Notes</label>
-            <textarea onchange="updateRecordField('Notes', this.value)" rows="2" class="w-full glass rounded-lg p-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Notes'] || ''}</textarea>
-          </div>
         `;
       } 
       
@@ -4092,6 +4090,7 @@
         html += `
           ${approvalBannerHtml}
 
+          ${isAdmin ? `<div class="mb-4">${renderHiddenFromPicker('modal-hidefrom', record['Hidden From'] || '', 'onModalHiddenFromChange()')}</div>` : ''}
           <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 w-full mb-4">
             <label class="block text-base text-emerald-400 font-bold mb-2 text-center">Current Step</label>
             ${isFieldEditable('Current Step') ? `
@@ -4111,7 +4110,11 @@
             `}
             ${getStepInfoHtml('Ordinations', record['Current Step'], isAdmin)}
           </div>
-          ${isAdmin ? `<div class="mb-4">${renderHiddenFromPicker('modal-hidefrom', record['Hidden From'] || '', 'onModalHiddenFromChange()')}</div>` : ''}
+          <!-- Notes -->
+          <div>
+            <label class="block text-sm text-slate-400 font-medium mb-1">Notes</label>
+            <textarea onchange="updateRecordField('Notes', this.value)" rows="2" class="w-full glass rounded-lg p-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Notes'] || ''}</textarea>
+          </div>
           ${isAdmin ? `
           <div class="mb-4">
             <label class="block text-[10px] text-slate-400 font-bold mb-2 text-center uppercase tracking-wider">Jump To</label>
@@ -4286,19 +4289,13 @@
             </div>
           </div>
 
-          <hr class="border-slate-800">
           ` : ''}
-
-          <!-- Notes -->
-          <div>
-            <label class="block text-sm text-slate-400 font-medium mb-1">Notes</label>
-            <textarea onchange="updateRecordField('Notes', this.value)" rows="2" class="w-full glass rounded-lg p-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Notes'] || ''}</textarea>
-          </div>
         `;
       }
       
       else if (type === 'Release Only') {
         html += `
+          ${isAdmin ? `<div class="mb-4">${renderHiddenFromPicker('modal-hidefrom', record['Hidden From'] || '', 'onModalHiddenFromChange()')}</div>` : ''}
           <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 w-full mb-4">
             <label class="block text-base text-emerald-400 font-bold mb-2 text-center">Current Step</label>
             ${isFieldEditable('Current Step') ? `
@@ -4315,7 +4312,11 @@
             `}
             ${getStepInfoHtml('Release Only', record['Current Step'], isAdmin)}
           </div>
-          ${isAdmin ? `<div class="mb-4">${renderHiddenFromPicker('modal-hidefrom', record['Hidden From'] || '', 'onModalHiddenFromChange()')}</div>` : ''}
+          <!-- Notes -->
+          <div>
+            <label class="block text-sm text-slate-400 font-medium mb-1">Notes</label>
+            <textarea onchange="updateRecordField('Notes', this.value)" rows="2" class="w-full glass rounded-lg p-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Notes'] || ''}</textarea>
+          </div>
 
           <!-- Section 1: Workflow & Key Info -->
           <div class="space-y-4">
@@ -4386,14 +4387,6 @@
               ${renderSelectField('LCR Updated?', 'LCR Updated?', ['Yes', 'No'], record)}
               ${renderSelectField('Stake-Wide Unit Release Required?', 'Stake-Wide Release Required?', ['Yes', 'No'], record)}
             </div>
-          </div>
-
-          <hr class="border-slate-800">
-
-          <!-- Notes -->
-          <div>
-            <label class="block text-sm text-slate-400 font-medium mb-1">Notes</label>
-            <textarea onchange="updateRecordField('Notes', this.value)" rows="2" class="w-full glass rounded-lg p-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">${record['Notes'] || ''}</textarea>
           </div>
         `;
       }
@@ -6392,7 +6385,7 @@
       const displayText = String(selectedStr || '').trim() || 'No one — visible to all';
       return `
         <div>
-          <label class="block text-sm font-medium text-rose-400 mb-1"><i data-lucide="eye-off" class="w-3.5 h-3.5 inline-block mr-1"></i>Hide This Record From (kept confidential)</label>
+          <label class="block text-sm font-medium text-rose-400 mb-1"><i data-lucide="eye-off" class="w-3.5 h-3.5 inline-block mr-1"></i>Hide This Record From</label>
           <div class="relative">
             <button type="button" onclick="document.getElementById('${prefix}-menu').classList.toggle('hidden')" class="w-full glass rounded-lg px-2.5 py-2 text-base text-slate-200 focus:outline-none focus:ring-1 focus:ring-rose-500 flex justify-between items-center text-left">
               <span class="truncate" id="${prefix}-display">${displayText}</span>
