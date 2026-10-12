@@ -5468,9 +5468,16 @@
         }
       });
       
+      // Admin Review is a hard stop: nothing whose parent record sits there is
+      // read over the pulpit, whatever its Pulpit Tracker row or the rules below
+      // say. Once the record moves on, its rows (and any check-offs already on
+      // them) come back under the normal rules.
+      const parentInAdminReview = pulpitAdminReviewMatcher();
+
       // Exclude sustaining items whose parent record is still at an early step
       const earlySteps = ['HC Approval', 'Stake Interview', 'Call / Release', 'Complete', 'Declined', 'Cancelled'];
       const filteredSustainings = activeSustainings.filter(s => {
+        if (parentInAdminReview(s)) return false;
         const name = s["Individual"];
         const calling = s["Calling"];
         // Check callings records (sustain: Member Name matches)
@@ -5571,6 +5578,30 @@
     const RELEASE_ONLY_RANK_OFFSET = 100000;
 
     function pulpitNorm(v) { return String(v == null ? '' : v).trim().toLowerCase(); }
+
+    function pulpitAdminReviewMatcher() {
+      const timestamps = new Set();
+      const nameCalling = new Set();
+      const note = (r, callingField) => {
+        if (pulpitNorm(r["Current Step"]) !== 'admin review') return;
+        const ts = String(r["Timestamp"] || '').trim();
+        if (ts) timestamps.add(ts);
+        const calling = pulpitNorm(r[callingField]);
+        const member = pulpitNorm(r["Member Name"]);
+        const released = pulpitNorm(r["Member to Release"]);
+        if (member) nameCalling.add(member + '|' + calling);
+        if (released) nameCalling.add(released + '|' + calling);
+      };
+      (state.records.callings || []).forEach(r => note(r, 'Calling'));
+      (state.records.ordinations || []).forEach(r => note(r, 'Priesthood Office'));
+      (state.records.releases || []).forEach(r => note(r, 'Calling to be Released From'));
+      return row => {
+        const ts = String(row["TimeStamp from Records Tab"] || '').trim();
+        const bare = ts.indexOf('R-') === 0 ? ts.substring(2) : ts;
+        if (bare && timestamps.has(bare)) return true;
+        return nameCalling.has(pulpitNorm(row["Individual"]) + '|' + pulpitNorm(row["Calling"] || row["Calling / Office"]));
+      };
+    }
 
     function dashboardIndex(list, matchFn) {
       const i = (list || []).findIndex(matchFn);
