@@ -1972,7 +1972,7 @@
     // responses echo the deployed backend's version; a mismatch means the
     // Apps Script deployment is stale (pasted but never redeployed as a new
     // version) and admins get warned instead of silently hitting old behavior.
-    const EXPECTED_BACKEND_VERSION = '2026-10-01.1';
+    const EXPECTED_BACKEND_VERSION = '2026-10-18.1';
 
     function warnIfBackendStale(res) {
       if (state.isDemo || state.role !== 'admin' || state.backendStaleWarned) return;
@@ -2236,6 +2236,19 @@
                 const percent = totalCount > 0 ? (trueCount / totalCount) : 0;
                 item["Percent"] = String(percent);
 
+                // Home unit sustaining -> Update LCR, as the server does
+                const homeUnit = getStakeUnits().find(u => u.toLowerCase() === String(item["Unit"] || '').trim().toLowerCase());
+                if (payload.updates._action.trim().toLowerCase() === 'sustain' && homeUnit && payload.updates.hasOwnProperty(homeUnit) && item[homeUnit] === 'True') {
+                  const wantCalling = payload.updates._calling.trim().toLowerCase();
+                  const parent = [...(state.records.ordinations || []), ...(state.records.callings || [])].find(r =>
+                    String(r["Member Name"] || '').trim().toLowerCase() === payload.memberName.trim().toLowerCase() &&
+                    String(r["Priesthood Office"] || r["Calling"] || '').trim().toLowerCase() === wantCalling);
+                  if (parent && parent["Current Step"] === 'Sustain') {
+                    parent["Current Step"] = 'Update LCR';
+                    if (!parent["Date Sustained"]) parent["Date Sustained"] = new Date().toISOString().substring(0, 10);
+                  }
+                }
+
                 // Mirror the backend: an explicitly-set Status (admin Complete/Pending
                 // toggle) wins over the percent-based auto-status.
                 if (!payload.updates.hasOwnProperty('Status')) {
@@ -2408,18 +2421,8 @@
 
     function updateMainSheetSustainDateDemo(memberName, action) {
       const todayStr = new Date().toISOString().substring(0,10);
-      if (action.toLowerCase() === "sustain") {
-        var call = state.records.callings.find(r => r["Member Name"].toLowerCase() === memberName.toLowerCase());
-        if (call) {
-          call["Date Sustained"] = todayStr;
-          call["Current Step"] = "Set Apart";
-        }
-        var ord = state.records.ordinations.find(r => r["Member Name"].toLowerCase() === memberName.toLowerCase());
-        if (ord) {
-          ord["Date Sustained"] = todayStr;
-          ord["Current Step"] = "Ordination";
-        }
-      } else {
+      // Sustain rows move their record on the home-unit check-off instead
+      if (action.toLowerCase() !== "sustain") {
         var rel = state.records.releases.find(r => r["Member Name"].toLowerCase() === memberName.toLowerCase());
         if (rel) {
           rel["Date Released"] = todayStr;
@@ -2935,6 +2938,10 @@
                 personalTasks.push({ record: c, name: c["Member Name"], releaseName: c["Member to Release"] || '', task: "Extend Calling & Release", details: `${c["Calling"]} (${c["Unit"]})`, type: 'calling', priority: 'High' });
             } else if (step === 'Sustain' && overseer.includes(usernameLower) && usernameLower.length > 0) {
                 personalTasks.push({ record: c, name: c["Member Name"], task: "Sustain", details: `${c["Calling"]} (${c["Unit"]})`, type: 'calling', priority: 'High' });
+            } else if (step === 'Update LCR' && admin1 === usernameLower && usernameLower.length > 0) {
+                // Twice per calling: once sustained, then again once set apart
+                const lcrPass = String(c["Date Set Apart"] || '').trim() ? 'record the setting apart' : 'record the sustaining';
+                personalTasks.push({ record: c, name: c["Member Name"], task: "Update LCR", details: `${c["Calling"]} (${c["Unit"]}) — ${lcrPass}`, type: 'calling', priority: 'High' });
             } else if (step === 'Set Apart' && setApart.includes(usernameLower) && usernameLower.length > 0) {
                 personalTasks.push({ record: c, name: c["Member Name"], task: "Set Apart", details: `${c["Calling"]} (${c["Unit"]})`, type: 'calling', priority: 'High' });
             } else if (step === 'Training' && tr.includes(usernameLower) && usernameLower.length > 0) {
@@ -2964,6 +2971,8 @@
                 }
             } else if (step === 'Sustain' && overseer.includes(usernameLower) && usernameLower.length > 0) {
                 personalTasks.push({ record: o, name: o["Member Name"], task: "Sustain", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination', priority: 'High' });
+            } else if (step === 'Update LCR' && admin1 === usernameLower && usernameLower.length > 0) {
+                personalTasks.push({ record: o, name: o["Member Name"], task: "Update LCR", details: `${o["Priesthood Office"]} (${o["Unit"]}) — record the sustaining`, type: 'ordination', priority: 'High' });
             } else if (step === 'Ordination' && overseer.includes(usernameLower) && usernameLower.length > 0) {
                 personalTasks.push({ record: o, name: o["Member Name"], task: "Ordination", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination', priority: 'High' });
             } else if (step === 'Certificate' && admin1 === usernameLower && usernameLower.length > 0) {
@@ -2995,8 +3004,8 @@
 
           // Sort by priority: High first, Normal middle, Low last; then by step order within each priority
           const _pOrder = { 'High': 0, 'Normal': 1, 'Low': 2 };
-          const _callingSteps = ['Admin Review', 'HC Approval', 'Call / Release', 'Sustain', 'Set Apart', 'Training'];
-          const _ordinationSteps = ['Admin Review', 'Stake Interview', 'HC Approval', 'Sustain', 'Ordination', 'Certificate'];
+          const _callingSteps = CALLING_STEP_ORDER;
+          const _ordinationSteps = ORDINATION_STEP_ORDER;
           const _releaseSteps = ['Admin Review', 'Extend Release', 'Pulpit Release', 'Complete', 'Cancelled'];
           const _getStepIdx = (t) => {
             const step = (t.record && t.record["Current Step"]) || '';
@@ -3244,8 +3253,8 @@
     }
 
     // Step order for grouping on admin/presidency dashboard
-    const CALLING_STEP_ORDER = ['Admin Review', 'HC Approval', 'Call / Release', 'Sustain', 'Set Apart', 'Training'];
-    const ORDINATION_STEP_ORDER = ['Admin Review', 'Stake Interview', 'HC Approval', 'Sustain', 'Ordination', 'Certificate'];
+    const CALLING_STEP_ORDER = ['Admin Review', 'HC Approval', 'Call / Release', 'Sustain', 'Update LCR', 'Set Apart', 'Training'];
+    const ORDINATION_STEP_ORDER = ['Admin Review', 'Stake Interview', 'HC Approval', 'Sustain', 'Update LCR', 'Ordination', 'Certificate'];
     const RELEASE_STEP_ORDER = ['Admin Review', 'Extend Release', 'Pulpit Release', 'Complete', 'Cancelled'];
     const FINISHED_STEPS = ['Complete', 'Declined', 'Cancelled', 'Release Complete', 'Release Completed'];
 
@@ -3412,6 +3421,8 @@
           // The assignee's task is extending the release — only show them at that step
           // (e.g. not on Pulpit Release, where the units handle the announcement).
           if (step === 'Extend Release') assignedPerson = r['Assigned to Extend Release'] || '';
+        } else if (step === 'Update LCR') {
+          assignedPerson = (state.isDemo ? (state.records.admins || mockData.admins || []) : (state.admins || []))[0] || '';
         } else if (step.includes('Call') || step.includes('Release')) {
           assignedPerson = r['Assigned to Extend Calling / Release'] || r['Assigned to Extend Release'] || '';
         } else if (step.includes('Sustain') || step.includes('Ordination')) {
@@ -3798,6 +3809,7 @@
               <option value="HC Approval" ${record['Current Step'] === 'HC Approval' ? 'selected' : ''}>HC Approval</option>
               <option value="Call / Release" ${record['Current Step'] === 'Call / Release' ? 'selected' : ''}>Call / Release</option>
               <option value="Sustain" ${record['Current Step'] === 'Sustain' ? 'selected' : ''}>Sustain</option>
+              <option value="Update LCR" ${record['Current Step'] === 'Update LCR' ? 'selected' : ''}>Update LCR</option>
               <option value="Set Apart" ${record['Current Step'] === 'Set Apart' ? 'selected' : ''}>Set Apart</option>
               <option value="Training" ${record['Current Step'] === 'Training' ? 'selected' : ''}>Training</option>
               <option value="Complete" ${record['Current Step'] === 'Complete' ? 'selected' : ''}>Complete</option>
@@ -3961,7 +3973,7 @@
 
           <!-- Section 3: Sustaining & Setting Apart -->
           <div id="cr-sustain" class="space-y-4">
-            ${isAdmin || ['Call / Release', 'Sustain', 'Set Apart'].includes(record['Current Step']) ? `<h4 class="text-sm font-bold uppercase tracking-wider text-slate-400 text-center">Sustain & Set Apart</h4>` : ''}
+            ${isAdmin || ['Call / Release', 'Sustain', 'Update LCR', 'Set Apart'].includes(record['Current Step']) ? `<h4 class="text-sm font-bold uppercase tracking-wider text-slate-400 text-center">Sustain & Set Apart</h4>` : ''}
             
             ${isAdmin || ['Call / Release', 'Sustain'].includes(record['Current Step']) ? `
             <div class="grid grid-cols-2 gap-3">
@@ -3979,13 +3991,13 @@
             ` : ''}
             ` : ''}
             
-            ${isAdmin || ['Sustain', 'Set Apart'].includes(record['Current Step']) ? `
+            ${isAdmin || ['Sustain', 'Update LCR', 'Set Apart'].includes(record['Current Step']) ? `
             <div class="grid grid-cols-2 gap-3">
               <div>
                 <label class="block text-sm text-slate-400 font-medium mb-1">Date Sustained</label>
                 <input type="date" value="${record['Date Sustained'] || ''}" onchange="updateRecordField('Date Sustained', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200${reqCls('Date Sustained', record)}">
               </div>
-              ${isAdmin || ['Set Apart'].includes(record['Current Step']) ? `
+              ${isAdmin || ['Update LCR', 'Set Apart'].includes(record['Current Step']) ? `
               <div>
                 <label class="block text-sm text-slate-400 font-medium mb-1">Date Set Apart</label>
                 <input type="date" value="${record['Date Set Apart'] || ''}" onchange="updateRecordField('Date Set Apart', this.value)" class="w-full glass rounded-lg px-2.5 py-2 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-200${reqCls('Date Set Apart', record)}">
@@ -3994,7 +4006,7 @@
             </div>
             ` : ''}
             
-            ${isAdmin || ['Call / Release', 'Sustain', 'Set Apart'].includes(record['Current Step']) ? `
+            ${isAdmin || ['Call / Release', 'Sustain', 'Update LCR', 'Set Apart'].includes(record['Current Step']) ? `
             <div class="grid grid-cols-2 gap-3">
               ${(() => {
                 const spRoster = state.isDemo ? (state.records.stakePresidency || []) : (state.stakePresidency || []);
@@ -4020,9 +4032,9 @@
             ` : ''}
           </div>
 
-          ${isAdmin || ['Call / Release', 'Sustain', 'Set Apart'].includes(record['Current Step']) ? `<hr class="border-slate-800">` : ''}
+          ${isAdmin || ['Call / Release', 'Sustain', 'Update LCR', 'Set Apart'].includes(record['Current Step']) ? `<hr class="border-slate-800">` : ''}
 
-          ${isAdmin || ['Call / Release', 'Sustain', 'Set Apart', 'Training'].includes(record['Current Step']) ? `
+          ${isAdmin || ['Call / Release', 'Sustain', 'Update LCR', 'Set Apart', 'Training'].includes(record['Current Step']) ? `
           <!-- Section 4: Training & Onboarding -->
           <div id="cr-training" class="space-y-4">
             <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400 text-center">Training & Onboarding</h4>
@@ -4100,6 +4112,7 @@
               <option value="Stake Interview" ${record['Current Step'] === 'Stake Interview' ? 'selected' : ''}>Interview</option>
               <option value="HC Approval" ${record['Current Step'] === 'HC Approval' ? 'selected' : ''}>HC Approval</option>
               <option value="Sustain" ${record['Current Step'] === 'Sustain' ? 'selected' : ''}>Sustain</option>
+              <option value="Update LCR" ${record['Current Step'] === 'Update LCR' ? 'selected' : ''}>Update LCR</option>
               <option value="Ordination" ${record['Current Step'] === 'Ordination' ? 'selected' : ''}>Ordination</option>
               <option value="Certificate" ${record['Current Step'] === 'Certificate' ? 'selected' : ''}>Certificate</option>
               <option value="Cancelled" ${record['Current Step'] === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
@@ -4209,19 +4222,19 @@
             </div>
             ` : ''}
             
-            ${isAdmin || ['Sustain', 'Ordination'].includes(record['Current Step']) ? `
+            ${isAdmin || ['Sustain', 'Update LCR', 'Ordination'].includes(record['Current Step']) ? `
             ${renderSelectField('Assigned to Oversee Sustaining / Ordination', 'Assigned to Oversee Sustaining / Ordination', [''].concat([...(state.isDemo ? (state.records.stakePresidency || mockData.stakePresidency) : state.stakePresidency || []), ...(state.isDemo ? (state.records.highCouncilors || mockData.highCouncilors) : state.highCouncilors || [])].filter(Boolean)), record)}
             ` : ''}
           </div>
 
-          ${isAdmin || ['Sustain', 'Ordination'].includes(record['Current Step']) ? `<hr class="border-slate-800">` : ''}
+          ${isAdmin || ['Sustain', 'Update LCR', 'Ordination'].includes(record['Current Step']) ? `<hr class="border-slate-800">` : ''}
 
-          ${isAdmin || ['Sustain', 'Ordination'].includes(record['Current Step']) ? `
+          ${isAdmin || ['Sustain', 'Update LCR', 'Ordination'].includes(record['Current Step']) ? `
           <!-- Section 2: Sustaining & Ordination -->
           <div id="ord-sustain" class="space-y-4">
             <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400 text-center">Sustain & Ordain</h4>
             <div class="grid grid-cols-2 gap-3">
-              ${isAdmin || ['Sustain', 'Ordination'].includes(record['Current Step']) ? `
+              ${isAdmin || ['Sustain', 'Update LCR', 'Ordination'].includes(record['Current Step']) ? `
               <div>
                 <label class="block text-sm text-slate-400 font-medium mb-1">Date Sustained</label>
                 ${isFieldEditable('Date Sustained') ? `
@@ -4737,6 +4750,7 @@
           'HC Approval': { admin: 'Each High Councilor sees this record in their Dashboard and can now vote.', next: 'Vote below by clicking the voting tile with your name.' },
           'Call / Release': { admin: 'Task has been set for the person assigned to extend the calling / release', next: "Extend Calling first. If member doesn't accept, counsel with the presidency before extending release (if applicable). If the person accepts the calling, update the 'Calling Accepted?' and 'Notified of Release?' fields below (and key returned if applicable)." },
           'Sustain': { admin: 'Task has been set for the person assigned to complete the Sustaining', next: "Sustain the person over the pulpit in their unit and update the 'Date Sustained' below." },
+          'Update LCR': { admin: 'Task has been set for the first admin to update LCR. Units that have not sustained this member yet still see them on Over the Pulpit.', next: "Update LCR: record the sustaining, or once the member is set apart, record the setting apart. Then move the Current Step on: to Set Apart, or to Training if they are already set apart." },
           'Set Apart': { admin: 'Task has been set for the person assigned to complete the Setting Apart', next: "Set Apart the person in their new calling, then update the 'Date Set Apart' field below." },
           'Training': { admin: 'Task has been set for the person assigned to provide Training', next: 'Provide training and update training fields below.' },
         },
@@ -4745,6 +4759,7 @@
           'Stake Interview': { admin: 'While the Interview Status is Pending the task sits with the Executive Secretary. Once it is Scheduled the task moves to the Interviewing Presidency Member.', next: "Choose the Interviewing Presidency Member and Interview Date, then set 'Interview Status' to Scheduled. After the interview, set it to Complete and the record returns to Admin Review." },
           'HC Approval': { admin: 'Each High Councilor sees this record in their Dashboard and can now vote.', next: 'Vote below by clicking the voting tile with your name.' },
           'Sustain': { admin: 'Task has been set for the person assigned to complete the Sustaining', next: "Sustain the person over the pulpit in their unit and update the 'Date Sustained' below." },
+          'Update LCR': { admin: 'Task has been set for the first admin to update LCR.', next: 'Record the sustaining in LCR, then move the Current Step to Ordination.' },
           'Ordination': { admin: 'Task has been set for the person assigned to complete the Ordination', next: "Oversee the ordination of the person, then update the 'Ordained Date', 'Ordained By', and if necessary the 'Out of Unit Member Info' below." },
           'Certificate': { admin: 'Complete the Ordination Certificate and update LCR', next: 'Print and Deliver the Certificate, then update the Certificate and LCR fields below.' },
         },
@@ -5154,6 +5169,11 @@
         if (res.success) {
           showToast('Changes saved!', 'success');
           state.activeRecord.record[fieldKey] = value;
+          if (res.createdAction) {
+            state.records.actions = state.records.actions || [];
+            state.records.actions.push(res.createdAction);
+            showToast(`Calendar & Drive action item created for ${res.createdAction.Owner}.`, 'info', 5000);
+          }
           if (updates['Modified Date']) {
             state.activeRecord.record['Modified Date'] = updates['Modified Date'];
             state.activeRecord.record['Modified By'] = updates['Modified By'];
@@ -5191,10 +5211,10 @@
             const ordainedDate = rec['Ordained Date'] || '';
             const ordainedBy = rec['Ordained By'] || '';
             
-            // Step 1: If at Sustain and Date Sustained is entered, move to Ordination
+            // Step 1: If at Sustain and Date Sustained is entered, LCR records it next
             if (currentStep === 'Sustain' && dateSustained) {
-              updateRecordField('Current Step', 'Ordination');
-              showToast('Date Sustained recorded. Current Step moved to Ordination.', 'info', 4000);
+              updateRecordField('Current Step', 'Update LCR');
+              showToast('Date Sustained recorded. Current Step moved to Update LCR.', 'info', 4000);
             }
             
             // Step 2: If both Date Sustained and Ordained Date are filled
@@ -5233,38 +5253,22 @@
             const dateSetApart = rec['Date Set Apart'] || '';
             const setApartBy = rec['Set Apart By'] || '';
             
-            // Step 1: If at Sustain and Date Sustained is entered, move to Set Apart
-            // (previously compared against 'Sustaining', a step Callings never have,
-            // so this auto-advance was dead code)
-            if (currentStep === 'Sustain' && dateSustained) {
-              updateRecordField('Current Step', 'Set Apart');
-              showToast('Date Sustained recorded. Current Step moved to Set Apart.', 'info', 4000);
+            // Sustained: LCR records the sustaining next. (Sustained over the pulpit
+            // in the home unit does the same, server-side.)
+            if (fieldKey === 'Date Sustained' && currentStep === 'Sustain' && dateSustained) {
+              updateRecordField('Current Step', 'Update LCR');
+              showToast('Date Sustained recorded. Current Step moved to Update LCR.', 'info', 4000);
             }
-            
-            // Step 2: If both Date Sustained and Date Set Apart are filled
-            if (dateSustained && dateSetApart) {
+
+            // Set apart: LCR records that too. Only from Sustain or Set Apart, so a
+            // late edit never pulls a record back from Training.
+            if (['Date Set Apart', 'Set Apart By'].includes(fieldKey) && dateSetApart &&
+                ['Sustain', 'Set Apart'].includes(currentStep)) {
               if (!setApartBy) {
                 showToast("Please select a person from the 'Assigned to Set Apart' dropdown.", 'warning', 5000);
               } else {
-                // All 3 fields complete — prompt to move to Admin Review
-                setTimeout(() => {
-                  const overlay = document.createElement('div');
-                  overlay.className = 'fixed inset-0 bg-black/60 z-[100] flex items-center justify-center backdrop-blur-sm';
-                  overlay.innerHTML = `
-                    <div class="bg-slate-900 border border-slate-700 p-6 rounded-2xl shadow-2xl max-w-sm w-full mx-4">
-                      <h3 class="text-xl font-bold text-slate-100 mb-2">Sustaining & Setting Apart Complete</h3>
-                      <p class="text-slate-400 mb-6">Sustaining and Setting Apart are finished. The Current Step for this record will now be set to "Admin Review" for updating LCR.</p>
-                      <div class="flex gap-3 justify-end">
-                        <button id="btn-admin-review-ok" class="px-4 py-2 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold hover:bg-emerald-500/30 transition-colors border border-emerald-500/30">OK</button>
-                      </div>
-                    </div>
-                  `;
-                  document.body.appendChild(overlay);
-                  document.getElementById('btn-admin-review-ok').onclick = () => {
-                    updateRecordField('Current Step', 'Admin Review');
-                    document.body.removeChild(overlay);
-                  };
-                }, 300);
+                updateRecordField('Current Step', 'Update LCR');
+                showToast('Set apart recorded. Current Step moved to Update LCR.', 'info', 4000);
               }
             }
           }
@@ -6012,48 +6016,10 @@
             };
           }
         }
-      } else {
-        // Sustain
-        if (calling === "Elder" || calling === "High Priest") {
-          // Ordination
-          const ordRecord = (state.records.ordinations || []).find(r => 
-            r["Member Name"] === individual && r["Priesthood Office"] === calling
-          );
-          if (ordRecord) {
-            targetType = 'Ordinations';
-            targetTimestamp = ordRecord["Timestamp"];
-            targetMemberName = ordRecord["Member Name"];
-            recordUpdates = isChecked ? {
-              "Current Step": "Ordination",
-              "Date Sustained": todayStr,
-              "Ready for Sustaining?": "Yes"
-            } : {
-              "Current Step": "Sustain",
-              "Date Sustained": "",
-              "Ready for Sustaining?": "Yes"
-            };
-          }
-        } else {
-          // Calling
-          const callRecord = (state.records.callings || []).find(r => 
-            r["Member Name"] === individual && r["Calling"] === calling
-          );
-          if (callRecord) {
-            targetType = 'Callings Releasings';
-            targetTimestamp = callRecord["Timestamp"];
-            targetMemberName = callRecord["Member Name"];
-            recordUpdates = isChecked ? {
-              "Current Step": "Set Apart",
-              "Date Sustained": todayStr,
-              "Ready for Sustaining / Setting Apart?": "Yes"
-            } : {
-              "Current Step": "Sustain",
-              "Date Sustained": "",
-              "Ready for Sustaining / Setting Apart?": "Yes"
-            };
-          }
-        }
       }
+      // Sustain rows: nothing is sent for the parent record from here. The server
+      // moves it when the HOME unit checks the member off (Sustain -> Update LCR),
+      // and leaves it alone for every other unit; the refetch below shows the result.
       
       if (targetType && Object.keys(recordUpdates).length > 0) {
         promises.push(
@@ -6456,8 +6422,8 @@
     // the Admin Info / Next Step lines, which live-update as the selection changes.
     // (Gold-field legend suppressed: the create form has no gold-highlighted fields.)
     const FORM_STEP_CONFIG = {
-      calling:    { type: 'Callings Releasings', def: 'Admin Review',    steps: ['Admin Review', 'HC Approval', 'Call / Release', 'Sustain', 'Set Apart', 'Training'] },
-      ordination: { type: 'Ordinations',         def: 'Stake Interview', steps: ['Admin Review', 'Stake Interview', 'HC Approval', 'Sustain', 'Ordination', 'Certificate'] },
+      calling:    { type: 'Callings Releasings', def: 'Admin Review',    steps: CALLING_STEP_ORDER },
+      ordination: { type: 'Ordinations',         def: 'Stake Interview', steps: ORDINATION_STEP_ORDER },
       release:    { type: 'Release Only',        def: 'Admin Review',    steps: ['Admin Review', 'Extend Release', 'Pulpit Release', 'Complete', 'Cancelled'] }
     };
 
