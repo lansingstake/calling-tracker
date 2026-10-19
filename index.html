@@ -1972,7 +1972,7 @@
     // responses echo the deployed backend's version; a mismatch means the
     // Apps Script deployment is stale (pasted but never redeployed as a new
     // version) and admins get warned instead of silently hitting old behavior.
-    const EXPECTED_BACKEND_VERSION = '2026-10-18.1';
+    const EXPECTED_BACKEND_VERSION = '2026-10-18.2';
 
     function warnIfBackendStale(res) {
       if (state.isDemo || state.role !== 'admin' || state.backendStaleWarned) return;
@@ -2940,7 +2940,7 @@
                 personalTasks.push({ record: c, name: c["Member Name"], task: "Sustain", details: `${c["Calling"]} (${c["Unit"]})`, type: 'calling', priority: 'High' });
             } else if (step === 'Update LCR' && admin1 === usernameLower && usernameLower.length > 0) {
                 // Twice per calling: once sustained, then again once set apart
-                const lcrPass = String(c["Date Set Apart"] || '').trim() ? 'record the setting apart' : 'record the sustaining';
+                const lcrPass = String(c["Date Set Apart"] || '').trim() ? 'Record the Setting Apart' : 'Enter the Calling into LCR';
                 personalTasks.push({ record: c, name: c["Member Name"], task: "Update LCR", details: `${c["Calling"]} (${c["Unit"]}) — ${lcrPass}`, type: 'calling', priority: 'High' });
             } else if (step === 'Set Apart' && setApart.includes(usernameLower) && usernameLower.length > 0) {
                 personalTasks.push({ record: c, name: c["Member Name"], task: "Set Apart", details: `${c["Calling"]} (${c["Unit"]})`, type: 'calling', priority: 'High' });
@@ -2972,7 +2972,7 @@
             } else if (step === 'Sustain' && overseer.includes(usernameLower) && usernameLower.length > 0) {
                 personalTasks.push({ record: o, name: o["Member Name"], task: "Sustain", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination', priority: 'High' });
             } else if (step === 'Update LCR' && admin1 === usernameLower && usernameLower.length > 0) {
-                personalTasks.push({ record: o, name: o["Member Name"], task: "Update LCR", details: `${o["Priesthood Office"]} (${o["Unit"]}) — record the sustaining`, type: 'ordination', priority: 'High' });
+                personalTasks.push({ record: o, name: o["Member Name"], task: "Update LCR", details: `${o["Priesthood Office"]} (${o["Unit"]}) — Enter the Ordination into LCR`, type: 'ordination', priority: 'High' });
             } else if (step === 'Ordination' && overseer.includes(usernameLower) && usernameLower.length > 0) {
                 personalTasks.push({ record: o, name: o["Member Name"], task: "Ordination", details: `${o["Priesthood Office"]} (${o["Unit"]})`, type: 'ordination', priority: 'High' });
             } else if (step === 'Certificate' && admin1 === usernameLower && usernameLower.length > 0) {
@@ -4750,7 +4750,7 @@
           'HC Approval': { admin: 'Each High Councilor sees this record in their Dashboard and can now vote.', next: 'Vote below by clicking the voting tile with your name.' },
           'Call / Release': { admin: 'Task has been set for the person assigned to extend the calling / release', next: "Extend Calling first. If member doesn't accept, counsel with the presidency before extending release (if applicable). If the person accepts the calling, update the 'Calling Accepted?' and 'Notified of Release?' fields below (and key returned if applicable)." },
           'Sustain': { admin: 'Task has been set for the person assigned to complete the Sustaining', next: "Sustain the person over the pulpit in their unit and update the 'Date Sustained' below." },
-          'Update LCR': { admin: 'Task has been set for the first admin to update LCR. Units that have not sustained this member yet still see them on Over the Pulpit.', next: "Update LCR: record the sustaining, or once the member is set apart, record the setting apart. Then move the Current Step on: to Set Apart, or to Training if they are already set apart." },
+          'Update LCR': { admin: 'Task has been set for the first admin to update LCR. Units that have not sustained this member yet still see them on Over the Pulpit.', next: "Enter the Calling into LCR, or once the member is set apart, record the setting apart. Then move the Current Step on: to Set Apart, or to Training if they are already set apart." },
           'Set Apart': { admin: 'Task has been set for the person assigned to complete the Setting Apart', next: "Set Apart the person in their new calling, then update the 'Date Set Apart' field below." },
           'Training': { admin: 'Task has been set for the person assigned to provide Training', next: 'Provide training and update training fields below.' },
         },
@@ -4759,7 +4759,7 @@
           'Stake Interview': { admin: 'While the Interview Status is Pending the task sits with the Executive Secretary. Once it is Scheduled the task moves to the Interviewing Presidency Member.', next: "Choose the Interviewing Presidency Member and Interview Date, then set 'Interview Status' to Scheduled. After the interview, set it to Complete and the record returns to Admin Review." },
           'HC Approval': { admin: 'Each High Councilor sees this record in their Dashboard and can now vote.', next: 'Vote below by clicking the voting tile with your name.' },
           'Sustain': { admin: 'Task has been set for the person assigned to complete the Sustaining', next: "Sustain the person over the pulpit in their unit and update the 'Date Sustained' below." },
-          'Update LCR': { admin: 'Task has been set for the first admin to update LCR.', next: 'Record the sustaining in LCR, then move the Current Step to Ordination.' },
+          'Update LCR': { admin: 'Task has been set for the first admin to update LCR.', next: 'Enter the Ordination into LCR, then move the Current Step to Ordination.' },
           'Ordination': { admin: 'Task has been set for the person assigned to complete the Ordination', next: "Oversee the ordination of the person, then update the 'Ordained Date', 'Ordained By', and if necessary the 'Out of Unit Member Info' below." },
           'Certificate': { admin: 'Complete the Ordination Certificate and update LCR', next: 'Print and Deliver the Certificate, then update the Certificate and LCR fields below.' },
         },
