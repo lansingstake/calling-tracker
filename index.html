@@ -1972,7 +1972,7 @@
     // responses echo the deployed backend's version; a mismatch means the
     // Apps Script deployment is stale (pasted but never redeployed as a new
     // version) and admins get warned instead of silently hitting old behavior.
-    const EXPECTED_BACKEND_VERSION = '2026-10-18.2';
+    const EXPECTED_BACKEND_VERSION = '2026-10-22.1';
 
     function warnIfBackendStale(res) {
       if (state.isDemo || state.role !== 'admin' || state.backendStaleWarned) return;
@@ -2024,7 +2024,10 @@
             at: new Date().toISOString(),
             count: 1,
             user: state.username || '',
-            device: String(navigator.userAgent || '').slice(0, 200)
+            device: String(navigator.userAgent || '').slice(0, 200),
+            recordType: String(ev.recordType || '').slice(0, 40),
+            record: String(ev.record || '').slice(0, 120),
+            recordKey: String(ev.recordKey || '').slice(0, 60)
           });
         }
         writeClientEvents(list);
@@ -2925,7 +2928,6 @@
           state.records.callings.forEach(c => {
             if (taskUnitFilter !== 'all' && c["Unit"] !== taskUnitFilter) return;
             const ext = String(c["Assigned to Extend Calling / Release"] || "").toLowerCase();
-            const tr = String(c["Assigned Trainer"] || "").toLowerCase();
             const overseer = String(c["Assigned to Oversee Sustaining / Ordination"] || "").toLowerCase();
             const setApart = String(c["Set Apart By"] || "").toLowerCase();
             const step = c["Current Step"];
@@ -2944,7 +2946,7 @@
                 personalTasks.push({ record: c, name: c["Member Name"], task: "Update LCR", details: `${c["Calling"]} (${c["Unit"]}) — ${lcrPass}`, type: 'calling', priority: 'High' });
             } else if (step === 'Set Apart' && setApart.includes(usernameLower) && usernameLower.length > 0) {
                 personalTasks.push({ record: c, name: c["Member Name"], task: "Set Apart", details: `${c["Calling"]} (${c["Unit"]})`, type: 'calling', priority: 'High' });
-            } else if (step === 'Training' && tr.includes(usernameLower) && usernameLower.length > 0) {
+            } else if (step === 'Training' && isNamedIn(c["Assigned Trainer"], state.username)) {
                 personalTasks.push({ record: c, name: c["Member Name"], task: "Provide Training", details: `${c["Calling"]} (${c["Unit"]})`, type: 'calling', priority: 'Normal' });
             }
           });
@@ -4671,12 +4673,145 @@
       return '';
     }
 
+    // Is this person named in an assignment field? Whole-word match on the name,
+    // so "Beam" matches "Brother Beam" or "Beam, Condie", but "Bill" is not "Bills".
+    // Code.js uses the same rule, so the task and the permission always agree.
+    function isNamedIn(list, name) {
+      const who = String(name || '').trim().toLowerCase();
+      if (!who) return false;
+      const escaped = who.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      return new RegExp('(^|[^a-z])' + escaped + '([^a-z]|$)', 'i').test(String(list || ''));
+    }
+
+    // Training section: who trains (and whether they are ready to) is an admin
+    // call; the check-offs belong to admins and the assigned trainer.
+    const TRAINING_ADMIN_FIELDS = ['Assigned Trainer', 'Ready for Training?', 'Ready for Training'];
+    const TRAINING_TRAINER_FIELDS = ['Key Provided?', 'Key Provided', 'Training Provided?', 'Training Provided'];
+
+    // What has to be true before a record may move to Complete: everything the
+    // workflow asks for at each step (the gold-bordered fields), plus LCR and
+    // every unit's Over the Pulpit sustaining. Same list as COMPLETION_REQUIREMENTS
+    // in Code.js, which refuses the save as well. Cancelled and Declined are never blocked.
+    const COMPLETION_REQUIREMENTS = {
+      'Callings Releasings': [
+        { field: 'Calling Accepted?', accept: ['Accepted'], label: 'Calling accepted' },
+        { field: 'Notified of Release?', accept: ['Yes'], label: 'Released member notified of the release', whenReleasing: true },
+        { field: 'Key Returned?', accept: ['Yes', 'N/A'], label: "Released member's key returned (or N/A)", whenReleasing: true },
+        { field: 'Date Sustained', label: 'Date Sustained' },
+        { field: 'Date Set Apart', label: 'Date Set Apart' },
+        { field: 'Set Apart By', label: 'Assigned to Set Apart' },
+        { field: 'LCR Updated?', accept: ['Yes'], label: 'LCR updated' },
+        { field: 'Training Provided?', accept: ['Yes'], label: 'Training provided' }
+      ],
+      'Ordinations': [
+        { field: 'Interview Status', accept: ['Complete', 'Completed'], label: 'Interview complete' },
+        { field: 'Date Sustained', label: 'Date Sustained' },
+        { field: 'Ordained Date', label: 'Ordained Date' },
+        { field: 'Ordained By', label: 'Ordained By' },
+        { field: 'Certificate Printed?', accept: ['Yes'], label: 'Certificate printed' },
+        { field: 'Certificate Signed?', accept: ['Yes'], label: 'Certificate signed' },
+        { field: 'Certificate Delivered?', accept: ['Yes'], label: 'Certificate delivered' },
+        { field: 'LCR Updated?', accept: ['Yes'], label: 'LCR updated' }
+      ],
+      'Release Only': [
+        { field: 'Date Released', label: 'Date Released' }
+      ]
+    };
+
+    // Pulpit Tracker rows for this record that some unit still has to announce
+    function pulpitStillWaiting(type, record) {
+      const lower = v => String(v == null ? '' : v).trim().toLowerCase();
+      const key = String(record['Timestamp'] || '').trim();
+      const member = lower(record['Member Name']);
+      const released = lower(record['Member to Release']);
+      const held = lower(type === 'Ordinations' ? record['Priesthood Office'] :
+                         type === 'Release Only' ? record['Calling to be Released From'] : record['Calling']);
+      const isFalse = v => v === false || v === 'False' || v === 'FALSE';
+      const isTrue = v => v === true || v === 'True' || v === 'TRUE' || v === 'Complete';
+      const out = [];
+      (state.records.sustainings || []).forEach(row => {
+        if (String(row['Status'] || '').trim() === 'Complete') return;
+        const ts = String(row['TimeStamp from Records Tab'] || '').trim();
+        const who = lower(row['Individual']);
+        const what = lower(row['Calling'] || row['Calling / Office']);
+        const isRelease = lower(row['Action']) === 'release & thank';
+        let linked;
+        if (type === 'Release Only') linked = isRelease && ((key && ts === key) || (who === member && what === held));
+        else if (isRelease) linked = type === 'Callings Releasings' && ((key && ts === 'R-' + key) || (released !== '' && who === released && what === held));
+        else linked = (key && ts === key) || (who === member && what === held);
+        if (!linked) return;
+        const units = getStakeUnits();
+        const waiting = units.filter(u => isFalse(row[u]));
+        if (!waiting.length && units.some(u => isTrue(row[u]))) return;
+        const line = (isRelease ? 'Released' : 'Sustained') + ' over the pulpit in every unit' +
+                     (waiting.length ? ' (still waiting on ' + waiting.join(', ') + ')' : '');
+        if (!out.includes(line)) out.push(line);
+      });
+      return out;
+    }
+
+    // Everything still keeping this record from Complete, in plain words
+    function completionBlockers(type, record) {
+      const reqs = COMPLETION_REQUIREMENTS[type];
+      if (!reqs || !record) return [];
+      const val = f => String(getRecordValue(record, f) == null ? '' : getRecordValue(record, f)).trim();
+      const released = val('Member to Release');
+      const releasing = released !== '' && released.toLowerCase() !== 'n/a';
+      const missing = [];
+      reqs.forEach(q => {
+        if (q.whenReleasing && !releasing) return;
+        const v = val(q.field).toLowerCase();
+        const ok = q.accept ? q.accept.some(a => a.toLowerCase() === v) : v !== '';
+        if (!ok) missing.push(q.label);
+      });
+      return missing.concat(pulpitStillWaiting(type, record));
+    }
+
+    // The warning, and a line in the Activity Log so admins can see the attempt
+    function showCompletionBlocked(blockers) {
+      const active = state.activeRecord || {};
+      const record = active.record || {};
+      const name = record['Member Name'] || 'This record';
+      const pulpitOpen = blockers.some(b => / over the pulpit /.test(b));
+      const overlay = document.createElement('div');
+      overlay.className = 'fixed inset-0 bg-black/60 z-[150] flex items-center justify-center backdrop-blur-sm';
+      overlay.innerHTML = `
+        <div class="bg-slate-900 border border-amber-500/40 p-6 rounded-2xl shadow-2xl max-w-sm w-full mx-4">
+          <h3 class="text-xl font-bold text-amber-400 mb-2 flex items-center gap-2"><i data-lucide="alert-triangle" class="w-5 h-5 shrink-0"></i> Not ready to complete</h3>
+          <p class="text-slate-400 mb-3">${escapeHtml(name)} can't be marked Complete until these are done:</p>
+          <ul class="list-disc pl-5 space-y-1 text-sm text-slate-200 mb-4">${blockers.map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ul>
+          <p class="text-xs text-slate-500 mb-5">To close the record without finishing it, set the step to Cancelled.${pulpitOpen ? ' If a unit handled the sustaining another way, an admin can mark it complete on the Over the Pulpit screen.' : ''}</p>
+          <div class="flex justify-end">
+            <button type="button" class="px-4 py-2 rounded-lg bg-amber-500/20 text-amber-400 font-bold hover:bg-amber-500/30 transition-colors border border-amber-500/30">OK</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+      overlay.querySelector('button').onclick = () => overlay.remove();
+      lucide.createIcons();
+      queueClientEvent({
+        kind: 'blocked-complete',
+        message: 'Still needed: ' + blockers.join('; '),
+        action: 'Mark Complete',
+        recordType: ({ 'Callings Releasings': 'Calling', 'Ordinations': 'Ordination', 'Release Only': 'Release' })[active.type] || '',
+        record: name,
+        recordKey: record['Timestamp'] || ''
+      });
+      maybeFlushClientEvents('');
+    }
+
     function isFieldEditable(fieldKey) {
       const isAdmin = state.role === 'admin';
       const isHC = state.role === 'hc';
       const isPres = state.role === 'presidency';
-      
+
       if (isAdmin) return true;
+      // Training comes before the role lists below: it depends on who is assigned
+      if (TRAINING_ADMIN_FIELDS.includes(fieldKey)) return false;
+      if (TRAINING_TRAINER_FIELDS.includes(fieldKey)) {
+        const record = state.activeRecord && state.activeRecord.record;
+        return !!record && isNamedIn(getRecordValue(record, 'Assigned Trainer'), state.username);
+      }
       if (fieldKey === 'Current Step') return false;
       if (fieldKey === 'Set Apart By') return false; // restricted to Admin only
       if (fieldKey === 'Unit of Member to Release') return false; // restricted to Admin only
@@ -5100,33 +5235,22 @@
         return;
       }
 
-      // Prompt logic for Training Provided
-      if ((fieldKey === 'Training Provided?' || fieldKey === 'Training Provided') && value === 'Yes') {
-        setTimeout(() => {
-          const overlay = document.createElement('div');
-          overlay.className = 'fixed inset-0 bg-black/60 z-[100] flex items-center justify-center backdrop-blur-sm';
-          overlay.innerHTML = `
-            <div class="bg-slate-900 border border-slate-700 p-6 rounded-2xl shadow-2xl max-w-sm w-full mx-4">
-              <h3 class="text-xl font-bold text-slate-100 mb-2">Training Complete</h3>
-              <p class="text-slate-400 mb-6">Training is Complete. Would you consider this calling complete?</p>
-              <div class="flex gap-3 justify-end">
-                <button id="btn-not-sure" class="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 font-medium hover:bg-slate-700 transition-colors border border-slate-700">Not Sure</button>
-                <button id="btn-yes" class="px-4 py-2 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold hover:bg-emerald-500/30 transition-colors border border-emerald-500/30">Yes</button>
-              </div>
-            </div>
-          `;
-          document.body.appendChild(overlay);
-
-          document.getElementById('btn-yes').onclick = () => {
-            updateRecordField('Current Step', 'Complete');
-            document.body.removeChild(overlay);
-          };
-          document.getElementById('btn-not-sure').onclick = () => {
-            updateRecordField('Current Step', 'Admin Review');
-            document.body.removeChild(overlay);
-          };
-        }, 300);
+      // Nothing is marked Complete while a critical step is still open. The server
+      // refuses too; this says why before anything is sent.
+      if (fieldKey === 'Current Step' && value === 'Complete' && COMPLETION_REQUIREMENTS[state.activeRecord.type] &&
+          String(state.activeRecord.record['Current Step'] || '').trim() !== 'Complete') {
+        const blockers = completionBlockers(state.activeRecord.type, state.activeRecord.record);
+        if (blockers.length) {
+          showCompletionBlocked(blockers);
+          renderModalContent(state.activeRecord.type, state.activeRecord.record);
+          lucide.createIcons();
+          return;
+        }
       }
+
+      // Training just provided: offer to complete the calling once the save lands
+      const offerCompletion = (fieldKey === 'Training Provided?' || fieldKey === 'Training Provided') && value === 'Yes' &&
+                              state.activeRecord.type === 'Callings Releasings';
       
       // Captured before the save: the interview rules below compare against it
       const previousStep = String(state.activeRecord.record['Current Step'] || '');
@@ -5169,6 +5293,7 @@
         if (res.success) {
           showToast('Changes saved!', 'success');
           state.activeRecord.record[fieldKey] = value;
+          if (offerCompletion) offerCompletionAfterTraining();
           if (res.createdAction) {
             state.records.actions = state.records.actions || [];
             state.records.actions.push(res.createdAction);
@@ -5322,6 +5447,43 @@
         showToast('Connection error, field not saved', 'error');
         renderModalContent(state.activeRecord.type, state.activeRecord.record);
       });
+    }
+
+    // After training is checked off, ask whether the calling is complete, but only
+    // when it could be. Otherwise say what is still open, rather than offer a step
+    // the app would then refuse.
+    function offerCompletionAfterTraining() {
+      const active = state.activeRecord;
+      if (!active) return;
+      const blockers = completionBlockers(active.type, active.record);
+      if (blockers.length) {
+        showToast('Training recorded. Before this calling can be completed: ' + blockers.join('; ') + '.', 'info', 9000);
+        return;
+      }
+      setTimeout(() => {
+        const overlay = document.createElement('div');
+        overlay.className = 'fixed inset-0 bg-black/60 z-[100] flex items-center justify-center backdrop-blur-sm';
+        overlay.innerHTML = `
+          <div class="bg-slate-900 border border-slate-700 p-6 rounded-2xl shadow-2xl max-w-sm w-full mx-4">
+            <h3 class="text-xl font-bold text-slate-100 mb-2">Training Complete</h3>
+            <p class="text-slate-400 mb-6">Training is Complete. Would you consider this calling complete?</p>
+            <div class="flex gap-3 justify-end">
+              <button id="btn-not-sure" class="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 font-medium hover:bg-slate-700 transition-colors border border-slate-700">Not Sure</button>
+              <button id="btn-yes" class="px-4 py-2 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold hover:bg-emerald-500/30 transition-colors border border-emerald-500/30">Yes</button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(overlay);
+
+        document.getElementById('btn-yes').onclick = () => {
+          updateRecordField('Current Step', 'Complete');
+          document.body.removeChild(overlay);
+        };
+        document.getElementById('btn-not-sure').onclick = () => {
+          updateRecordField('Current Step', 'Admin Review');
+          document.body.removeChild(overlay);
+        };
+      }, 300);
     }
 
     // Fetch active records for Sunday Unit View
@@ -6206,134 +6368,6 @@
           dismissToast(load);
           showToast('Connection error during bulk update', 'error');
         });
-    }
-
-    // renderSundayTodoChecklists removed - tasks consolidated on Dashboard
-
-    function renderTodoTaskRow(t) {
-      let actionBtnHtml = '';
-      
-      if (t.task === "Set Apart") {
-        actionBtnHtml = `<button onclick="triggerCompleteSetApart('${t.record["Timestamp"]}', '${t.name.replace(/'/g, "\\'")}')" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] rounded active:scale-95 transition-all">Mark Set Apart</button>`;
-      } else if (t.task === "Ordain") {
-        actionBtnHtml = `<button onclick="triggerCompleteOrdination('${t.record["Timestamp"]}', '${t.name.replace(/'/g, "\\'")}')" class="px-3 py-1 bg-purple-600 hover:bg-purple-500 text-white font-bold text-[11px] rounded active:scale-95 transition-all">Mark Ordained</button>`;
-      } else if (t.task === "Train") {
-        actionBtnHtml = `<button onclick="triggerCompleteTraining('${t.record["Timestamp"]}', '${t.name.replace(/'/g, "\\'")}')" class="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[11px] rounded active:scale-95 transition-all">Training Complete</button>`;
-      } else {
-        actionBtnHtml = `<button onclick="openRecordDetails('Callings Releasings', '${t.record["Timestamp"]}', '${t.name.replace(/'/g, "\\'")}')" class="px-3 py-1 bg-slate-800 border border-slate-700 text-slate-300 font-bold text-[11px] rounded active:scale-95 transition-all">View Details</button>`;
-      }
-
-      return `
-        <div class="glass p-3.5 rounded-xl flex items-center justify-between gap-3 border border-slate-800 shadow-md">
-          <div class="space-y-0.5">
-            <span class="text-[11px] uppercase tracking-wider bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded-md border border-slate-700 font-bold">${t.task}</span>
-            <p class="text-sm font-bold text-slate-100 pt-1">${t.name}</p>
-            <p class="text-[11px] text-slate-400 font-medium">${t.details}</p>
-            <p class="text-[11px] text-slate-500 italic">Assigned: ${t.performer || 'Not assigned'}</p>
-          </div>
-          ${actionBtnHtml}
-        </div>
-      `;
-    }
-
-    // Set Apart task complete prompt
-    function triggerCompleteSetApart(timestamp, name) {
-      const performer = prompt("Who set apart " + name + "?", state.username || "Earl");
-      if (performer === null) return; // Cancelled
-      
-      const todayStr = new Date().toISOString().substring(0, 10);
-      const updates = {
-        "Date Set Apart": todayStr,
-        "Set Apart By": performer,
-        "Current Step": "Training",
-        "Ready for Training?": "Yes"
-      };
-
-      const load = showToast("Saving ordinances...", "info", 0);
-      apiCall("updateRecord", {
-        type: "Callings Releasings",
-        timestamp: timestamp,
-        memberName: name,
-        updates: updates
-      })
-      .then(res => {
-        dismissToast(load);
-        if (res.success) {
-          showToast("Set Apart recorded successfully!", "success");
-          fetchSundayData();
-        } else {
-          showToast(res.error || "Failed to update record", "error");
-        }
-      })
-      .catch(() => {
-        dismissToast(load);
-        showToast("API connection error", "error");
-      });
-    }
-
-    // Ordination task complete prompt
-    function triggerCompleteOrdination(timestamp, name) {
-      const performer = prompt("Who ordained " + name + "?", state.username || "Earl");
-      if (performer === null) return;
-      
-      const todayStr = new Date().toISOString().substring(0, 10);
-      const updates = {
-        "Ordained Date": todayStr,
-        "Ordained By": performer,
-        "Current Step": "Complete"
-      };
-
-      const load = showToast("Saving ordination...", "info", 0);
-      apiCall("updateRecord", {
-        type: "Ordinations",
-        timestamp: timestamp,
-        memberName: name,
-        updates: updates
-      })
-      .then(res => {
-        dismissToast(load);
-        if (res.success) {
-          showToast("Ordination recorded successfully!", "success");
-          fetchSundayData();
-        } else {
-          showToast(res.error || "Failed to update record", "error");
-        }
-      })
-      .catch(() => {
-        dismissToast(load);
-        showToast("API connection error", "error");
-      });
-    }
-
-    // Training task complete prompt
-    function triggerCompleteTraining(timestamp, name) {
-      if (!confirm("Has training been fully provided to " + name + "?")) return;
-      
-      const updates = {
-        "Training Provided?": "Yes",
-        "Current Step": "Complete"
-      };
-
-      const load = showToast("Completing training...", "info", 0);
-      apiCall("updateRecord", {
-        type: "Callings Releasings",
-        timestamp: timestamp,
-        memberName: name,
-        updates: updates
-      })
-      .then(res => {
-        dismissToast(load);
-        if (res.success) {
-          showToast("Training marked complete!", "success");
-          fetchSundayData();
-        } else {
-          showToast(res.error || "Failed to update record", "error");
-        }
-      })
-      .catch(() => {
-        dismissToast(load);
-        showToast("API connection error", "error");
-      });
     }
 
     // 4. Create Entry Form rendering
