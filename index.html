@@ -1972,7 +1972,7 @@
     // responses echo the deployed backend's version; a mismatch means the
     // Apps Script deployment is stale (pasted but never redeployed as a new
     // version) and admins get warned instead of silently hitting old behavior.
-    const EXPECTED_BACKEND_VERSION = '2026-10-22.1';
+    const EXPECTED_BACKEND_VERSION = '2026-10-23.1';
 
     function warnIfBackendStale(res) {
       if (state.isDemo || state.role !== 'admin' || state.backendStaleWarned) return;
@@ -4683,15 +4683,16 @@
       return new RegExp('(^|[^a-z])' + escaped + '([^a-z]|$)', 'i').test(String(list || ''));
     }
 
-    // Training section: who trains (and whether they are ready to) is an admin
-    // call; the check-offs belong to admins and the assigned trainer.
-    const TRAINING_ADMIN_FIELDS = ['Assigned Trainer', 'Ready for Training?', 'Ready for Training'];
+    // Training section: admins and the Stake Presidency choose the trainer, only
+    // admins mark it ready, and the check-offs belong to admins and the trainer.
+    const TRAINING_ADMIN_FIELDS = ['Ready for Training?', 'Ready for Training'];
     const TRAINING_TRAINER_FIELDS = ['Key Provided?', 'Key Provided', 'Training Provided?', 'Training Provided'];
 
     // What has to be true before a record may move to Complete: everything the
-    // workflow asks for at each step (the gold-bordered fields), plus LCR and
-    // every unit's Over the Pulpit sustaining. Same list as COMPLETION_REQUIREMENTS
-    // in Code.js, which refuses the save as well. Cancelled and Declined are never blocked.
+    // workflow asks for at each step (the gold-bordered fields), plus LCR. The
+    // pulpit is not on the list: completing a record leaves its announcements
+    // running. Same list as COMPLETION_REQUIREMENTS in Code.js, which refuses the
+    // save as well. Cancelled and Declined are never blocked.
     const COMPLETION_REQUIREMENTS = {
       'Callings Releasings': [
         { field: 'Calling Accepted?', accept: ['Accepted'], label: 'Calling accepted' },
@@ -4718,38 +4719,6 @@
       ]
     };
 
-    // Pulpit Tracker rows for this record that some unit still has to announce
-    function pulpitStillWaiting(type, record) {
-      const lower = v => String(v == null ? '' : v).trim().toLowerCase();
-      const key = String(record['Timestamp'] || '').trim();
-      const member = lower(record['Member Name']);
-      const released = lower(record['Member to Release']);
-      const held = lower(type === 'Ordinations' ? record['Priesthood Office'] :
-                         type === 'Release Only' ? record['Calling to be Released From'] : record['Calling']);
-      const isFalse = v => v === false || v === 'False' || v === 'FALSE';
-      const isTrue = v => v === true || v === 'True' || v === 'TRUE' || v === 'Complete';
-      const out = [];
-      (state.records.sustainings || []).forEach(row => {
-        if (String(row['Status'] || '').trim() === 'Complete') return;
-        const ts = String(row['TimeStamp from Records Tab'] || '').trim();
-        const who = lower(row['Individual']);
-        const what = lower(row['Calling'] || row['Calling / Office']);
-        const isRelease = lower(row['Action']) === 'release & thank';
-        let linked;
-        if (type === 'Release Only') linked = isRelease && ((key && ts === key) || (who === member && what === held));
-        else if (isRelease) linked = type === 'Callings Releasings' && ((key && ts === 'R-' + key) || (released !== '' && who === released && what === held));
-        else linked = (key && ts === key) || (who === member && what === held);
-        if (!linked) return;
-        const units = getStakeUnits();
-        const waiting = units.filter(u => isFalse(row[u]));
-        if (!waiting.length && units.some(u => isTrue(row[u]))) return;
-        const line = (isRelease ? 'Released' : 'Sustained') + ' over the pulpit in every unit' +
-                     (waiting.length ? ' (still waiting on ' + waiting.join(', ') + ')' : '');
-        if (!out.includes(line)) out.push(line);
-      });
-      return out;
-    }
-
     // Everything still keeping this record from Complete, in plain words
     function completionBlockers(type, record) {
       const reqs = COMPLETION_REQUIREMENTS[type];
@@ -4764,7 +4733,7 @@
         const ok = q.accept ? q.accept.some(a => a.toLowerCase() === v) : v !== '';
         if (!ok) missing.push(q.label);
       });
-      return missing.concat(pulpitStillWaiting(type, record));
+      return missing;
     }
 
     // The warning, and a line in the Activity Log so admins can see the attempt
@@ -4772,7 +4741,6 @@
       const active = state.activeRecord || {};
       const record = active.record || {};
       const name = record['Member Name'] || 'This record';
-      const pulpitOpen = blockers.some(b => / over the pulpit /.test(b));
       const overlay = document.createElement('div');
       overlay.className = 'fixed inset-0 bg-black/60 z-[150] flex items-center justify-center backdrop-blur-sm';
       overlay.innerHTML = `
@@ -4780,7 +4748,7 @@
           <h3 class="text-xl font-bold text-amber-400 mb-2 flex items-center gap-2"><i data-lucide="alert-triangle" class="w-5 h-5 shrink-0"></i> Not ready to complete</h3>
           <p class="text-slate-400 mb-3">${escapeHtml(name)} can't be marked Complete until these are done:</p>
           <ul class="list-disc pl-5 space-y-1 text-sm text-slate-200 mb-4">${blockers.map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ul>
-          <p class="text-xs text-slate-500 mb-5">To close the record without finishing it, set the step to Cancelled.${pulpitOpen ? ' If a unit handled the sustaining another way, an admin can mark it complete on the Over the Pulpit screen.' : ''}</p>
+          <p class="text-xs text-slate-500 mb-5">To close the record without finishing it, set the step to Cancelled.</p>
           <div class="flex justify-end">
             <button type="button" class="px-4 py-2 rounded-lg bg-amber-500/20 text-amber-400 font-bold hover:bg-amber-500/30 transition-colors border border-amber-500/30">OK</button>
           </div>
@@ -4807,6 +4775,7 @@
 
       if (isAdmin) return true;
       // Training comes before the role lists below: it depends on who is assigned
+      if (fieldKey === 'Assigned Trainer') return isPres;
       if (TRAINING_ADMIN_FIELDS.includes(fieldKey)) return false;
       if (TRAINING_TRAINER_FIELDS.includes(fieldKey)) {
         const record = state.activeRecord && state.activeRecord.record;
@@ -5640,8 +5609,10 @@
       // them) come back under the normal rules.
       const parentInAdminReview = pulpitAdminReviewMatcher();
 
-      // Exclude sustaining items whose parent record is still at an early step
-      const earlySteps = ['HC Approval', 'Stake Interview', 'Call / Release', 'Complete', 'Declined', 'Cancelled'];
+      // Exclude sustaining items whose parent record is still at an early step, or
+      // was cancelled or declined. Complete is not here: a Complete record's
+      // announcements carry on until each unit (or an admin) finishes them.
+      const earlySteps = ['HC Approval', 'Stake Interview', 'Call / Release', 'Declined', 'Cancelled'];
       const filteredSustainings = activeSustainings.filter(s => {
         if (parentInAdminReview(s)) return false;
         const name = s["Individual"];
@@ -5671,6 +5642,13 @@
           o["Member Name"] === name && o["Priesthood Office"] === calling
         );
         if (matchingOrd && earlySteps.includes(matchingOrd["Current Step"])) return false;
+        // A cancelled Release Only leaves at once (the server drops its row too)
+        if (s["Action"] === "Release & Thank") {
+          const matchingRel = (state.records.releases || []).find(r =>
+            r["Member Name"] === name && r["Calling to be Released From"] === calling
+          );
+          if (matchingRel && ['Declined', 'Cancelled'].includes(matchingRel["Current Step"])) return false;
+        }
         return true;
       });
 
